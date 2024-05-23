@@ -24,6 +24,14 @@ cmp.setup({
       end
     end,
   }),
+  sources = {
+    { name = "copilot" },
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+    { name = "buffer" },
+    { name = "nvim_lua" },
+    { name = "path" },
+  },
   formatting = {
     fields = { "abbr", "menu", "kind", },
   }

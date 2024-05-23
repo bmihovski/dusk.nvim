@@ -22,15 +22,16 @@ local options = {
 	writebackup = false,                     -- if a file is being edited by another program (or was written to file while editing with another program), it is not allowed to be edited
 	expandtab = true,                        -- convert tabs to spaces
 	shiftwidth = 2,                          -- the number of spaces inserted for each indentation
-	tabstop = 2,                             -- insert 4 spaces for a tab
+	tabstop = 2,                           -- insert 4 spaces for a tab
+	softtabstop = 2,
 	cursorline = true,                       -- disable/enable highlight the current line
 	number = true,                           -- show code lines
-	relativenumber = false,                  -- relative numbered code lines
+	relativenumber = true,                  -- relative numbered code lines
 	numberwidth = 4,                         -- set number column width to 2 {default 4}
 	signcolumn = "yes",                      -- always show the sign column, otherwise it would shift the text each time
 	wrap = false,                            -- display lines as one long line
 	sidescrolloff = 8,
-	                                         -- scrolloff = 8, -- is one of my fav
+	scrolloff = 8,                                       -- scrolloff = 8, -- is one of my fav
 	spell = false,                           -- disable spell checking
 }
 
