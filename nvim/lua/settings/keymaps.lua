@@ -11,7 +11,7 @@ keymap("n", "<C-k>", "<C-w>k", opts)
 keymap("n", "<C-l>", "<C-w>l", opts)
 keymap("n", "<leader>ww", "<C-w>w", opts)
 
-keymap("n", "<leader>x", ":BufferLineCloseOthers<CR>", opts)
+keymap("n", "<leader>x", ":BufferClose<CR>", opts)
 
 -- go to  beginning and end
 keymap("i", "<C-b>", "<ESC>^i", opts)
@@ -226,8 +226,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		-- Jump to declaration
 		bufmap("n", "gD", "<cmd>lua vim.lsp.buf.definition()<cr>")
 
-    -- Lists all the implementations for the symbol under the cursor
-    bufmap('n', 'gi', '<cmd>Lspsaga finder imp<cr>')
+		-- Lists all the implementations for the symbol under the cursor
+		bufmap("n", "gi", "<cmd>Lspsaga finder imp<cr>")
 
 		-- Jumps to the definition of the type symbol
 		bufmap("n", "go", "<cmd>lua vim.lsp.buf.type_definition()<cr>")
