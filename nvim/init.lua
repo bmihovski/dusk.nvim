@@ -32,20 +32,20 @@ require("lazy").setup({
 	-- UI --
 	--------------------------------------
 
-	{ "nvim-lua/plenary.nvim", lazy = true },
-	{
-		"rcarriga/nvim-notify",
-		lazy = true,
-		event = "VeryLazy",
-		config = function()
-			require("notify").setup({
-				stages = "fade_in_slide_out",
-				background_colour = "FloatShadow",
-				timeout = 3000,
-			})
-			vim.notify = require("notify")
-		end,
-	},
+  { 'nvim-lua/plenary.nvim',             lazy = true },
+  {
+    'rcarriga/nvim-notify',
+    lazy = true,
+    event = "VeryLazy",
+    config = function()
+      require("notify").setup {
+        stages = 'fade_in_slide_out',
+        background_colour = 'FloatShadow',
+        timeout = 3000,
+      }
+      vim.notify = require('notify')
+    end
+  },
 
 	{
 		"folke/which-key.nvim",
@@ -399,18 +399,46 @@ require("lazy").setup({
 	-- LSP & Autocompletion --
 	--------------------------------------
 
-	{
-		-- LSP Configuration & Plugins
-		"neovim/nvim-lspconfig",
-		dependencies = {
-			-- Automatically install LSPs to stdpath for neovim
-			{ "williamboman/mason.nvim", config = true },
-			"williamboman/mason-lspconfig.nvim",
+  {
+    'nvim-java/nvim-java',
+    lazy = false,
+    dependencies = {
+      'nvim-java/lua-async-await',
+      'nvim-java/nvim-java-refactor',
+      'nvim-java/nvim-java-core',
+      'nvim-java/nvim-java-test',
+      'nvim-java/nvim-java-dap',
+      'MunifTanjim/nui.nvim',
+      'neovim/nvim-lspconfig',
+      'mfussenegger/nvim-dap',
+      {
+        'williamboman/mason.nvim',
+        opts = {
+          registries = {
+            'github:nvim-java/mason-registry',
+            'github:mason-org/mason-registry',
+          },
+        },
+      }
+    },
+    config = function()
+      require('java').setup({
+        root_markers = {
+          '.git',
+          'mvnw',
+          'gradlew',
+          'pom.xml',
+          'build.gradle',
+        },
+        jdk = {
+          -- Choose whether to install jdk automatically using mason.nvim
+          auto_install = false,
+        },
+      })
+    end
+  },
 
-			-- Additional lua configuration, makes nvim stuff amazing!
-			"folke/neodev.nvim",
-		},
-	},
+  { "williamboman/mason-lspconfig.nvim", lazy = true },
 
 	{
 		"VidocqH/lsp-lens.nvim",
@@ -422,8 +450,6 @@ require("lazy").setup({
 			})
 		end,
 	},
-
-	{ "williamboman/mason-lspconfig.nvim", lazy = true },
 
 	-- Autocompletion
 	{
@@ -449,14 +475,6 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"zbirenbaum/copilot-cmp",
-		event = "InsertEnter",
-		dependencies = { "zbirenbaum/copilot.lua" },
-		config = function()
-			require("copilot_cmp").setup()
-		end,
-	},
 	{
 		"tris203/precognition.nvim",
 		event = "VeryLazy",
@@ -485,6 +503,14 @@ require("lazy").setup({
 				--     NextParagraph = { text = "}", prio = 1 },
 				-- },
 			})
+		end,
+	},
+	{
+		"zbirenbaum/copilot-cmp",
+		event = "InsertEnter",
+		dependencies = { "zbirenbaum/copilot.lua" },
+		config = function()
+			require("copilot_cmp").setup()
 		end,
 	},
 	{
@@ -523,33 +549,83 @@ require("lazy").setup({
 			require("mason").setup({})
 			require("mason-lspconfig").setup({
 				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
-				ensure_installed = {
-					"jdtls",
-					"tsserver",
-					"lua_ls",
-					"jsonls",
-					"lemminx",
-					"emmet_ls",
-					"gradle_ls",
-					"html",
-					"cssls",
-					"pyright",
-					"clangd",
-					"helm_ls",
-					"yamlls",
-					"taplo",
-					"ruff_lsp",
-					"cmake",
-					"marksman",
-					"bashls",
-				},
-				handlers = {
-					lsp_zero.default_setup,
-					jdtls = lsp_zero.noop, -- This means don't setup jdtls with default setup, because there is special config for it.
-				},
+		lsp_zero.on_attach(function(client, bufnr)
+			-- disable semanticTokens because they interfere with treesitter
+			if client.supports_method "textDocument/semanticTokens" then
+				client.server_capabilities.semanticTokensProvider = nil
+			end
+
+			-- see :help lsp-zero-keybindings
+			-- to learn the available actions
+			lsp_zero.default_keymaps({ buffer = bufnr })
+		end)
+
+		require('mason').setup({})
+		require('mason-lspconfig').setup({
+			-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
+			ensure_installed = {
+				"jdtls",
+				"tsserver",
+				"lua_ls",
+				"jsonls",
+				"lemminx",
+				"emmet_ls",
+				"gradle_ls",
+				"html",
+				"cssls",
+				"pyright",
+				"clangd",
+				"helm_ls",
+				"yamlls",
+				"taplo",
+				"ruff_lsp",
+				"cmake",
+				"marksman",
+				"bashls",
+			},
+			handlers = {
+				jdtls = function()
+					require('lspconfig').jdtls.setup({
+						capabilities = {
+							textDocument = {
+								completion = {
+									completionItem = {
+										snippetSupport = true
+									}
+								}
+							}
+						},
+						settings = {
+							java = {
+								configuration = {
+									runtimes = {
+										-- {
+										--   name = "JavaSE-17",
+										--   path = "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+										--   default = true,
+										-- }
+									}
+								}
+							}
+						}
+					})
+				end,
+
+				-- This is the default configuration for all servers except jdtls
+				function(server_name)
+					require('lspconfig')[server_name].setup({
+						defaults = require("pluginconfigs.lsp").defaults(),
+						capabilities = require("pluginconfigs.lsp").capabilities,
+
+					})
+				end,
+					-- lsp_zero.default_setup,
+					-- jdtls = lsp_zero.noop, -- This means don't setup jdtls with default setup, because there is special config for it.
+				}
 			})
 		end,
 	},
+
 	-- Useful status updates for LSP
 	{ "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
 
@@ -581,18 +657,6 @@ require("lazy").setup({
 		config = function(_, opts)
 			require("lsp_signature").setup(opts)
 		end,
-	},
-
-	{
-		"jay-babu/mason-nvim-dap.nvim",
-		event = "VeryLazy",
-		dependencies = {
-			"williamboman/mason.nvim",
-			"mfussenegger/nvim-dap",
-		},
-		opts = {
-			handlers = {},
-		},
 	},
 
 	{
@@ -921,14 +985,6 @@ require("lazy").setup({
 
 	-- Code Runner
 	{
-		"is0n/jaq-nvim",
-		lazy = true,
-		cmd = "Jaq",
-		config = function()
-			require("pluginconfigs.jaq")
-		end,
-	},
-	{
 		"Civitasv/cmake-tools.nvim",
 		event = "VeryLazy",
 		opts = {
@@ -1019,5 +1075,4 @@ require("lazy").setup({
 	},
 }, {})
 
---Load the rest of the plugin configurations that need to be loaded at the end
 require("pluginconfigs.jdtls")
