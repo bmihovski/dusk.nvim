@@ -87,7 +87,7 @@ keymap("x", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable(true)<CR>"
 keymap("n", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant()<CR>", opts)
 keymap("x", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
 keymap("n", "<leader>jt", "<Cmd>lua require('jdtls').test_nearest_method()<CR>", opts)
-keymap("n", "<leader>jd", "<Cmd>lua require'jdtls'.test_class()<CR>", opts)
+keymap("n", "<leader>jd", "<Cmd>lua require('jdtls').test_class()<CR>", opts)
 keymap("n", "<leader>ju", "<Cmd>JdtUpdateConfig<CR>", opts)
 
 keymap("v", "<leader>jv", "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)

@@ -543,88 +543,87 @@ require("lazy").setup({
 		"VonHeikemen/lsp-zero.nvim",
 		lazy = true,
 		branch = "v3.x",
-		config = function()
-			local lsp_zero = require("lsp-zero")
-			lsp_zero.extend_lspconfig()
-			require("mason").setup({})
-			require("mason-lspconfig").setup({
-				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
-		lsp_zero.on_attach(function(client, bufnr)
-			-- disable semanticTokens because they interfere with treesitter
-			if client.supports_method "textDocument/semanticTokens" then
-				client.server_capabilities.semanticTokensProvider = nil
-			end
+    config = function()
+      local lsp_zero = require('lsp-zero')
+      lsp_zero.extend_lspconfig()
 
-			-- see :help lsp-zero-keybindings
-			-- to learn the available actions
-			lsp_zero.default_keymaps({ buffer = bufnr })
-		end)
+      lsp_zero.on_attach(function(client, bufnr)
+        -- disable semanticTokens because they interfere with treesitter
+        if client.supports_method "textDocument/semanticTokens" then
+          client.server_capabilities.semanticTokensProvider = nil
+        end
 
-		require('mason').setup({})
-		require('mason-lspconfig').setup({
-			-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
+        -- see :help lsp-zero-keybindings
+        -- to learn the available actions
+        lsp_zero.default_keymaps({ buffer = bufnr })
+      end)
+
+      require('mason').setup({})
+      require('mason-lspconfig').setup({
+        -- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
 			ensure_installed = {
-				"jdtls",
-				"tsserver",
-				"lua_ls",
-				"jsonls",
-				"lemminx",
-				"emmet_ls",
-				"gradle_ls",
-				"html",
-				"cssls",
-				"pyright",
-				"clangd",
-				"helm_ls",
-				"yamlls",
-				"taplo",
-				"ruff_lsp",
-				"cmake",
-				"marksman",
-				"bashls",
-			},
-			handlers = {
-				jdtls = function()
-					require('lspconfig').jdtls.setup({
-						capabilities = {
-							textDocument = {
-								completion = {
-									completionItem = {
-										snippetSupport = true
-									}
-								}
-							}
-						},
-						settings = {
-							java = {
-								configuration = {
-									runtimes = {
-										-- {
-										--   name = "JavaSE-17",
-										--   path = "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-										--   default = true,
-										-- }
-									}
-								}
-							}
-						}
-					})
-				end,
+					"jdtls",
+					"tsserver",
+					"lua_ls",
+					"jsonls",
+					"lemminx",
+					"emmet_ls",
+					"gradle_ls",
+					"html",
+					"cssls",
+					"pyright",
+					"clangd",
+					"helm_ls",
+					"yamlls",
+					"taplo",
+					"ruff_lsp",
+					"cmake",
+					"marksman",
+					"bashls",
+				},
+        handlers = {
+          jdtls = function()
+            require('lspconfig').jdtls.setup({
+              capabilities = {
+                textDocument = {
+                  completion = {
+                    completionItem = {
+                      snippetSupport = true
+                    }
+                  }
+                }
+              },
+              settings = {
+                java = {
+                  configuration = {
+                    runtimes = {
+                      -- {
+                      --   name = "JavaSE-17",
+                      --   path = "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+                      --   default = true,
+                      -- }
+                    }
+                  }
+                }
+              }
+            })
+          end,
 
-				-- This is the default configuration for all servers except jdtls
-				function(server_name)
-					require('lspconfig')[server_name].setup({
-						defaults = require("pluginconfigs.lsp").defaults(),
-						capabilities = require("pluginconfigs.lsp").capabilities,
+          -- This is the default configuration for all servers except jdtls
+          function(server_name)
+            require('lspconfig')[server_name].setup({
+              defaults = require("pluginconfigs.lsp").defaults(),
+              capabilities = require("pluginconfigs.lsp").capabilities,
 
-					})
-				end,
-					-- lsp_zero.default_setup,
-					-- jdtls = lsp_zero.noop, -- This means don't setup jdtls with default setup, because there is special config for it.
-				}
-			})
-		end,
-	},
+            })
+          end,
+
+          -- lsp_zero.default_setup,
+          -- jdtls = lsp_zero.noop, -- This means don't setup jdtls with default setup, because there is special config for it.
+        }
+      })
+    end
+  },
 
 	-- Useful status updates for LSP
 	{ "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
