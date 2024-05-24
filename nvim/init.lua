@@ -701,13 +701,6 @@ require("lazy").setup({
 			handlers = {},
 		},
 	},
-	{
-		"simaxme/java.nvim",
-		event = "VeryLazy",
-		config = function()
-			require("java").setup()
-		end,
-	},
 	-- Python LSP
 	{
 		"mfussenegger/nvim-dap-python",
