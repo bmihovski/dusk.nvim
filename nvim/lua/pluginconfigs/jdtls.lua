@@ -1,4 +1,4 @@
-local config = {}
+local java_cmds = vim.api.nvim_create_augroup('java_cmds', {clear = true})
 local cache_vars = {}
 
 local root_files = {
@@ -9,6 +9,14 @@ local root_files = {
   'build.gradle',
 }
 
+local features = {
+  -- change this to `true` to enable codelens
+  codelens = true,
+
+  -- change this to `true` if you have `nvim-dap`,
+  -- `java-test` and `java-debug-adapter` installed
+  debugger = true,
+}
 
 local function get_jdtls_paths()
   if cache_vars.paths then
@@ -20,14 +28,10 @@ local function get_jdtls_paths()
   path.data_dir = vim.fn.stdpath('cache') .. '/nvim-jdtls'
 
   local jdtls_install = require('mason-registry')
-      .get_package('jdtls')
-      :get_install_path()
+    .get_package('jdtls')
+    :get_install_path()
 
-  local lombok_install = require('mason-registry')
-      .get_package('lombok-nightly')
-      :get_install_path()
-
-  path.lombok_jar = lombok_install .. '/lombok.jar'
+  path.java_agent = jdtls_install .. '/lombok.jar'
   path.launcher_jar = vim.fn.glob(jdtls_install .. '/plugins/org.eclipse.equinox.launcher_*.jar')
 
   if vim.fn.has('mac') == 1 then
@@ -38,13 +42,51 @@ local function get_jdtls_paths()
     path.platform_config = jdtls_install .. '/config_win'
   end
 
+  path.bundles = {}
+
   ---
-  -- Useful if you're starting jdtls with a Java version that's
+  -- Include java-test bundle if present
+  ---
+  local java_test_path = require('mason-registry')
+    .get_package('java-test')
+    :get_install_path()
+
+  local java_test_bundle = vim.split(vim.fn.glob(java_test_path .. "/extension/server/*.jar", 1), "\n")
+  for _, bundle in ipairs(java_test_bundle) do
+        --These two jars are not bundles, therefore don't put them in the table
+        if
+            not vim.endswith(bundle, "com.microsoft.java.test.runner-jar-with-dependencies.jar")
+            and not vim.endswith(bundle, "com.microsoft.java.test.runner.jar")
+        then
+            if java_test_bundle[1] ~= '' then
+                table.insert(path.bundles, bundle)
+            end
+        end
+    end
+
+  ---
+  -- Include java-debug-adapter bundle if present
+  ---
+  local java_debug_path = require('mason-registry')
+    .get_package('java-debug-adapter')
+    :get_install_path()
+
+  local java_debug_bundle = vim.split(
+    vim.fn.glob(java_debug_path .. '/extension/server/com.microsoft.java.debug.plugin-*.jar'),
+    '\n'
+  )
+
+  if java_debug_bundle[1] ~= '' then
+    vim.list_extend(path.bundles, java_debug_bundle)
+  end
+
+  ---
+  -- Useful if you're starting jdtls with a Java version that's 
   -- different from the one the project uses.
   ---
   path.runtimes = {
     -- Note: the field `name` must be a valid `ExecutionEnvironment`,
-    -- you can find the list here:
+    -- you can find the list here: 
     -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
     --
     -- This example assume you are using sdkman: https://sdkman.io
@@ -63,15 +105,63 @@ local function get_jdtls_paths()
   return path
 end
 
-local on_attach = function(client, bufnr)
+local function enable_codelens(bufnr)
+  pcall(vim.lsp.codelens.refresh)
 
-			end
+  vim.api.nvim_create_autocmd('BufWritePost', {
+    buffer = bufnr,
+    group = java_cmds,
+    desc = 'refresh codelens',
+    callback = function()
+      pcall(vim.lsp.codelens.refresh)
+    end,
+  })
+end
 
-local function get_jdtls_config()
-  -- local jdtls = require('jdtls')
+local function enable_debugger(bufnr)
+  require('jdtls').setup_dap({hotcodereplace = 'auto'})
+  require('jdtls.dap').setup_dap_main_class_configs()
+end
+
+local function jdtls_on_attach(client, bufnr)
+  if features.debugger then
+    enable_debugger(bufnr)
+  end
+
+  if features.codelens then
+    enable_codelens(bufnr)
+  end
+  
+  require("lsp_signature").on_attach({
+    bind = true,
+    use_lspsaga = false,
+    floating_window = true,
+    fix_pos = true,
+    hint_enable = false,
+    hi_parameter = "Search",
+    handler_opts = {
+      border = "rounded",
+    }, bufnr
+  })
+
+end
+
+local function jdtls_setup(event)
+  local jdtls = require('jdtls')
 
   local path = get_jdtls_paths()
-  local data_dir = path.data_dir .. '/' .. vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
+  local data_dir = path.data_dir .. '/' ..  vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
+
+  if cache_vars.capabilities == nil then
+    jdtls.extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
+
+    local ok_cmp, cmp_lsp = pcall(require, 'cmp_nvim_lsp')
+    cache_vars.capabilities = vim.tbl_deep_extend(
+      'force',
+      vim.lsp.protocol.make_client_capabilities(),
+      ok_cmp and cmp_lsp.default_capabilities() or {}
+    )
+  end
 
   -- The command that starts the language server
   -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
@@ -84,12 +174,13 @@ local function get_jdtls_config()
     '-Declipse.product=org.eclipse.jdt.ls.core.product',
     '-Dlog.protocol=true',
     '-Dlog.level=ALL',
-    '-javaagent:' .. path.lombok_jar,
+    '-javaagent:' .. path.java_agent,
     '--add-modules=ALL-SYSTEM',
     '--add-opens',
     'java.base/java.util=ALL-UNNAMED',
     '--add-opens',
     'java.base/java.lang=ALL-UNNAMED',
+    
     -- 💀
     '-jar',
     path.launcher_jar,
@@ -155,7 +246,7 @@ local function get_jdtls_config()
     contentProvider = {
       preferred = 'fernflower',
     },
-    -- extendedClientCapabilities = jdtls.extendedClientCapabilities,
+    extendedClientCapabilities = jdtls.extendedClientCapabilities,
     sources = {
       organizeImports = {
         starThreshold = 9999,
@@ -170,9 +261,26 @@ local function get_jdtls_config()
     },
   }
 
-  config.cmd = cmd
-  config.setting = lsp_settings
-  return config
+  -- This starts a new client & server,
+  -- or attaches to an existing client & server depending on the `root_dir`.
+  jdtls.start_or_attach({
+    cmd = cmd,
+    settings = lsp_settings,
+    on_attach = jdtls_on_attach,
+    capabilities = cache_vars.capabilities,
+    root_dir = jdtls.setup.find_root(root_files),
+    flags = {
+      allow_incremental_sync = true,
+    },
+    init_options = {
+      bundles = path.bundles,
+    },
+  })
 end
 
-return get_jdtls_config()
+vim.api.nvim_create_autocmd('FileType', {
+  group = java_cmds,
+  pattern = {'java'},
+  desc = 'Setup jdtls',
+  callback = jdtls_setup,
+})
