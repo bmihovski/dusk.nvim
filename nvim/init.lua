@@ -33,7 +33,6 @@ require("lazy").setup({
 	--------------------------------------
 
 	{ "nvim-lua/plenary.nvim", lazy = true },
-	{ "kyazdani42/nvim-web-devicons", lazy = true },
 	{
 		"rcarriga/nvim-notify",
 		lazy = true,
@@ -552,9 +551,12 @@ require("lazy").setup({
 				enable = false,
 				folder_level = 6,
 			},
+			outline = {
+				auto_preview = false,
+				win_width = 40,
+			},
 		},
 	},
-
 	{
 		"ray-x/lsp_signature.nvim",
 		event = "VeryLazy",
