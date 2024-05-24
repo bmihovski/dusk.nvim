@@ -232,16 +232,6 @@ require("lazy").setup({
 	-- File explorer and Finder --
 	--------------------------------------
 	{
-		"AndreM222/copilot-lualine",
-		event = "VeryLazy",
-		opts = {
-			handlers = {},
-		},
-		config = function()
-			require("lualine").setup()
-		end,
-	},
-	{
 		"nvim-lualine/lualine.nvim",
 		lazy = true,
 		event = { "BufReadPost", "BufAdd", "BufNewFile" },

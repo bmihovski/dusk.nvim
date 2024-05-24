@@ -61,65 +61,50 @@ keymap("v", "//", [[y/\V<C-R>=escape(@",'/\')<CR><CR>]], opts)
 -- Open file under cursor with system app
 keymap("n", "gx", [[:silent execute '!$BROWSER ' . shellescape(expand('<cWORD>'), 1)<CR>]], opts)
 
-keymap("n", "<C-f>", "<cmd> !tmux neww tmux-sessionizer <CR>", { noremap = true, silent = true })
-keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", { noremap = true, silent = true })
+keymap("n", "<C-f>", "<cmd> !tmux neww tmux-sessionizer <CR>", opts)
+keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", opts)
 -- cmake run
-keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", { noremap = true, silent = true })
-keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", { noremap = true, silent = true })
-keymap("n", "<leader>s", "<cmd> CMakeCloseExecutor <CR><cmd> CMakeCloseRunner <CR>", { noremap = true, silent = true })
+keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", opts)
+keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", opts)
+keymap("n", "<leader>s", "<cmd> CMakeCloseExecutor <CR><cmd> CMakeCloseRunner <CR>", opts)
 -- copilot chat
-keymap("n", "<leader>t", "<cmd> CopilotChatToggle <CR>", { noremap = true, silent = true })
+keymap("n", "<leader>t", "<cmd> CopilotChatToggle <CR>", opts)
 -- telescope
-keymap("n", "<leader>;", "<cmd> Telescope git_files <CR>", { noremap = true, silent = true })
-keymap(
-	"n",
-	"<leader>.",
-	"<cmd> lua require('telescope').extensions.recent_files.pick() <CR>",
-	{ noremap = true, silent = true }
-)
-keymap("n", "<leader>lw", "<cmd> Telescope lazygit <CR>", { noremap = true, silent = true })
-keymap("n", "<leader>8", "<cmd> Telescope live_grep <CR>", { noremap = true, silent = true })
-keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", { noremap = true, silent = true })
+keymap("n", "<leader>;", "<cmd> Telescope git_files <CR>", opts)
+keymap("n", "<leader>.", "<cmd> lua require('telescope').extensions.recent_files.pick() <CR>", opts)
+keymap("n", "<leader>lw", "<cmd> Telescope lazygit <CR>", opts)
+keymap("n", "<leader>8", "<cmd> Telescope live_grep <CR>", opts)
+keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)
 
 -- outline symbols
-keymap("n", "<F3>", "<Cmd>SymbolsOutline<CR>", { noremap = true, silent = true })
+keymap("n", "<F3>", "<Cmd>SymbolsOutline<CR>", opts)
 --trouble
-keymap("n", "<leader>xx", "<cmd> lua require('trouble').toggle() <CR>", { noremap = true, silent = true })
+keymap("n", "<leader>xx", "<cmd> lua require('trouble').toggle() <CR>", opts)
 -- java test
-keymap("n", "<A-o>", "<Cmd>lua require'jdtls'.organize_imports()<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", { noremap = true, silent = true })
-keymap("x", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable(true)<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant()<CR>", { noremap = true, silent = true })
-keymap("x", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant(true)<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jt", "<Cmd>lua require('jdtls').test_nearest_method()<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jd", "<Cmd>lua require'jdtls'.test_class()<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>ju", "<Cmd>JdtUpdateConfig<CR>", { noremap = true, silent = true })
+keymap("n", "<A-o>", "<Cmd>lua require'jdtls'.organize_imports()<CR>", opts)
+keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", opts)
+keymap("x", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
+keymap("n", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant()<CR>", opts)
+keymap("x", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
+keymap("n", "<leader>jt", "<Cmd>lua require('jdtls').test_nearest_method()<CR>", opts)
+keymap("n", "<leader>jd", "<Cmd>lua require'jdtls'.test_class()<CR>", opts)
+keymap("n", "<leader>ju", "<Cmd>JdtUpdateConfig<CR>", opts)
 
-keymap(
-	"v",
-	"<leader>jv",
-	"<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>",
-	{ noremap = true, silent = true }
-)
-keymap(
-	"v",
-	"<leader>jw",
-	"<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>",
-	{ noremap = true, silent = true }
-)
-keymap("v", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", { noremap = true, silent = true })
-keymap("x", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jl", "<Cmd>lua function() vim.lsp.buf.incoming_calls() end<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>jp", "<Cmd>lua require('jdtls').super_implementation<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>js", "<Cmd>lua require('jdtls').jshell()<CR>", { noremap = true, silent = true })
+keymap("v", "<leader>jv", "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
+keymap("v", "<leader>jw", "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
+keymap("v", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", opts)
+keymap("x", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", opts)
+keymap("n", "<leader>jl", "<Cmd>lua function() vim.lsp.buf.incoming_calls() end<CR>", opts)
+keymap("n", "<leader>jp", "<Cmd>lua require('jdtls').super_implementation<CR>", opts)
+keymap("n", "<leader>js", "<Cmd>lua require('jdtls').jshell()<CR>", opts)
 -- markdown
-keymap("n", "<F6>", "<cmd> MarkdownPreviewToggle<CR>", { noremap = true, silent = true })
+keymap("n", "<F6>", "<cmd> MarkdownPreviewToggle<CR>", opts)
 -- python
-keymap("n", "<leader>vl", "<cmd>VenvSelect<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>vh", "<cmd>VenvSelectCached<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>kw", "<cmd>lua require('dap-python').test_method()<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>kf", "<cmd>lua require('dap-python').test_class()<CR>", { noremap = true, silent = true })
-keymap("n", "<leader>ks", "<cmd>lua require('dap-python').debug_selection()<CR>", { noremap = true, silent = true })
+keymap("n", "<leader>vl", "<cmd>VenvSelect<CR>", opts)
+keymap("n", "<leader>vh", "<cmd>VenvSelectCached<CR>", opts)
+keymap("n", "<leader>kw", "<cmd>lua require('dap-python').test_method()<CR>", opts)
+keymap("n", "<leader>kf", "<cmd>lua require('dap-python').test_class()<CR>", opts)
+keymap("n", "<leader>ks", "<cmd>lua require('dap-python').debug_selection()<CR>", opts)
 
 -- tmux
 keymap("n", "<C-\\>", '<cmd>lua require("nvim-tmux-navigation").NvimTmuxNavigateLastActive<cr>', opts)
