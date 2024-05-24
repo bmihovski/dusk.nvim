@@ -11,11 +11,13 @@ require('nvim-treesitter.configs').setup {
 	-- You can specify additional Treesitter modules here: -- For example: -- playground = {--enable = true,-- },
 	modules = {},
 	highlight = { enable = true,
-		disable = { "markdown" }, -- list of language that highlighting will be disabled
+		-- disable = { "markdown" }, -- list of language that highlighting will be disabled
 		additional_vim_regex_highlighting = true,
 
 	},
 	indent = { enable = true },
+	autopairs = { enable = true },
+	matchup = { enable = true },
 	incremental_selection = {
 		enable = true,
 		keymaps = {
@@ -31,12 +33,22 @@ require('nvim-treesitter.configs').setup {
 			lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
 			keymaps = {
 				-- You can use the capture groups defined in textobjects.scm
-				['aa'] = '@parameter.outer',
-				['ia'] = '@parameter.inner',
-				['af'] = '@function.outer',
-				['if'] = '@function.inner',
-				['ac'] = '@class.outer',
-				['ic'] = '@class.inner',
+				["af"] = "@function.outer",
+				["if"] = "@function.inner",
+				["ac"] = "@class.outer",
+				["ic"] = "@class.inner",
+				["aa"] = "@parameter.outer",
+				["ia"] = "@parameter.inner",
+				["al"] = "@loop.outer",
+				["il"] = "@loop.inner",
+				["ai"] = "@conditional.outer",
+				["ii"] = "@conditional.inner",
+				["a/"] = "@comment.outer",
+				["i/"] = "@comment.inner",
+				["as"] = "@statement.outer",
+				["is"] = "@scopename.inner",
+				["aA"] = "@attribute.outer",
+				["iA"] = "@attribute.inner",
 			},
 		},
 	}

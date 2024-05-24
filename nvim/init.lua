@@ -1,5 +1,4 @@
--- Set <space> as the leader key
--- See `:help mapleader`
+--- Set <space> as the leader key
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = "-"
 vim.g.maplocalleader = "-"
@@ -33,6 +32,21 @@ require("lazy").setup({
 	-- UI --
 	--------------------------------------
 
+	{ "nvim-lua/plenary.nvim", lazy = true },
+	{
+		"rcarriga/nvim-notify",
+		lazy = true,
+		event = "VeryLazy",
+		config = function()
+			require("notify").setup({
+				stages = "fade_in_slide_out",
+				background_colour = "FloatShadow",
+				timeout = 3000,
+			})
+			vim.notify = require("notify")
+		end,
+	},
+
 	{
 		"folke/which-key.nvim",
 		lazy = false,
@@ -40,17 +54,6 @@ require("lazy").setup({
 			require("pluginconfigs.whichkey")
 		end,
 	},
-
-	{
-		"akinsho/bufferline.nvim",
-		version = "*",
-		dependencies = "nvim-tree/nvim-web-devicons",
-		config = function()
-			vim.opt.termguicolors = true
-			require("bufferline").setup()
-		end,
-	},
-
 	{
 		"tris203/hawtkeys.nvim",
 		cmd = { "Hawtkeys", "HawtkeysAll", "HawtkeysDupes" },
@@ -138,16 +141,12 @@ require("lazy").setup({
 			})
 		end,
 	},
-
-	{ "kyazdani42/nvim-web-devicons", lazy = true },
-
 	{
 		-- Theme inspired by Atom
 		"navarasu/onedark.nvim",
 		lazy = true,
 		event = "CursorHold",
 	},
-
 	{
 		"nyoom-engineering/oxocarbon.nvim",
 		lazy = true,
@@ -175,13 +174,11 @@ require("lazy").setup({
 		opts = {},
 	},
 
-	{ "ojroques/nvim-bufdel", event = "CursorHold", opts = {} },
 	{
 		"folke/zen-mode.nvim",
 		dependencies = { "folke/twilight.nvim" },
 		event = "VeryLazy",
 	},
-
 	--Dashboard
 	{
 		"goolord/alpha-nvim",
@@ -190,6 +187,50 @@ require("lazy").setup({
 		end,
 	},
 
+	-- Status Line
+	{
+		"nvim-lualine/lualine.nvim",
+		lazy = true,
+		event = { "BufReadPost", "BufAdd", "BufNewFile" },
+		opts = {
+			options = {
+				-- icons_enabled = false,
+				-- theme = 'onedark',
+				component_separators = "|",
+				section_separators = "",
+			},
+
+			sections = {
+				lualine_b = {
+					"branch",
+					"diff",
+					{
+						"diagnostics",
+						sources = { "nvim_workspace_diagnostic" },
+					},
+				},
+				lualine_c = { { "filename", path = 3 } },
+			},
+		},
+	},
+
+	-- Tab Line
+	{
+		"romgrk/barbar.nvim",
+		lazy = true,
+		event = { "BufReadPost", "BufAdd", "BufNewFile" },
+		dependencies = {
+			"lewis6991/gitsigns.nvim", -- OPTIONAL: for git status
+			"nvim-tree/nvim-web-devicons", -- OPTIONAL: for file icons
+		},
+		init = function()
+			vim.g.barbar_auto_setup = false
+		end,
+		opts = {},
+	},
+	--------------------------------------
+	-- File explorer and Finder --
+	--------------------------------------
 	{
 		"AndreM222/copilot-lualine",
 		event = "VeryLazy",
@@ -237,10 +278,6 @@ require("lazy").setup({
 			"rcarriga/nvim-notify",
 		},
 	},
-
-	--------------------------------------
-	-- File explorer and Finder --
-	--------------------------------------
 
 	-- Nvim Tree
 	{
@@ -303,15 +340,48 @@ require("lazy").setup({
 			"nvim-lua/plenary.nvim",
 			{
 				"ahmedkhalf/project.nvim",
-				event = { "BufReadPost", "BufAdd", "BufNewFile" },
+				-- event = { "BufReadPost", "BufAdd", "BufNewFile" },
 				config = function()
-					require("project_nvim").setup()
+					require("project_nvim").setup({
+						-- Methods of detecting the root directory. **"lsp"** uses the native neovim
+						-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
+						-- order matters: if one is not detected, the other is used as fallback. You
+						-- can also delete or rearangne the detection methods.
+						detection_methods = { "pattern", "lsp" },
+
+						-- All the patterns used to detect root dir, when **"pattern"** is in
+						-- detection_methods
+						patterns = { ".git" },
+					})
 					require("telescope").load_extension("projects")
 				end,
 			},
 		},
+		config = function()
+			require("telescope").setup({
+				defaults = {
+					path_display = { "smart" },
+				},
+				pickers = {
+					find_files = {
+						theme = "dropdown",
+						previewer = false,
+					},
+					oldfiles = {
+						theme = "dropdown",
+						previewer = false,
+					},
+					live_grep = {
+						theme = "ivy",
+					},
+					buffers = {
+						theme = "dropdown",
+						previewer = false,
+					},
+				},
+			})
+		end,
 	},
-
 	{
 		"smartpde/telescope-recent-files",
 		event = "VeryLazy",
@@ -363,12 +433,12 @@ require("lazy").setup({
 		end,
 	},
 
-	-- Useful status updates for LSP
-	{ "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
+	{ "williamboman/mason-lspconfig.nvim", lazy = true },
 
+	-- Autocompletion
 	{
-		-- Autocompletion
 		"hrsh7th/nvim-cmp",
+		lazy = true,
 		event = "InsertEnter",
 		dependencies = {
 			-- Snippet Engine & its associated nvim-cmp source
@@ -377,18 +447,54 @@ require("lazy").setup({
 
 			-- Adds LSP completion capabilities
 			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-buffer",
 			"hrsh7th/cmp-path",
+			"amarakon/nvim-cmp-buffer-lines",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
 		},
+		config = function()
+			require("pluginconfigs.cmp")
+		end,
 	},
+
 	{
 		"zbirenbaum/copilot-cmp",
 		event = "InsertEnter",
 		dependencies = { "zbirenbaum/copilot.lua" },
 		config = function()
 			require("copilot_cmp").setup()
+		end,
+	},
+	{
+		"tris203/precognition.nvim",
+		event = "VeryLazy",
+		config = function()
+			require("precognition").setup({
+				startVisible = true,
+				showBlankVirtLine = false,
+				-- highlightColor = { link = "Comment"),
+				-- hints = {
+				--      Caret = { text = "^", prio = 2 },
+				--      Dollar = { text = "$", prio = 1 },
+				--      MatchingPair = { text = "%", prio = 5 },
+				--      Zero = { text = "0", prio = 1 },
+				--      w = { text = "w", prio = 10 },
+				--      b = { text = "b", prio = 9 },
+				--      e = { text = "e", prio = 8 },
+				--      W = { text = "W", prio = 7 },
+				--      B = { text = "B", prio = 6 },
+				--      E = { text = "E", prio = 5 },
+				-- },
+				-- gutterHints = {
+				--     -- prio is not currently used for gutter hints
+				--     G = { text = "G", prio = 1 },
+				--     gg = { text = "gg", prio = 1 },
+				--     PrevParagraph = { text = "{", prio = 1 },
+				--     NextParagraph = { text = "}", prio = 1 },
+				-- },
+			})
 		end,
 	},
 	{
@@ -417,21 +523,13 @@ require("lazy").setup({
 			})
 		end,
 	},
-
 	{
 		"VonHeikemen/lsp-zero.nvim",
-		branch = "v3.x",
 		lazy = true,
+		branch = "v3.x",
 		config = function()
 			local lsp_zero = require("lsp-zero")
 			lsp_zero.extend_lspconfig()
-
-			lsp_zero.on_attach(function(client, bufnr)
-				-- see :help lsp-zero-keybindings
-				-- to learn the available actions
-				lsp_zero.default_keymaps({ buffer = bufnr })
-			end)
-
 			require("mason").setup({})
 			require("mason-lspconfig").setup({
 				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
@@ -452,12 +550,46 @@ require("lazy").setup({
 					"taplo",
 					"ruff_lsp",
 					"cmake",
+					"marksman",
+					"bashls",
 				},
 				handlers = {
 					lsp_zero.default_setup,
 					jdtls = lsp_zero.noop, -- This means don't setup jdtls with default setup, because there is special config for it.
 				},
 			})
+		end,
+	},
+	-- Useful status updates for LSP
+	{ "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
+
+	{
+		"nvimdev/lspsaga.nvim",
+		event = "LspAttach",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter", -- optional
+			"nvim-tree/nvim-web-devicons", -- optional
+		},
+		opts = {
+			lightbulb = {
+				enable = false,
+			},
+			symbol_in_winbar = {
+				enable = false,
+				folder_level = 6,
+			},
+			outline = {
+				auto_preview = false,
+				win_width = 40,
+			},
+		},
+	},
+	{
+		"ray-x/lsp_signature.nvim",
+		event = "VeryLazy",
+		opts = { hint_enable = false },
+		config = function(_, opts)
+			require("lsp_signature").setup(opts)
 		end,
 	},
 
@@ -474,18 +606,6 @@ require("lazy").setup({
 	},
 
 	{
-		"nvimdev/lspsaga.nvim",
-		event = "LspAttach",
-		opts = {
-			lightbulb = {
-				enable = false,
-			},
-			symbol_in_winbar = {
-				folder_level = 6,
-			},
-		},
-	},
-	{
 		"rockerBOO/symbols-outline.nvim",
 		event = "VeryLazy",
 		config = function(_, opts)
@@ -498,15 +618,6 @@ require("lazy").setup({
 		event = "BufEnter",
 		config = function()
 			require("lsp_lines").setup()
-		end,
-	},
-
-	{
-		"ray-x/lsp_signature.nvim",
-		event = "VeryLazy",
-		opts = {},
-		config = function(_, opts)
-			require("lsp_signature").setup(opts)
 		end,
 	},
 
@@ -549,6 +660,7 @@ require("lazy").setup({
 					"debugpy", -- debugger
 					"black", -- formatter
 					"isort", -- organize imports
+					"markdown-toc",
 				},
 				-- if set to true this will check each tool for updates. If updates
 				-- are available the tool will be updated. This setting does not
@@ -638,9 +750,11 @@ require("lazy").setup({
 		-- Adds git related signs to the gutter, as well as utilities for managing changes
 		"lewis6991/gitsigns.nvim",
 		event = "CursorHold",
-		opts = {},
+		opts = {
+			current_line_blame = true,
+			current_line_blame_opts = { delay = 1200, virtual_text_pos = "eol" },
+		},
 	},
-
 	{
 		"akinsho/git-conflict.nvim",
 		event = "CursorHold",
@@ -679,13 +793,14 @@ require("lazy").setup({
 		event = "CursorHold",
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter-textobjects",
+			"JoosepAlviste/nvim-ts-context-commentstring",
+			"andymass/vim-matchup",
 		},
 		build = ":TSUpdate",
 		config = function()
 			require("pluginconfigs.treesitter")
 		end,
 	},
-
 	{
 		"Badhi/nvim-treesitter-cpp-tools",
 		event = "VeryLazy",
@@ -767,9 +882,11 @@ require("lazy").setup({
 			})
 		end,
 	},
+	-- Custom Formatters
 	{
 		"stevearc/conform.nvim",
-		event = { "BufReadPre", "BufNewFile" },
+		lazy = true,
+		event = { "LspAttach", "BufReadPre", "BufNewFile" },
 		config = function()
 			require("conform").setup({
 				formatters_by_ft = {
@@ -838,26 +955,40 @@ require("lazy").setup({
 
 	--Search & replace string
 	{ "nvim-pack/nvim-spectre", lazy = true, cmd = "Spectre", opts = {} },
-
-	--Handy package with many lightweight editing tools. Choose those that fit you.
-	-- Check documentation at https://github.com/echasnovski/mini.nvim
 	{
-		"echasnovski/mini.nvim",
-		event = "CursorHold",
+		"kylechui/nvim-surround",
+		version = "*", -- Use for stability; omit to use `main` branch for the latest features
+		event = "VeryLazy",
 		config = function()
-			require("mini.ai").setup()
-			require("mini.align").setup()
-			require("mini.pairs").setup()
-			require("mini.surround").setup()
+			require("nvim-surround").setup({
+				-- Configuration here, or leave empty to use defaults
+			})
 		end,
 	},
+
 	{
 		"numToStr/Comment.nvim",
+		event = "CursorHold",
 		opts = {
 			-- add any options here
 		},
-		lazy = false,
 	},
+
+	{
+		"windwp/nvim-autopairs",
+		event = "InsertEnter",
+		config = true,
+	},
+
+	{
+		"windwp/nvim-ts-autotag",
+		event = { "BufReadPre", "BufNewFile" },
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+		},
+		opts = {},
+	},
+
 	{
 		"booperlv/nvim-gomove",
 		event = "VeryLazy",
@@ -894,17 +1025,16 @@ require("lazy").setup({
 	--Markdown
 	{ "dkarter/bullets.vim", ft = "markdown" }, -- Automatic ordered lists. For reordering messed list, use :RenumberSelection cmd
 	{ "jghauser/follow-md-links.nvim", ft = "markdown" }, --Follow md links with ENTER
+	-- install without yarn or npm
 	{
 		"iamcco/markdown-preview.nvim",
 		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-		build = "cd app && npm install",
-		init = function()
-			vim.g.mkdp_filetypes = { "markdown" }
-		end,
 		ft = { "markdown" },
+		build = function()
+			vim.fn["mkdp#util#install"]()
+		end,
 	},
 }, {})
 
 --Load the rest of the plugin configurations that need to be loaded at the end
 require("pluginconfigs.jdtls")
-require("pluginconfigs.cmp")
