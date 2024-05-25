@@ -59,7 +59,7 @@ local disabled_built_ins = {
 	"tutor_mode_plugin",
 	"remote_plugins",
 	"spellfile_plugin",
-	"shada_plugin",
+	"shada_plugin"
 }
 
 for _, plugin in pairs(disabled_built_ins) do
