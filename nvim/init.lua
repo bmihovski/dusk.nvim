@@ -474,7 +474,7 @@ require('lazy').setup({
           "html",
           "cssls",
           "bashls",
-          "angularls"
+          "angularls",
           "pyright",
           "clangd",
           "helm_ls",
