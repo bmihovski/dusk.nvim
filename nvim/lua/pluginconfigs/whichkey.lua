@@ -21,17 +21,17 @@ local function find_git_root()
 	local current_dir
 	local cwd = vim.fn.getcwd()
 	-- If the buffer is not associated with a file, return nil
-	if current_file == '' then
+	if current_file == "" then
 		current_dir = cwd
 	else
 		-- Extract the directory from the current file's path
-		current_dir = vim.fn.fnamemodify(current_file, ':h')
+		current_dir = vim.fn.fnamemodify(current_file, ":h")
 	end
 
 	-- Find the Git root directory from the current file's path
-	local git_root = vim.fn.systemlist('git -C ' .. vim.fn.escape(current_dir, ' ') .. ' rev-parse --show-toplevel')[1]
+	local git_root = vim.fn.systemlist("git -C " .. vim.fn.escape(current_dir, " ") .. " rev-parse --show-toplevel")[1]
 	if vim.v.shell_error ~= 0 then
-		print 'Not a git repository. Searching on current working directory'
+		print("Not a git repository. Searching on current working directory")
 		return cwd
 	end
 	return git_root
@@ -41,21 +41,20 @@ end
 local function live_grep_git_root()
 	local git_root = find_git_root()
 	if git_root then
-		require('telescope.builtin').live_grep {
+		require("telescope.builtin").live_grep({
 			search_dirs = { git_root },
-		}
+		})
 	end
 end
 
-vim.api.nvim_create_user_command('LiveGrepGitRoot', live_grep_git_root, {})
+vim.api.nvim_create_user_command("LiveGrepGitRoot", live_grep_git_root, {})
 
 local function telescope_live_grep_open_files()
-	require('telescope.builtin').live_grep {
+	require("telescope.builtin").live_grep({
 		grep_open_files = true,
-		prompt_title = 'Live Grep in Open Files',
-	}
+		prompt_title = "Live Grep in Open Files",
+	})
 end
-
 
 --------------------------------------
 -- Keymaps --
@@ -63,7 +62,7 @@ end
 
 local setup = {
 	plugins = {
-		marks = false,   -- shows a list of your marks on ' and `
+		marks = false, -- shows a list of your marks on ' and `
 		registers = false, -- shows your registers on " in NORMAL or <C-r> in INSERT mode
 		spelling = {
 			enabled = false, -- enabling this will show WhichKey when pressing z= to select spelling suggestions
@@ -73,12 +72,12 @@ local setup = {
 		-- No actual key bindings are created
 		presets = {
 			operators = true, -- adds help for operators like d, y, ... and registers them for motion / text object completion
-			motions = true,   -- adds help for motions
+			motions = true, -- adds help for motions
 			text_objects = true, -- help for text objects triggered after entering an operator
-			windows = false,  -- default bindings on <c-w>
-			nav = false,      -- misc bindings to work with windows
-			z = true,         -- bindings for folds, spelling and others prefixed with z
-			g = true,         -- bindings for prefixed with g
+			windows = false, -- default bindings on <c-w>
+			nav = false, -- misc bindings to work with windows
+			z = true, -- bindings for folds, spelling and others prefixed with z
+			g = true, -- bindings for prefixed with g
 		},
 	},
 	-- add operators that will trigger motion and text object completion
@@ -101,22 +100,22 @@ local setup = {
 		scroll_up = "<c-u>", -- binding to scroll up inside the popup
 	},
 	window = {
-		border = "none",        -- none, single, double, shadow
-		position = "bottom",    -- bottom, top
+		border = "none", -- none, single, double, shadow
+		position = "bottom", -- bottom, top
 		margin = { 1, 0, 1, 0 }, -- extra window margin [top, right, bottom, left]
 		padding = { 1, 1, 1, 1 }, -- extra window padding [top, right, bottom, left]
 		winblend = 0,
 	},
 	layout = {
-		height = { min = 4, max = 25 },                                        -- min and max height of the columns
-		width = { min = 20, max = 50 },                                        -- min and max width of the columns
-		spacing = 3,                                                           -- spacing between columns
-		align = "center",                                                      -- align columns left, center or right
+		height = { min = 4, max = 25 }, -- min and max height of the columns
+		width = { min = 20, max = 50 }, -- min and max width of the columns
+		spacing = 3, -- spacing between columns
+		align = "center", -- align columns left, center or right
 	},
-	ignore_missing = true,                                                   -- enable this to hide mappings for which you didn't specify a label
+	ignore_missing = true, -- enable this to hide mappings for which you didn't specify a label
 	hidden = { "<silent>", ":", "<Cmd>", "<cr>", "call", "lua", "^:", "^ " }, -- hide mapping boilerplate
-	show_help = true,                                                        -- show help message on the command line when the popup is visible
-	triggers = "auto",                                                       -- automatically setup triggers
+	show_help = true, -- show help message on the command line when the popup is visible
+	triggers = "auto", -- automatically setup triggers
 	-- triggers = {"<leader>"} -- or specify a list manually
 	triggers_blacklist = {
 		-- list of mode / prefixes that should never be hooked by WhichKey
@@ -128,9 +127,9 @@ local setup = {
 }
 
 local opts = {
-	mode = "n",    -- NORMAL mode
+	mode = "n", -- NORMAL mode
 	prefix = "<leader>",
-	buffer = nil,  -- Global mappings. Specify a buffer number for buffer local mappings
+	buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
 	silent = true, -- use `silent` when creating keymaps
 	noremap = true, -- use `noremap` when creating keymaps
 	nowait = true, -- use `nowait` when creating keymaps
@@ -211,6 +210,13 @@ local mappings = {
 		b = { "<cmd>lua require('spectre').open_file_search()<cr>", "Replace in the current Buffer" },
 	},
 
+	C = {
+		name = "C++",
+		r = { "<cmd>CMakeRun<cr>", "Run code cmake" },
+		d = { "<cmd>CMakeDebug<cr>", "Run Debug cmake" },
+		c = { "<cmd>CMakeCloseExecutor <CR><cmd>CMakeCloseRunner<cr>", "Close and stop cmake Runner" },
+	},
+
 	j = {
 		name = "Java",
 		o = { "<Cmd>lua require'jdtls'.organize_imports()<CR>", "Organize Imports" },
@@ -239,20 +245,22 @@ local mappings = {
 		l = { "<Cmd>JavaRunnerToggleLogs<CR>", "Toggle Java Runner Panel" },
 	},
 
-
 	s = {
 		name = "Search String",
-		b = { function()
-			-- You can pass additional configuration to telescope to change theme, layout, etc.
-			require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-				winblend = 10,
-				previewer = false,
-			})
-		end, "In current buffer" },
+		b = {
+			function()
+				-- You can pass additional configuration to telescope to change theme, layout, etc.
+				require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
+					winblend = 10,
+					previewer = false,
+				}))
+			end,
+			"In current buffer",
+		},
 		p = { "<cmd>LiveGrepGitRoot<cr>", "In Git root (Project)" },
 		c = { "<cmd>Telescope live_grep theme=ivy<cr>", "In current working directory" },
 		l = { "<cmd>Telescope resume<cr>", "Resume last Search" },
-		o = { telescope_live_grep_open_files, "In currently open files" }
+		o = { telescope_live_grep_open_files, "In currently open files" },
 	},
 
 	g = {
@@ -290,9 +298,12 @@ local mappings = {
 		m = { ":Mason<cr>", "Install Language" },
 		w = {
 			name = "LSP Workspace",
-			l = { function()
-				print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-			end, "List Workspace Folders" }
+			l = {
+				function()
+					print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+				end,
+				"List Workspace Folders",
+			},
 		},
 	},
 
@@ -317,6 +328,21 @@ local mappings = {
 		v = { ":ToggleTerm size=50 direction=vertical<cr>", "Vertical Terminal" },
 	},
 
+	P = {
+		name = "Python",
+		v = { "<Cmd>VenvSelect<CR>", "Select New Virtual Environment" },
+		c = {
+			"<Cmd>VenvSelectCached<CR>",
+			"Select Cached Virtual Environment",
+		},
+		T = {
+			"<Cmd>lua require('dap-python').test_class()<CR>",
+			"Test Class",
+		},
+		t = { "<Cmd>lua require('dap-python').test_method()<CR>", "Test Method" },
+		d = { "<Cmd>lua require('dap-python').debug_selection()<CR>", "Debug Selection" },
+	},
+
 	t = {
 		name = "Toggle option",
 		w = { '<cmd>lua require("settings.options").toggle_option("wrap")<cr>', "Wrap Text" },
@@ -337,7 +363,6 @@ local mappings = {
 		q = { "<cmd>q!<cr>", "Kill window" },
 	},
 }
-
 
 which_key.setup(setup)
 which_key.register(mappings, opts)
