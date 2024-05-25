@@ -473,6 +473,8 @@ require('lazy').setup({
           "gradle_ls",
           "html",
           "cssls",
+          "bashls",
+          "angularls"
           "pyright",
           "clangd",
           "helm_ls",
@@ -481,7 +483,6 @@ require('lazy').setup({
           "ruff_lsp",
           "cmake",
           "marksman",
-          "bashls",
         },
         handlers = {
 
@@ -639,17 +640,17 @@ require('lazy').setup({
     "WhoIsSethDaniel/mason-tool-installer.nvim",
     config = function()
       require("mason-tool-installer").setup({
-  
+
         ensure_installed = {
-          "bash-language-server",
-          "google-java-format",
-          "stylua",
-          "shellcheck",
-          "shfmt",
-          "java-test",
-          "java-debug-adapter",
-          "markdown-toc",
-          "lombok-nightly",
+          'bash-language-server',
+          'google-java-format',
+          'stylua',
+          'shellcheck',
+          'shfmt',
+          'java-test',
+          'java-debug-adapter',
+          'markdown-toc',
+          'lombok-nightly',
           "clang-format",
           "codelldb",
           "cpptools",
@@ -682,7 +683,7 @@ require('lazy').setup({
   },
 
   -- Java LSP
-  { "mfussenegger/nvim-jdtls" },
+  { "mfussenegger/nvim-jdtls",         ft = "java" },
 
   -- DAP (Required to run Java unit tests and Debugging)--
 
@@ -711,6 +712,7 @@ require('lazy').setup({
 
   -- Obsolete plugins, might re-use later
   -- { "Pocco81/dap-buddy.nvim",  ft = "java" },
+
   -- Python LSP
   {
     "mfussenegger/nvim-dap-python",
@@ -736,6 +738,7 @@ require('lazy').setup({
     },
     event = "VeryLazy", -- Optional: needed only if you want to type `:VenvSelect` without a keymapping
   },
+
   --------------------------------------
   -- Git --
   --------------------------------------

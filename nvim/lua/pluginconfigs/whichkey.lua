@@ -193,7 +193,7 @@ local mappings = {
 		R = { ":Lspsaga rename ++project<cr>", "Rename in Project" },
 		r = { ":Lspsaga rename<cr>", "Rename in current buffer" },
 		o = { ":Lspsaga outline<cr>", "Code Outline" },
-		f = { "<cmd>lua vim.lsp.buf.format()<cr>", "Format" },
+		f = { "<cmd>lua vim.lsp.buf.format({async = true})<cr>", "Format" },
 		n = {
 			":Lspsaga diagnostic_jump_next<cr>",
 			"Next Diagnostic",
@@ -222,7 +222,7 @@ local mappings = {
 			"<Cmd>lua require'jdtls'.test_class({ config = { console = 'console' }})<CR>",
 			"Test Class",
 		},
-		f = { "<cmd>lua require('conform').format()<cr>", "Format with Google Java Format" },
+		f = { "<cmd>lua require('conform').format({async = true})<cr>", "Format with Google Java Format" },
 		d = { "<Cmd>JavaDapConfig<CR>", "Refresh debug config" },
 		r = { "<Cmd>JavaRunnerRunMain<CR>", "Run Java" },
 		p = { "<Cmd>JavaProfile<CR>", "Active Profile" },
@@ -235,7 +235,8 @@ local mappings = {
 		c = { "<Cmd>lua require('jdtls').extract_constant()<CR>", "Extract Constant" },
 		u = { "<Cmd>lua require('jdtls').update_project_config()<CR>", "Refresh java config" },
 		e = { "<Cmd>JdtSetRuntime<CR>", "Choose Java Runtime" },
-		C = { "<Cmd>JdtCompile<CR>", "Compile Java" }
+		C = { "<Cmd>JdtCompile<CR>", "Compile Java" },
+		l = { "<Cmd>JavaRunnerToggleLogs<CR>", "Toggle Java Runner Panel" },
 	},
 
 
@@ -305,6 +306,8 @@ local mappings = {
 		r = { ":lua require'dap'.repl.open()<cr>", "Repl Console" },
 		d = { ":lua require'dapui'.toggle()<cr>", "Dap UI" },
 		t = { ":lua require'dap'.terminate()<cr>", "Terminate session" },
+		m = { ":JavaTestDebugCurrentMethod<cr>", "Java - Debug method" },
+		C = { ":JavaTestDebugCurrentClass<cr>", "Java - Debug Class" },
 	},
 
 	o = {
