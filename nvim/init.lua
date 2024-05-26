@@ -236,9 +236,6 @@ require('lazy').setup({
   {
     "AndreM222/copilot-lualine",
     event = "VeryLazy",
-    opts = {
-      handlers = {}
-    },
   },
 
   -- Tab Line
@@ -702,7 +699,7 @@ require('lazy').setup({
   },
 
   -- Java LSP
-  { "mfussenegger/nvim-jdtls",         ft = "java" },
+  { "mfussenegger/nvim-jdtls",         ft = "java", "proto" },
 
   -- DAP (Required to run Java unit tests and Debugging)--
 
@@ -710,7 +707,7 @@ require('lazy').setup({
   {
     "rcarriga/nvim-dap-ui",
     event = "VeryLazy",
-    ft = { "c", "cpp", "hpp", "h", "objc", "objcpp", "cuda", "proto", "cpp", "java" },
+    ft = { "c", "cpp", "hpp", "h", "objc", "objcpp", "cuda", "proto", "java" },
     dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
     config = function()
       local dap = require("dap")
@@ -807,6 +804,7 @@ require('lazy').setup({
   },
   {
     "Badhi/nvim-treesitter-cpp-tools",
+    ft = { "hpp", "h", "cpp" },
     event = "VeryLazy",
     dependencies = { "nvim-treesitter" },
     config = function()
@@ -820,6 +818,7 @@ require('lazy').setup({
 
   {
     "https://gitlab.com/schrieveslaach/sonarlint.nvim",
+    ft = { "hpp", "h", "cpp", "proto", "python", "java" },
     dependencies = { "mfussenegger/nvim-jdtls" },
     event = "VeryLazy",
     opts = {
@@ -942,6 +941,7 @@ require('lazy').setup({
   -- Code Runner
   {
     "Civitasv/cmake-tools.nvim",
+    ft = { "hpp", "h", "cpp" },
     event = "VeryLazy",
     opts = {
       handlers = {},
