@@ -633,6 +633,7 @@ require("lazy").setup({
 			require("symbols-outline").setup(opts)
 		end,
 	},
+  
 	{
 		"https://git.sr.ht/~whynothugo/lsp_lines.nvim",
 		branch = "main",
@@ -932,17 +933,6 @@ require("lazy").setup({
 		end,
 	},
 
-	-- Docker
-	-- LazyDocker app is required https://github.com/mgierada/lazydocker.nvim?tab=readme-ov-file#-installation
-	{
-		"mgierada/lazydocker.nvim",
-    event = "VeryLazy",
-		dependencies = { "akinsho/toggleterm.nvim" },
-		config = function()
-			require("lazydocker").setup({})
-		end
-	},
-
 	-- Tmux
 	{
 		"alexghergh/nvim-tmux-navigation",
@@ -982,6 +972,17 @@ require("lazy").setup({
 			handlers = {},
 		},
 	},
+
+  -- Docker
+  -- LazyDocker app is required https://github.com/mgierada/lazydocker.nvim?tab=readme-ov-file#-installation
+  {
+    "mgierada/lazydocker.nvim",
+    event = "VeryLazy",
+    dependencies = { "akinsho/toggleterm.nvim" },
+    config = function()
+      require("lazydocker").setup({})
+    end
+  },
 
   -- Database
   {
