@@ -78,8 +78,6 @@ keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)
 
 -- outline symbols
 keymap("n", "<F3>", "<Cmd>SymbolsOutline<CR>", opts)
---trouble
-keymap("n", "<leader>xx", "<cmd> lua require('trouble').toggle() <CR>", opts)
 -- java test
 keymap("n", "<A-o>", "<Cmd>lua require'jdtls'.organize_imports()<CR>", opts)
 keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", opts)
@@ -137,7 +135,7 @@ keymap("n", "<F8>", "<cmd>DapStepOver<cr>", opts)
 keymap("n", "<F9>", "<cmd>DapContinue<cr>", opts)
 keymap("n", "<leader>f", "<cmd>DapTerminate<cr>", opts)
 keymap("n", "<leader>r", '<cmd>lua require("dap").clear_breakpoints()<cr>', opts)
-keymap("n", "<leader>o", '<cmd>lua require("dap.ui.widgets").hover()<cr>', opts)
+keymap("n", "<leader>y", '<cmd>lua require("dap.ui.widgets").hover()<cr>', opts)
 keymap("n", "<leader>w", '<cmd>lua require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))<cr>', opts)
 keymap(
 	"n",
@@ -145,6 +143,8 @@ keymap(
 	'<cmd>lua require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) <cr>',
 	opts
 )
+-- check failed tests from dap repl
+keymap("n", "<leader>xx", "<cmd> DapToggleRepl <CR>", opts)
 -- ESC to clear highlights after search
 keymap("n", "<Esc>", ":noh<CR> :helpclose<CR>", opts)
 -- dap ui icons

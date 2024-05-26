@@ -1,5 +1,6 @@
 --- Set <space> as the leader key
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+vim.keymap.set({ 'n', 'v' }, '-', '<Nop>', { silent = true })
 vim.g.mapleader = "-"
 vim.g.maplocalleader = "-"
 vim.cmd([[silent! runtime plugin/rplugin.vim]])
@@ -704,7 +705,6 @@ require("lazy").setup({
 	-- Sonarlint plugin
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		ft = { "java", "python", "cpp" },
 		dependencies = { "mfussenegger/nvim-jdtls" },
 		opts = {
 			handlers = {},
@@ -933,14 +933,14 @@ require("lazy").setup({
 	},
 
 	-- Docker
-	-- lazydocker.nvim
+	-- LazyDocker app is required https://github.com/mgierada/lazydocker.nvim?tab=readme-ov-file#-installation
 	{
 		"mgierada/lazydocker.nvim",
+    event = "VeryLazy",
 		dependencies = { "akinsho/toggleterm.nvim" },
 		config = function()
 			require("lazydocker").setup({})
-		end,
-		event = "VeryLazy",
+		end
 	},
 
 	-- Tmux
@@ -982,6 +982,19 @@ require("lazy").setup({
 			handlers = {},
 		},
 	},
+
+  -- Database
+  {
+    "tpope/vim-dadbod",
+    event = "VeryLazy",
+    dependencies = {
+      "kristijanhusak/vim-dadbod-ui",
+      "kristijanhusak/vim-dadbod-completion",
+    },
+    config = function()
+      require("pluginconfigs.dadbod").setup()
+    end,
+  },
 
 	--Terminal
 	{ "akinsho/toggleterm.nvim", version = "*", lazy = true, cmd = "ToggleTerm", opts = {} },
