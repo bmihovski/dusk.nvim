@@ -68,7 +68,11 @@ local jdtls_settings = {
       },
       configuration = {
         -- Here you can specify all your java runtimes
-        -- runtimes = {
+        runtimes = {
+          {
+            name = 'JavaSE-21',
+            path = vim.fn.expand('~/.sdkman/candidates/java/current'),
+          },
         --   {
         --     name = "JavaSE-1.8",
         --     path = "/Library/Java/JavaVirtualMachines/jdk1.8.0_291.jdk/Contents/Home",
@@ -82,7 +86,7 @@ local jdtls_settings = {
         --     name = "JavaSE-19",
         --     path = "/opt/homebrew/Cellar/openjdk/19.0.2/libexec/openjdk.jdk/Contents/Home",
         --   },
-        -- }
+        }
       },
 
       -- Here you can manually add dependency jars you might have

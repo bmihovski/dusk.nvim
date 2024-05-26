@@ -186,6 +186,16 @@ require('lazy').setup({
       })
     end,
   },
+  {
+    "https://gitlab.com/yorickpeterse/nvim-pqf.git",
+    event = "VeryLazy",
+    opts = {
+      handlers = {}
+    },
+    config = function()
+      require("pqf").setup()
+    end
+  },
 
   --Dashboard
   {
@@ -210,6 +220,7 @@ require('lazy').setup({
 
       sections = {
         lualine_b = {
+          'copilot',
           'branch',
           'diff',
           {
@@ -220,6 +231,14 @@ require('lazy').setup({
         lualine_c = { { 'filename', path = 3 } },
       }
     }
+  },
+
+  {
+    "AndreM222/copilot-lualine",
+    event = "VeryLazy",
+    opts = {
+      handlers = {}
+    },
   },
 
   -- Tab Line
@@ -798,10 +817,11 @@ require('lazy').setup({
     end,
     cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
   },
+
   {
     "https://gitlab.com/schrieveslaach/sonarlint.nvim",
     dependencies = { "mfussenegger/nvim-jdtls" },
-    event = { "BufRead", "BufNewFile" },
+    event = "VeryLazy",
     opts = {
       handlers = {},
     },
@@ -835,7 +855,6 @@ require('lazy').setup({
     end,
   },
 
-  -- Custom Formatters
   {
     "mfussenegger/nvim-lint",
     event = {
