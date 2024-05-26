@@ -2,6 +2,7 @@
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = '-'
 vim.g.maplocalleader = '-'
+vim.cmd([[silent! runtime plugin/rplugin.vim]])
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -67,6 +68,12 @@ require('lazy').setup({
     lazy = true,
     event = { "BufReadPost", "BufAdd", "BufNewFile" },
     opts = {}
+  },
+
+  {
+    "folke/zen-mode.nvim",
+    dependencies = { "folke/twilight.nvim" },
+    event = "VeryLazy",
   },
 
   {
@@ -236,6 +243,9 @@ require('lazy').setup({
   {
     "AndreM222/copilot-lualine",
     event = "VeryLazy",
+    config = function ()
+      require("lualine").setup()
+    end,
   },
 
   -- Tab Line
@@ -486,7 +496,27 @@ require('lazy').setup({
       require('mason-lspconfig').setup({
 
         -- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
-        ensure_installed = { 'jdtls', "tsserver", "lua_ls", "jsonls", "lemminx", "marksman", "emmet_ls", "gradle_ls", "html", "cssls", "bashls", "angularls" },
+        ensure_installed = {
+          "jdtls",
+          "tsserver",
+          "lua_ls",
+          "jsonls",
+          "lemminx",
+          "marksman",
+          "emmet_ls",
+          "gradle_ls",
+          "html",
+          "cssls",
+          "bashls",
+          "angularls",
+          "pyright",
+          "clangd",
+          "helm_ls",
+          "yamlls",
+          "taplo",
+          "ruff_lsp",
+          "cmake"
+        },
         handlers = {
 
           -- This is custom configuration for jdtls.
@@ -636,6 +666,7 @@ require('lazy').setup({
           'markdown-toc',
           'lombok-nightly',
           'sonarlint-language-server',
+          "vscode-java-decompiler",
           "clang-format",
           "codelldb",
           "cpptools",
