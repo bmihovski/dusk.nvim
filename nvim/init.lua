@@ -458,20 +458,38 @@ require("lazy").setup({
 				},
 				handlers = {
 
-					-- Don't setup jdtls here, it's configured in pluginconfigs/jdtls.lua
-					jdtls = lsp_zero.noop,
+  -- Shows signature as you type
+  {
+    "ray-x/lsp_signature.nvim",
+    event = "VeryLazy",
+    opts = { hint_enable = false, time_interval = 50 },
+    config = function(_, opts) require 'lsp_signature'.setup(opts) end
+  },
 
-					-- This is the default configuration for all servers except jdtls
-					function(server_name)
-						require("lspconfig")[server_name].setup({
-							defaults = require("pluginconfigs.lsp").defaults(),
-							capabilities = require("pluginconfigs.lsp").capabilities,
-						})
-					end,
-				},
-			})
-		end,
-	},
+  {
+    "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
+    event = "LspAttach",
+    branch = "main",
+    config = function()
+      require("lsp_lines").setup({
+        vim.keymap.set(
+          "",
+          "<Leader>X",
+          require("lsp_lines").toggle,
+          { desc = "Toggle lsp_lines plugin" }
+        )
+      })
+    end,
+  },
+
+  --LSP Diagnostics
+  {
+    "folke/trouble.nvim",
+    branch = "dev",
+    lazy = true,
+    cmd = "Trouble",
+    opts = { auto_preview = false } -- automatically preview the location of the diagnostic
+  },
 
 	-- Autocompletion
 	{
@@ -483,12 +501,29 @@ require("lazy").setup({
 			"L3MON4D3/LuaSnip",
 			"saadparwaiz1/cmp_luasnip",
 
-			-- Adds LSP completion capabilities
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-buffer",
-			"hrsh7th/cmp-path",
-			"hrsh7th/cmp-cmdline",
-			"amarakon/nvim-cmp-buffer-lines",
+        ensure_installed = {
+          'bash-language-server',
+          'google-java-format',
+          'stylua',
+          'shellcheck',
+          'shfmt',
+          'java-test',
+          'java-debug-adapter',
+          'markdown-toc',
+          'sonarlint-language-server'
+        },
+        -- if set to true this will check each tool for updates. If updates
+        -- are available the tool will be updated. This setting does not
+        -- affect :MasonToolsUpdate or :MasonToolsInstall.
+        -- Default: false
+        auto_update = false,
+        -- set a delay (in ms) before the installation starts. This is only
+        -- effective if run_on_start is set to true.
+        -- e.g.: 5000 = 5 second delay, 10000 = 10 second delay, etc...
+        -- Default: 0
+        start_delay = 3000, -- 3 second delay
+      }
+    end
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
@@ -498,64 +533,68 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"zbirenbaum/copilot-cmp",
-		event = "InsertEnter",
-		dependencies = { "zbirenbaum/copilot.lua" },
-		config = function()
-			require("copilot_cmp").setup()
-		end,
-	},
+  -- The Java LSP server
+  {
+    "mfussenegger/nvim-jdtls",
+    ft = "java",
+    config = function()
+      require("pluginconfigs.jdtls")
+    end
+  },
 
-	{
-		"CopilotC-Nvim/CopilotChat.nvim",
-		event = "VeryLazy",
-		branch = "canary",
-		dependencies = {
-			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim zbirenbaum/copilot.lua
-			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-		},
-		opts = {
-			debug = false, -- Disable debugging
-		},
-		build = function()
-			vim.cmd("UpdateRemotePlugins") -- You need to restart to make it works
-		end,
-	},
+  -- Rename packages and imports also when renaming/moving files via nvim-tree (for Java)
+  {
+    'simaxme/java.nvim',
+    ft = "java",
+    after = { "mfussenegger/nvim-jdtls" },
+    config = function()
+      require("simaxme-java").setup()
+    end
+  },
 
-	{
-		"zbirenbaum/copilot.lua",
-		cmd = "Copilot",
-		event = "InsertEnter",
-		config = function()
-			require("copilot").setup({
-				suggestion = { enabled = false },
-				panel = { enabled = false },
-			})
-		end,
-	},
-	-- Improves LSP UI
-	{
-		"nvimdev/lspsaga.nvim",
-		event = "LspAttach",
-		dependencies = {
-			"nvim-treesitter/nvim-treesitter", -- optional
-			"nvim-tree/nvim-web-devicons", -- optional
-		},
-		opts = {
-			lightbulb = {
-				enable = false,
-			},
-			symbol_in_winbar = {
-				enable = false,
-				folder_level = 6,
-			},
-			outline = {
-				auto_preview = false,
-				win_width = 50,
-			},
-		},
-	},
+  -- Sonarlint plugin
+  {
+    "https://gitlab.com/schrieveslaach/sonarlint.nvim",
+    ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html" },
+    dependencies = { "mfussenegger/nvim-jdtls" },
+    opts = {
+      handlers = {},
+    },
+    config = function()
+      require("sonarlint").setup({
+        server = {
+          root_dir = require('jdtls.setup').find_root({ 'gradlew', '.git', 'pom.xml', 'mvnw' }),
+          -- autostart = true,
+          cmd = {
+            "sonarlint-language-server",
+            -- Ensure that sonarlint-language-server uses stdio channel
+            "-stdio",
+            "-analyzers",
+            -- paths to the analyzers you need, using those for python and java in this example
+            vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarpython.jar"),
+            vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarcfamily.jar"),
+            vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjava.jar"),
+            vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjs.jar"),
+            vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarhtml.jar"),
+          },
+          settings = {
+            sonarlint = {
+              pathToCompileCommands = vim.fn.getcwd() .. "/compile_commands.json",
+            },
+          },
+        },
+        filetypes = {
+          -- Tested and working
+          "python",
+          "cpp",
+          "java",
+          "typescript",
+          "html",
+        },
+      })
+    end,
+  },
+
 
 	-- Shows signature as you type
 	{
@@ -567,16 +606,50 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"https://git.sr.ht/~whynothugo/lsp_lines.nvim",
-		event = "LspAttach",
-		branch = "main",
-		config = function()
-			require("lsp_lines").setup({
-				vim.keymap.set("", "<Leader>X", require("lsp_lines").toggle, { desc = "Toggle lsp_lines plugin" }),
-			})
-		end,
-	},
+
+  --------------------------------------
+  -- Linters and Formatters --
+  --------------------------------------
+
+  -- Custom Formatters
+  {
+    'stevearc/conform.nvim',
+    lazy = true,
+    event = "LspAttach",
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          java = { "google-java-format" },
+        },
+      })
+    end
+  },
+
+  -- -- NOTE: if you want additional linters, try this plugin
+  -- -- Linters
+  -- {
+  --   "mfussenegger/nvim-lint",
+  --   event = "LspAttach",
+  --   config = function()
+  --     local lint = require("lint")
+  --
+  --     lint.linters_by_ft = {
+  --       -- javascript = { "eslint_d" },
+  --       -- typescript = { "eslint_d" },
+  --       -- javascriptreact = { "eslint_d" },
+  --       -- typescriptreact = { "eslint_d" },
+  --       java = { "checkstyle" },
+  --     }
+  --     local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+  --
+  --     vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+  --       group = lint_augroup,
+  --       callback = function()
+  --         lint.try_lint()
+  --       end,
+  --     })
+  --   end
+  -- },
 
 	--LSP Diagnostics
 	{

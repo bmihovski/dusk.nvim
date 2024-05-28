@@ -375,11 +375,6 @@ local mappings = {
 		d = { "<cmd>LazyDocker<cr>", "Run LazyDocker" },
 	},
 
-	T = {
-		name = "Developer tools",
-		d = { "<cmd>Lazydocker<cr>", "Run LazyDocker" },
-	},
-
 	w = {
 		name = "Window",
 		w = { "<C-w>w", "Last window" },
