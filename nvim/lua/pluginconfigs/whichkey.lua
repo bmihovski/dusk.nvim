@@ -225,7 +225,7 @@ local mappings = {
 		b = { "<cmd>lua require('spectre').open_file_search()<cr>", "Replace in the current Buffer" },
 	},
 
-	C = {
+	S = {
 		name = "C++",
 		r = { "<cmd>CMakeRun<cr>", "Run code cmake" },
 		d = { "<cmd>CMakeDebug<cr>", "Run Debug cmake" },

@@ -221,7 +221,27 @@ require('lazy').setup({
   	end,
   },
 
-  -- auto save
+  -- auto save and restore the last session
+
+  {
+  	"olimorris/persisted.nvim",
+  	lazy = false,
+  	config = function()
+  		require("persisted").setup({
+  			ignored_dirs = {
+  				"~/.config",
+  				"~/.local/nvim",
+  				{ "/", exact = true },
+  				{ "/tmp", exact = true },
+  			},
+  			autoload = true,
+  			on_autoload_no_session = function()
+  				vim.notify("No existing session to load.")
+  			end,
+  		})
+  	end,
+  },
+
   {
     "okuuva/auto-save.nvim",
     cmd = "ASToggle", -- Use this cmd if you want to enable auto-save
@@ -374,6 +394,18 @@ require('lazy').setup({
   },
 
   -- Search in file history
+  {
+    "smartpde/telescope-recent-files",
+    event = "VeryLazy",
+    dependencies = { "nvim-telescope/telescope.nvim" },
+    opts = {
+      handlers = {},
+    },
+    config = function()
+      require("telescope").load_extension("recent_files")
+    end,
+  },
+
   {
     "debugloop/telescope-undo.nvim",
     dependencies = { -- note how they're inverted to above example
@@ -708,7 +740,7 @@ require('lazy').setup({
 	{ "mfussenegger/nvim-dap", ft = { "c", "cpp", "hpp", "h", "proto", "java" } },
 	{
 		"rcarriga/nvim-dap-ui",
-		ft = { "c", "cpp", "hpp", "h", "proto", "java" }
+		ft = { "c", "cpp", "hpp", "h", "proto", "java" },
 		dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
 		config = function()
 			local dap = require("dap")
@@ -800,25 +832,6 @@ require('lazy').setup({
 			})
 		end,
 	},
-
-	-- {
-	-- 	"olimorris/persisted.nvim",
-	-- 	lazy = false,
-	-- 	config = function()
-	-- 		require("persisted").setup({
-	-- 			ignored_dirs = {
-	-- 				"~/.config",
-	-- 				"~/.local/nvim",
-	-- 				{ "/", exact = true },
-	-- 				{ "/tmp", exact = true },
-	-- 			},
-	-- 			autoload = true,
-	-- 			on_autoload_no_session = function()
-	-- 				vim.notify("No existing session to load.")
-	-- 			end,
-	-- 		})
-	-- 	end,
-	-- },
 
 	-- Tmux
 	{
