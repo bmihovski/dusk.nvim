@@ -244,7 +244,7 @@ require('lazy').setup({
 
   {
     "okuuva/auto-save.nvim",
-    cmd = "ASToggle", -- Use this cmd if you want to enable auto-save
+    event = { "InsertLeave", "TextChanged" },
     opts = {
       execution_message = {
         enabled = false,
