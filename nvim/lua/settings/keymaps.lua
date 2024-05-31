@@ -11,7 +11,7 @@ keymap("n", "<C-k>", "<C-w>k", opts)
 keymap("n", "<C-l>", "<C-w>l", opts)
 keymap("n", "<leader>ww", "<C-w>w", opts)
 
-keymap("n", "<leader>x", ":BufferClose<CR>", opts)
+keymap("n", "<leader>x", "<cmd>bd<CR>", opts)
 
 -- go to  beginning and end
 keymap("i", "<C-b>", "<ESC>^i", opts)
@@ -44,8 +44,8 @@ keymap("n", "<leader>e", "<cmd> NvimTreeFocus <CR>", opts)
 keymap("n", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise.current()<cr>", opts)
 keymap("v", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
 -- Navigate buffers
-keymap("n", "<TAB>", ":bnext<CR>", opts)
-keymap("n", "<S-TAB>", ":bprevious<CR>", opts)
+keymap("n", "<TAB>", "<cmd>bnext<CR>", opts)
+keymap("n", "<S-TAB>", "<cmd>bprevious<CR>", opts)
 
 -- Visual --
 -- Stay in indent mode
@@ -71,7 +71,7 @@ keymap("n", "<leader>s", "<cmd> CMakeCloseExecutor <CR><cmd> CMakeCloseRunner <C
 keymap("n", "<leader>t", "<cmd> CopilotChatToggle <CR>", opts)
 -- telescope
 keymap("n", "<leader>;", "<cmd> Telescope git_files <CR>", opts)
-keymap("n", "<leader>.", "<cmd> lua require('telescope').extensions.recent_files.pick() <CR>", opts)
+keymap("n", "<leader>.", "<cmd>Telescope buffers theme=dropdown<cr>", opts)
 keymap("n", "<leader>lw", "<cmd> Telescope lazygit <CR>", opts)
 keymap("n", "<leader>8", "<cmd> Telescope live_grep <CR>", opts)
 keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)

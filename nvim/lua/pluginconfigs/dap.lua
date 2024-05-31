@@ -1,7 +1,7 @@
 return {
 
   -- DAP
-  { "mfussenegger/nvim-dap", lazy = true },
+  { "mfussenegger/nvim-dap", event = "VeryLazy" },
 
   -- Required to configure DAP for languages other than Java
   {
@@ -13,7 +13,7 @@ return {
     },
     config = function()
       require('mason-nvim-dap').setup({
-        ensure_installed = { 'chrome', 'node2', 'js', 'bash' },
+        ensure_installed = { 'chrome', 'node2', 'js', 'bash', 'python', 'cppdbg', 'javadbg', 'javatest', 'codelldb' },
         handlers = {
           function(config)
             -- all sources with no handler get passed here
@@ -109,28 +109,7 @@ return {
     end,
   },
 
-  -- DAP (Required to run Java unit tests and Debugging)--
-  { "mfussenegger/nvim-dap", ft = { "c", "cpp", "hpp", "h", "proto", "java" } },
-  {
-    "rcarriga/nvim-dap-ui",
-    ft = { "c", "cpp", "hpp", "h", "proto", "java" },
-    dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
-    config = function()
-      local dap = require("dap")
-      local dapui = require("dapui")
-      dapui.setup()
-      dap.listeners.after.event_initialized["dapui_config"] = function()
-        dapui.open()
-      end
-      dap.listeners.before.event_terminated["dapui_config"] = function()
-        dapui.close()
-      end
-      dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close()
-      end
-    end,
-  },
-  { "theHamsta/nvim-dap-virtual-text", ft = { "c", "cpp", "hpp", "h", "proto", "java" }, opts = {} },
+  { "theHamsta/nvim-dap-virtual-text", event = "VeryLazy", opts = {} },
 
   -- Python LSP
   {
