@@ -39,7 +39,9 @@ require("lazy").setup({
 	--------------------------------------
 
 	-- Essential lua functions
-	{ "nvim-lua/plenary.nvim", lazy = true },
+	{ "nvim-lua/plenary.nvim",       lazy = true },
+	-- Functions for buffer management
+	{ 'ojroques/nvim-bufdel',        cmd = { "BufDel", "BufDelOthers" } },
 	{ "nvim-tree/nvim-web-devicons", lazy = true },
 
 	-- Shows available keys
@@ -85,37 +87,26 @@ require("lazy").setup({
 		},
 	},
 
+	-- Breadcrumbs
 	{
-		"AndreM222/copilot-lualine",
-		event = "VeryLazy",
+		"LunarVim/breadcrumbs.nvim",
+		event = "LspAttach",
+		dependencies = {
+			{
+				"SmiteshP/nvim-navic",
+				config = function()
+					require("nvim-navic").setup {
+						lsp = {
+							auto_attach = true,
+						},
+					}
+				end
+			},
+		},
 		config = function()
-			require("lualine").setup()
-		end,
-	},
+			require("breadcrumbs").setup()
+		end
 
-	-- Tab Line
-	{
-		"romgrk/barbar.nvim",
-		lazy = true,
-		event = { "BufReadPost", "BufAdd", "BufNewFile" },
-		dependencies = {
-			"lewis6991/gitsigns.nvim",
-			"nvim-tree/nvim-web-devicons",
-		},
-		init = function()
-			vim.g.barbar_auto_setup = false
-		end,
-		opts = {},
-	},
-
-	{
-		"folke/noice.nvim",
-		event = "VeryLazy",
-		opts = {},
-		dependencies = {
-			-- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
-			"MunifTanjim/nui.nvim",
-		},
 	},
 
 	--------------------------------------
@@ -142,170 +133,12 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"gen740/SmoothCursor.nvim",
-		event = { "BufRead", "BufNewFile" },
-		config = function()
-			local default = {
-				autostart = true,
-				cursor = "", -- cursor shape (need nerd font)
-				intervals = 35, -- tick interval
-				linehl = nil, -- highlight sub-cursor line like 'cursorline', "CursorLine" recommended
-				type = "exp", -- define cursor movement calculate function, "default" or "exp" (exponential).
-				fancy = {
-					enable = true, -- enable fancy mode
-					head = { cursor = "▷", texthl = "SmoothCursor", linehl = nil },
-					body = {
-						{ cursor = "", texthl = "SmoothCursorRed" },
-						{ cursor = "", texthl = "SmoothCursorOrange" },
-						{ cursor = "●", texthl = "SmoothCursorYellow" },
-						{ cursor = "●", texthl = "SmoothCursorGreen" },
-						{ cursor = "•", texthl = "SmoothCursorAqua" },
-						{ cursor = ".", texthl = "SmoothCursorBlue" },
-						{ cursor = ".", texthl = "SmoothCursorPurple" },
-					},
-					tail = { cursor = nil, texthl = "SmoothCursor" },
-				},
-				priority = 10, -- set marker priority
-				speed = 25, -- max is 100 to stick to your current position
-				texthl = "SmoothCursor", -- highlight group, default is { bg = nil, fg = "#FFD400" }
-				threshold = 3,
-				timeout = 3000,
-				disable_float_win = true, -- disable on float window
-			}
-			require("smoothcursor").setup(default)
-		end,
-	},
-
-	{
-		"https://gitlab.com/yorickpeterse/nvim-pqf.git",
-		event = "VeryLazy",
-		opts = {
-			handlers = {},
-		},
-		config = function()
-			require("pqf").setup()
-		end,
-	},
-
 	--------------------------------------
-	-- General Features --
+	-- Optional Features --
 	--------------------------------------
 
-	{
-		"tris203/precognition.nvim",
-		event = "VeryLazy",
-		config = function()
-			require("precognition").setup({
-				startVisible = true,
-				showBlankVirtLine = false,
-				-- highlightColor = { link = "Comment"),
-				-- hints = {
-				--      Caret = { text = "^", prio = 2 },
-				--      Dollar = { text = "$", prio = 1 },
-				--      MatchingPair = { text = "%", prio = 5 },
-				--      Zero = { text = "0", prio = 1 },
-				--      w = { text = "w", prio = 10 },
-				--      b = { text = "b", prio = 9 },
-				--      e = { text = "e", prio = 8 },
-				--      W = { text = "W", prio = 7 },
-				--      B = { text = "B", prio = 6 },
-				--      E = { text = "E", prio = 5 },
-				-- },
-				-- gutterHints = {
-				--     -- prio is not currently used for gutter hints
-				--     G = { text = "G", prio = 1 },
-				--     gg = { text = "gg", prio = 1 },
-				--     PrevParagraph = { text = "{", prio = 1 },
-				--     NextParagraph = { text = "}", prio = 1 },
-				-- },
-			})
-		end,
-	},
-
-	-- auto save and restore the last session
-
-	{
-		"olimorris/persisted.nvim",
-		lazy = false,
-		config = function()
-			require("persisted").setup({
-				ignored_dirs = {
-					"~/.config",
-					"~/.local/nvim",
-					{ "/", exact = true },
-					{ "/tmp", exact = true },
-				},
-				autoload = true,
-				on_autoload_no_session = function()
-					vim.notify("No existing session to load.")
-				end,
-			})
-		end,
-	},
-
-	{
-		"okuuva/auto-save.nvim",
-		event = { "InsertLeave", "TextChanged" },
-		opts = {
-			execution_message = {
-				enabled = false,
-			},
-			debounce_delay = 5000,
-		},
-	},
-
-	-- Electric indentation
-	{
-		"nmac427/guess-indent.nvim",
-		lazy = true,
-		event = { "BufReadPost", "BufAdd", "BufNewFile" },
-		opts = {},
-	},
-
-	-- Highlight word under cursor
-	{
-		"RRethy/vim-illuminate",
-		event = "VeryLazy",
-		config = function()
-			local illuminate = require("illuminate")
-			vim.g.Illuminate_ftblacklist = { "NvimTree" }
-
-			illuminate.configure({
-				providers = {
-					"lsp",
-					"treesitter",
-					"regex",
-				},
-				delay = 200,
-				filetypes_denylist = {
-					"dirvish",
-					"fugitive",
-					"alpha",
-					"NvimTree",
-					"packer",
-					"neogitstatus",
-					"Trouble",
-					"lir",
-					"Outline",
-					"spectre_panel",
-					"toggleterm",
-					"DressingSelect",
-					"TelescopePrompt",
-					"sagafinder",
-					"sagacallhierarchy",
-					"sagaincomingcalls",
-					"sagapeekdefinition",
-				},
-				filetypes_allowlist = {},
-				modes_denylist = {},
-				modes_allowlist = {},
-				providers_regex_syntax_denylist = {},
-				providers_regex_syntax_allowlist = {},
-				under_cursor = true,
-			})
-		end,
-	},
+	-- Take a look at this file to see what features you need enabled
+	{ import = "optional.optionalfeatures" },
 
 	--------------------------------------
 	-- File explorer and Finder --
@@ -328,6 +161,9 @@ require("lazy").setup({
 			require("nvim-tree").setup({
 				sync_root_with_cwd = true,
 				respect_buf_cwd = true,
+				git = {
+					enable = false,
+				},
 				update_focused_file = {
 					enable = true,
 					update_root = false,
@@ -354,11 +190,11 @@ require("lazy").setup({
 						-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
 						-- order matters: if one is not detected, the other is used as fallback. You
 						-- can also delete or rearangne the detection methods.
-						detection_methods = { "pattern", "lsp" },
+						-- detection_methods = { "pattern", "lsp" },
 
 						-- All the patterns used to detect root dir, when **"pattern"** is in
 						-- detection_methods
-						patterns = { ".git" },
+						-- patterns = { ".git" },
 					})
 					require("telescope").load_extension("projects")
 				end,
@@ -395,18 +231,6 @@ require("lazy").setup({
 	},
 
 	-- Search in file history
-	{
-		"smartpde/telescope-recent-files",
-		event = "VeryLazy",
-		dependencies = { "nvim-telescope/telescope.nvim" },
-		opts = {
-			handlers = {},
-		},
-		config = function()
-			require("telescope").load_extension("recent_files")
-		end,
-	},
-
 	{
 		"debugloop/telescope-undo.nvim",
 		dependencies = { -- note how they're inverted to above example
@@ -446,7 +270,7 @@ require("lazy").setup({
 			"williamboman/mason-lspconfig.nvim",
 
 			-- Additional lua configuration, makes nvim stuff amazing!
-			{ "folke/neodev.nvim", opts = {} },
+			{ "folke/neodev.nvim",       opts = {} },
 		},
 	},
 
@@ -506,18 +330,6 @@ require("lazy").setup({
 				},
 			})
 		end,
-	},
-
-	{
-		"jay-babu/mason-nvim-dap.nvim",
-		event = "VeryLazy",
-		dependencies = {
-			"williamboman/mason.nvim",
-			"mfussenegger/nvim-dap",
-		},
-		opts = {
-			handlers = {},
-		},
 	},
 
 	-- Autocompletion
@@ -588,7 +400,7 @@ require("lazy").setup({
 		event = "LspAttach",
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter", -- optional
-			"nvim-tree/nvim-web-devicons", -- optional
+			"nvim-tree/nvim-web-devicons",  -- optional
 		},
 		opts = {
 			lightbulb = {
@@ -609,30 +421,28 @@ require("lazy").setup({
 	{
 		"ray-x/lsp_signature.nvim",
 		event = "VeryLazy",
-		opts = { hint_enable = false, time_interval = 50 },
+		opts = { hint_enable = false, cursorhold_update = false },
 		config = function(_, opts)
 			require("lsp_signature").setup(opts)
 		end,
 	},
 
+	-- Improves the way errors are shown in the buffer
 	{
 		"https://git.sr.ht/~whynothugo/lsp_lines.nvim",
 		event = "LspAttach",
 		branch = "main",
 		config = function()
-			require("lsp_lines").setup({
-				vim.keymap.set("", "<Leader>X", require("lsp_lines").toggle, { desc = "Toggle lsp_lines plugin" }),
-			})
+			require("lsp_lines").setup({})
 		end,
 	},
 
 	--LSP Diagnostics
 	{
 		"folke/trouble.nvim",
-		branch = "dev",
 		lazy = true,
 		cmd = "Trouble",
-		opts = { auto_preview = false }, -- automatically preview the location of the diagnostic
+		opts = { auto_preview = false, focus = true }, -- automatically preview the location of the diagnostic
 	},
 
 	-- This plugin ensures that the necessary dependencies for Dusk.nvim get automatically installed
@@ -695,7 +505,7 @@ require("lazy").setup({
 	{
 		"simaxme/java.nvim",
 		ft = "java",
-		after = { "mfussenegger/nvim-jdtls" },
+		dependencies = { "mfussenegger/nvim-jdtls" },
 		config = function()
 			require("simaxme-java").setup()
 		end,
@@ -744,54 +554,14 @@ require("lazy").setup({
 		end,
 	},
 
-	-- DAP (Required to run Java unit tests and Debugging)--
-	{ "mfussenegger/nvim-dap", ft = { "c", "cpp", "hpp", "h", "proto", "java" } },
-	{
-		"rcarriga/nvim-dap-ui",
-		ft = { "c", "cpp", "hpp", "h", "proto", "java" },
-		dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
-		config = function()
-			local dap = require("dap")
-			local dapui = require("dapui")
-			dapui.setup()
-			dap.listeners.after.event_initialized["dapui_config"] = function()
-				dapui.open()
-			end
-			dap.listeners.before.event_terminated["dapui_config"] = function()
-				dapui.close()
-			end
-			dap.listeners.before.event_exited["dapui_config"] = function()
-				dapui.close()
-			end
-		end,
-	},
-	{ "theHamsta/nvim-dap-virtual-text", ft = { "c", "cpp", "hpp", "h", "proto", "java" }, opts = {} },
 
-	-- Python LSP
-	{
-		"mfussenegger/nvim-dap-python",
-		ft = "python",
-		dependencies = {
-			"mfussenegger/nvim-dap",
-			"rcarriga/nvim-dap-ui",
-			"nvim-neotest/nvim-nio",
-		},
-		config = function()
-			-- uses the debugypy installation by mason
-			local path = require("mason-registry").get_package("debugpy"):get_install_path()
-			require("dap-python").setup(path .. "/venv/bin/python")
-		end,
-	},
-	{
-		"linux-cultist/venv-selector.nvim",
-		ft = "python",
-		dependencies = { "neovim/nvim-lspconfig", "nvim-telescope/telescope.nvim", "mfussenegger/nvim-dap-python" },
-		opts = {
-			-- Your options go here
-			-- name = "venv",
-			-- auto_refresh = false
-		},
-	},
+	--------------------------------------
+	-- DAP - Debuggers  --
+	--------------------------------------
+
+	-- You can configure the DAP for your language there
+	{ import = "pluginconfigs.dap" },
+
 
 	--------------------------------------
 	-- Linters and Formatters --
@@ -912,7 +682,7 @@ require("lazy").setup({
 		cmd = { "DiffviewOpen", "DiffviewClose" },
 	},
 
-	{ "kdheepak/lazygit.nvim", lazy = true, cmd = "LazyGit" },
+	{ "kdheepak/lazygit.nvim",   lazy = true,   cmd = "LazyGit" },
 
 	--------------------------------------
 	-- Editing Tools --
@@ -1054,7 +824,7 @@ require("lazy").setup({
 	--------------------------------------
 
 	--Markdown
-	{ "dkarter/bullets.vim", ft = "markdown" }, -- Automatic ordered lists. For reordering messed list, use :RenumberSelection cmd
+	{ "dkarter/bullets.vim",           ft = "markdown" }, -- Automatic ordered lists. For reordering messed list, use :RenumberSelection cmd
 	{ "jghauser/follow-md-links.nvim", ft = "markdown" }, --Follow md links with ENTER
 	{
 		"iamcco/markdown-preview.nvim",

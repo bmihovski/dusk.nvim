@@ -86,6 +86,19 @@ vim.diagnostic.config({
 	virtual_text = false,
 })
 
+-- go to previous/next line with h,l,left arrow and right arrow
+-- when cursor reaches end/beginning of line
+vim.opt.whichwrap:append "<>[]hl"
+
+-- disable nvim intro
+vim.opt.shortmess:append "sI"
+
+-- disable some default providers
+vim.g["loaded_node_provider"] = 0
+vim.g["loaded_python3_provider"] = 0
+vim.g["loaded_perl_provider"] = 0
+vim.g["loaded_ruby_provider"] = 0
+
 local M = {}
 
 function M.toggle_option(option)
