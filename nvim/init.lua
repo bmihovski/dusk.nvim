@@ -357,43 +357,6 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"zbirenbaum/copilot-cmp",
-		event = "InsertEnter",
-		dependencies = { "zbirenbaum/copilot.lua" },
-		config = function()
-			require("copilot_cmp").setup()
-		end,
-	},
-
-	{
-		"CopilotC-Nvim/CopilotChat.nvim",
-		event = "VeryLazy",
-		branch = "canary",
-		dependencies = {
-			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim zbirenbaum/copilot.lua
-			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-		},
-		opts = {
-			debug = false, -- Disable debugging
-		},
-		build = function()
-			vim.cmd("UpdateRemotePlugins") -- You need to restart to make it works
-		end,
-	},
-
-	{
-		"zbirenbaum/copilot.lua",
-		cmd = "Copilot",
-		event = "InsertEnter",
-		config = function()
-			require("copilot").setup({
-				suggestion = { enabled = false },
-				panel = { enabled = false },
-			})
-		end,
-	},
-
 	-- Improves LSP UI
 	{
 		"nvimdev/lspsaga.nvim",
@@ -611,17 +574,6 @@ require("lazy").setup({
 		end,
 	},
 
-	-- Tmux
-	{
-		"alexghergh/nvim-tmux-navigation",
-		lazy = false,
-		config = function()
-			require("nvim-tmux-navigation").setup({
-				disable_when_zoomed = true, -- defaults to false
-			})
-		end,
-	},
-
 	-- NOTE: if you want additional linters, try this plugin
 	-- Linters
 	{
@@ -703,29 +655,6 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"Badhi/nvim-treesitter-cpp-tools",
-		ft = { "hpp", "h", "cpp" },
-		event = "VeryLazy",
-		dependencies = { "nvim-treesitter" },
-		config = function()
-			require("nt-cpp-tools").setup({
-				header_extension = "h",
-				source_extension = "cpp",
-			})
-		end,
-		cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
-	},
-
-	-- Delete whitespaces
-	{
-		"saccarosium/nvim-whitespaces",
-		event = "BufWritePre",
-		opts = {
-			handlers = {},
-		},
-	},
-
 	-- Move blocks
 	{
 		"booperlv/nvim-gomove",
@@ -743,20 +672,10 @@ require("lazy").setup({
 	},
 
 	--Terminal
-	{ "akinsho/toggleterm.nvim", version = "*", lazy = true, cmd = "ToggleTerm", opts = {} },
-
-	-- Code Runner
-	{
-		"Civitasv/cmake-tools.nvim",
-		ft = { "hpp", "h", "cpp" },
-		event = "VeryLazy",
-		opts = {
-			handlers = {},
-		},
-	},
+	{ "akinsho/toggleterm.nvim", version = "*", lazy = true,     cmd = "ToggleTerm", opts = {} },
 
 	--Search & replace string
-	{ "nvim-pack/nvim-spectre", lazy = true, cmd = "Spectre", opts = {} },
+	{ "nvim-pack/nvim-spectre",  lazy = true,   cmd = "Spectre", opts = {} },
 
 	-- Add/remove/change surrounding {}, (), "" etc
 	{
@@ -836,4 +755,3 @@ require("lazy").setup({
 		end,
 	},
 }, {})
-

@@ -269,6 +269,7 @@ local mappings = {
 
 	},
 
+
 	s = {
 		name = "Search String",
 		b = {
@@ -400,6 +401,7 @@ local mappings = {
 		s = { ":MarkdownPreviewStop<CR>", "Stop Preview" },
 	},
 }
+
 
 which_key.setup(setup)
 which_key.register(mappings, opts)

@@ -109,4 +109,53 @@ return {
     end,
   },
 
+  -- DAP (Required to run Java unit tests and Debugging)--
+  { "mfussenegger/nvim-dap", ft = { "c", "cpp", "hpp", "h", "proto", "java" } },
+  {
+    "rcarriga/nvim-dap-ui",
+    ft = { "c", "cpp", "hpp", "h", "proto", "java" },
+    dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
+    config = function()
+      local dap = require("dap")
+      local dapui = require("dapui")
+      dapui.setup()
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+    end,
+  },
+  { "theHamsta/nvim-dap-virtual-text", ft = { "c", "cpp", "hpp", "h", "proto", "java" }, opts = {} },
+
+  -- Python LSP
+  {
+    "mfussenegger/nvim-dap-python",
+    ft = "python",
+    dependencies = {
+      "mfussenegger/nvim-dap",
+      "rcarriga/nvim-dap-ui",
+      "nvim-neotest/nvim-nio",
+    },
+    config = function()
+      -- uses the debugypy installation by mason
+      local path = require("mason-registry").get_package("debugpy"):get_install_path()
+      require("dap-python").setup(path .. "/venv/bin/python")
+    end,
+  },
+  {
+    "linux-cultist/venv-selector.nvim",
+    ft = "python",
+    dependencies = { "neovim/nvim-lspconfig", "nvim-telescope/telescope.nvim", "mfussenegger/nvim-dap-python" },
+    opts = {
+      -- Your options go here
+      -- name = "venv",
+      -- auto_refresh = false
+    },
+  },
+
 }

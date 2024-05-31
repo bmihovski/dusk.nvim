@@ -44,8 +44,8 @@ keymap("n", "<leader>e", "<cmd> NvimTreeFocus <CR>", opts)
 keymap("n", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise.current()<cr>", opts)
 keymap("v", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
 -- Navigate buffers
-keymap("n", "<TAB>", "<cmd>BufferNext<CR>", opts)
-keymap("n", "<S-TAB>", "<cmd>BufferPrevious<CR>", opts)
+keymap("n", "<TAB>", ":bnext<CR>", opts)
+keymap("n", "<S-TAB>", ":bprevious<CR>", opts)
 
 -- Visual --
 -- Stay in indent mode
