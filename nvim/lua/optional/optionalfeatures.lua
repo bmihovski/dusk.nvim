@@ -66,13 +66,13 @@ return {
 	},
 
 	-- Delete whitespaces automatically on save
-	-- {
-	-- 	"saccarosium/nvim-whitespaces",
-	-- 	event = "BufWritePre",
-	-- 	opts = {
-	-- 		handlers = {},
-	-- 	},
-	-- },
+	{
+		"saccarosium/nvim-whitespaces",
+		event = "BufWritePre",
+		opts = {
+			handlers = {},
+		},
+	},
 
 	{
 		"NStefan002/visual-surround.nvim",
