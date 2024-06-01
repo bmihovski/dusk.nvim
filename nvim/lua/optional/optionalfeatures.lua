@@ -3,7 +3,8 @@ return {
 	-- Autosave feature
 	{
 		"okuuva/auto-save.nvim",
-		cmd = "ASToggle", -- Use this cmd if you want to enable or Space + t + s
+		-- cmd = "ASToggle", -- Use this cmd if you want to enable or Space + t + s
+		event = { "InsertLeave", "TextChanged" },
 		opts = {
 			execution_message = {
 				enabled = false,
@@ -87,25 +88,24 @@ return {
 
 	-- Session management
 	-- auto save and restore the last session
-	{
-		"olimorris/persisted.nvim",
-		lazy = false,
-		config = function()
-			require("persisted").setup({
-				ignored_dirs = {
-					"~/.config",
-					"~/.local/nvim",
-					{ "/",    exact = true },
-					{ "/tmp", exact = true },
-				},
-				autoload = true,
-				on_autoload_no_session = function()
-					vim.notify("No existing session to load.")
-				end,
-			})
-		end,
-	},
-
+	-- {
+	-- 	"olimorris/persisted.nvim",
+	-- 	lazy = false,
+	-- 	config = function()
+	-- 		require("persisted").setup({
+	-- 			ignored_dirs = {
+	-- 				"~/.config",
+	-- 				"~/.local/nvim",
+	-- 				{ "/", exact = true },
+	-- 				{ "/tmp", exact = true },
+	-- 			},
+	-- 			autoload = true,
+	-- 			on_autoload_no_session = function()
+	-- 				vim.notify("No existing session to load.")
+	-- 			end,
+	-- 		})
+	-- 	end,
+	-- },
 
 	{
 		"folke/noice.nvim",
@@ -173,6 +173,14 @@ return {
 	-- GitHub copilot
 
 	{
+		"AndreM222/copilot-lualine",
+		event = "VeryLazy",
+		config = function()
+			require("lualine").setup()
+		end,
+	},
+
+	{
 		"zbirenbaum/copilot-cmp",
 		event = "InsertEnter",
 		dependencies = { "zbirenbaum/copilot.lua" },
@@ -231,5 +239,60 @@ return {
 			})
 		end,
 		cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
+	},
+
+	{
+		"gen740/SmoothCursor.nvim",
+		event = { "BufRead", "BufNewFile" },
+		config = function()
+			local default = {
+				autostart = true,
+				cursor = "", -- cursor shape (need nerd font)
+				intervals = 35, -- tick interval
+				linehl = nil, -- highlight sub-cursor line like 'cursorline', "CursorLine" recommended
+				type = "exp", -- define cursor movement calculate function, "default" or "exp" (exponential).
+				fancy = {
+					enable = true, -- enable fancy mode
+					head = { cursor = "▷", texthl = "SmoothCursor", linehl = nil },
+					body = {
+						{ cursor = "", texthl = "SmoothCursorRed" },
+						{ cursor = "", texthl = "SmoothCursorOrange" },
+						{ cursor = "●", texthl = "SmoothCursorYellow" },
+						{ cursor = "●", texthl = "SmoothCursorGreen" },
+						{ cursor = "•", texthl = "SmoothCursorAqua" },
+						{ cursor = ".", texthl = "SmoothCursorBlue" },
+						{ cursor = ".", texthl = "SmoothCursorPurple" },
+					},
+					tail = { cursor = nil, texthl = "SmoothCursor" },
+				},
+				priority = 10, -- set marker priority
+				speed = 25, -- max is 100 to stick to your current position
+				texthl = "SmoothCursor", -- highlight group, default is { bg = nil, fg = "#FFD400" }
+				threshold = 3,
+				timeout = 3000,
+				disable_float_win = true, -- disable on float window
+			}
+			require("smoothcursor").setup(default)
+		end,
+	},
+
+	{
+		"rockerBOO/symbols-outline.nvim",
+		event = "VeryLazy",
+		config = function(_, opts)
+			require("symbols-outline").setup(opts)
+		end,
+	},
+
+	{
+		"aznhe21/actions-preview.nvim",
+		event = "VeryLazy",
+		dependencies = { "MunifTanjim/nui.nvim", "nvim-telescope/telescope.nvim" },
+		opts = {
+			handlers = {},
+		},
+		config = function()
+			vim.keymap.set({ "v", "n" }, "gf", require("actions-preview").code_actions)
+		end,
 	},
 }

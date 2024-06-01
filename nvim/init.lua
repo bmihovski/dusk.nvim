@@ -39,9 +39,9 @@ require("lazy").setup({
 	--------------------------------------
 
 	-- Essential lua functions
-	{ "nvim-lua/plenary.nvim",       lazy = true },
+	{ "nvim-lua/plenary.nvim", lazy = true },
 	-- Functions for buffer management
-	{ 'ojroques/nvim-bufdel',        cmd = { "BufDel", "BufDelOthers" } },
+	{ "ojroques/nvim-bufdel", cmd = { "BufDel", "BufDelOthers" } },
 	{ "nvim-tree/nvim-web-devicons", lazy = true },
 
 	-- Shows available keys
@@ -95,18 +95,17 @@ require("lazy").setup({
 			{
 				"SmiteshP/nvim-navic",
 				config = function()
-					require("nvim-navic").setup {
+					require("nvim-navic").setup({
 						lsp = {
 							auto_attach = true,
 						},
-					}
-				end
+					})
+				end,
 			},
 		},
 		config = function()
 			require("breadcrumbs").setup()
-		end
-
+		end,
 	},
 
 	--------------------------------------
@@ -270,7 +269,7 @@ require("lazy").setup({
 			"williamboman/mason-lspconfig.nvim",
 
 			-- Additional lua configuration, makes nvim stuff amazing!
-			{ "folke/neodev.nvim",       opts = {} },
+			{ "folke/neodev.nvim", opts = {} },
 		},
 	},
 
@@ -363,7 +362,7 @@ require("lazy").setup({
 		event = "LspAttach",
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter", -- optional
-			"nvim-tree/nvim-web-devicons",  -- optional
+			"nvim-tree/nvim-web-devicons", -- optional
 		},
 		opts = {
 			lightbulb = {
@@ -517,14 +516,12 @@ require("lazy").setup({
 		end,
 	},
 
-
 	--------------------------------------
 	-- DAP - Debuggers  --
 	--------------------------------------
 
 	-- You can configure the DAP for your language there
 	{ import = "pluginconfigs.dap" },
-
 
 	--------------------------------------
 	-- Linters and Formatters --
@@ -634,7 +631,21 @@ require("lazy").setup({
 		cmd = { "DiffviewOpen", "DiffviewClose" },
 	},
 
-	{ "kdheepak/lazygit.nvim",   lazy = true,   cmd = "LazyGit" },
+	{
+		"kdheepak/lazygit.nvim",
+		dependencies = {
+			"nvim-telescope/telescope.nvim",
+			"nvim-lua/plenary.nvim",
+		},
+		event = "VeryLazy",
+		opts = {
+			handlers = {},
+		},
+		config = function()
+			require("lazygit.utils").project_root_dir()
+			require("telescope").load_extension("lazygit")
+		end,
+	},
 
 	--------------------------------------
 	-- Editing Tools --
@@ -672,10 +683,10 @@ require("lazy").setup({
 	},
 
 	--Terminal
-	{ "akinsho/toggleterm.nvim", version = "*", lazy = true,     cmd = "ToggleTerm", opts = {} },
+	{ "akinsho/toggleterm.nvim", version = "*", lazy = true, cmd = "ToggleTerm", opts = {} },
 
 	--Search & replace string
-	{ "nvim-pack/nvim-spectre",  lazy = true,   cmd = "Spectre", opts = {} },
+	{ "nvim-pack/nvim-spectre", lazy = true, cmd = "Spectre", opts = {} },
 
 	-- Add/remove/change surrounding {}, (), "" etc
 	{
@@ -743,7 +754,7 @@ require("lazy").setup({
 	--------------------------------------
 
 	--Markdown
-	{ "dkarter/bullets.vim",           ft = "markdown" }, -- Automatic ordered lists. For reordering messed list, use :RenumberSelection cmd
+	{ "dkarter/bullets.vim", ft = "markdown" }, -- Automatic ordered lists. For reordering messed list, use :RenumberSelection cmd
 	{ "jghauser/follow-md-links.nvim", ft = "markdown" }, --Follow md links with ENTER
 	{
 		"iamcco/markdown-preview.nvim",
