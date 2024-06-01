@@ -67,6 +67,12 @@ for _, plugin in pairs(disabled_built_ins) do
 	vim.g["loaded_" .. plugin] = 1
 end
 
+-- Load rplugin.vim required for Copilot Chat
+vim.cmd([[silent! runtime plugin/rplugin.vim]])
+-- disable lsp logs to save resources of huge logs
+vim.lsp.set_log_level(vim.lsp.log_levels.OFF)
+-- vim.lsp.set_log_level(vim.lsp.log_levels.DEBUG)
+
 -- Enable folding in markdown files
 vim.g.markdown_folding = 1
 
@@ -88,10 +94,10 @@ vim.diagnostic.config({
 
 -- go to previous/next line with h,l,left arrow and right arrow
 -- when cursor reaches end/beginning of line
-vim.opt.whichwrap:append "<>[]hl"
+vim.opt.whichwrap:append("<>[]hl")
 
 -- disable nvim intro
-vim.opt.shortmess:append "sI"
+vim.opt.shortmess:append("sI")
 
 -- disable some default providers
 vim.g["loaded_node_provider"] = 0

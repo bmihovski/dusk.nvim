@@ -8,7 +8,6 @@ vim.g.loaded_netrwPlugin = 1
 vim.keymap.set({ "n", "v" }, "-", "<Nop>", { silent = true })
 vim.g.mapleader = "-"
 vim.g.maplocalleader = "-"
-vim.cmd([[silent! runtime plugin/rplugin.vim]])
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -480,16 +479,10 @@ require("lazy").setup({
 	-- Sonarlint plugin
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html" },
-		dependencies = { "mfussenegger/nvim-jdtls" },
-		opts = {
-			handlers = {},
-		},
+		event = "VeryLazy",
 		config = function()
 			require("sonarlint").setup({
 				server = {
-					-- root_dir = require("jdtls.setup").find_root({ "gradlew", ".git", "pom.xml", "mvnw" }),
-					-- autostart = true,
 					cmd = {
 						"sonarlint-language-server",
 						-- Ensure that sonarlint-language-server uses stdio channel
@@ -770,6 +763,3 @@ require("lazy").setup({
 		end,
 	},
 }, {})
-
--- Always load jdtls setup autocommand
-require("pluginconfigs.jdtls")
