@@ -770,3 +770,6 @@ require("lazy").setup({
 		end,
 	},
 }, {})
+
+-- Always load jdtls setup autocommand
+require("pluginconfigs.jdtls")

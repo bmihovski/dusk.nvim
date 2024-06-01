@@ -94,6 +94,10 @@ local function get_jdtls_paths()
 		--   name = 'JavaSE-18',
 		--   path = vim.fn.expand('~/.sdkman/candidates/java/18.0.2-amzn'),
 		-- },
+		{
+			name = "JavaSE-21",
+			path = vim.fn.expand("~/.sdkman/candidates/java/current"),
+		},
 	}
 
 	cache_vars.paths = path
