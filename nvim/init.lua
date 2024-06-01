@@ -383,7 +383,11 @@ require("lazy").setup({
 	{
 		"ray-x/lsp_signature.nvim",
 		event = "VeryLazy",
-		opts = { hint_enable = false, cursorhold_update = false },
+		opts = {
+			hint_enable = false,
+			cursorhold_update = false, -- Fixes errors from some LSP servers (ex. angularls)
+			zindex = 45, -- avoid overlap with nvim.cmp
+		},
 		config = function(_, opts)
 			require("lsp_signature").setup(opts)
 		end,
@@ -484,7 +488,7 @@ require("lazy").setup({
 		config = function()
 			require("sonarlint").setup({
 				server = {
-					root_dir = require("jdtls.setup").find_root({ "gradlew", ".git", "pom.xml", "mvnw" }),
+					-- root_dir = require("jdtls.setup").find_root({ "gradlew", ".git", "pom.xml", "mvnw" }),
 					-- autostart = true,
 					cmd = {
 						"sonarlint-language-server",
