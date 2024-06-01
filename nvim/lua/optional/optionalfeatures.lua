@@ -293,4 +293,10 @@ return {
 			vim.keymap.set({ "v", "n" }, "gf", require("actions-preview").code_actions)
 		end,
 	},
+
+	{
+		"vinnymeller/swagger-preview.nvim",
+		build = "npm install -g swagger-ui-watcher",
+		config = true,
+	},
 }
