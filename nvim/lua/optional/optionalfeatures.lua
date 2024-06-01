@@ -65,14 +65,14 @@ return {
 		end,
 	},
 
-	-- Delete whitespaces
-	{
-		"saccarosium/nvim-whitespaces",
-		event = "BufWritePre",
-		opts = {
-			handlers = {},
-		},
-	},
+	-- Delete whitespaces automatically on save
+	-- {
+	-- 	"saccarosium/nvim-whitespaces",
+	-- 	event = "BufWritePre",
+	-- 	opts = {
+	-- 		handlers = {},
+	-- 	},
+	-- },
 
 	{
 		"NStefan002/visual-surround.nvim",
@@ -82,8 +82,6 @@ return {
 				-- your config
 			})
 		end,
-		-- or if you don't want to change defaults
-		-- config = true
 	},
 
 	-- Session management
