@@ -174,16 +174,10 @@ local function jdtls_setup(event)
     jdtls.extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
   end
 
-  -- The command that starts the language server
-  -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
-  local cmd = {
-    -- 💀
-    'java',
-
 	-- The command that starts the language server
 	-- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
 	local cmd = {
-		-- 💀
+		-- ð���
 		"java",
 
 		"-Declipse.application=org.eclipse.jdt.ls.core.id1",
@@ -198,11 +192,11 @@ local function jdtls_setup(event)
 		"--add-opens",
 		"java.base/java.lang=ALL-UNNAMED",
 
-		-- 💀
+		-- ð���
 		"-jar",
 		path.launcher_jar,
 
-		-- 💀
+		-- ð���
 		"-configuration",
 		path.platform_config,
 
@@ -311,3 +305,4 @@ vim.api.nvim_create_autocmd("FileType", {
 	desc = "Setup jdtls",
 	callback = jdtls_setup,
 })
+
