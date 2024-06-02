@@ -97,7 +97,7 @@ return {
 		dependencies = {
 			{ "mfussenegger/nvim-dap" },
 			{ "nvim-neotest/nvim-nio" },
-			-- { "theHamsta/nvim-dap-virtual-text", opts = {} },
+			{ "theHamsta/nvim-dap-virtual-text", opts = {} },
 		},
 		opts = {},
 		config = function()
@@ -115,8 +115,6 @@ return {
 			end
 		end,
 	},
-
-	{ "theHamsta/nvim-dap-virtual-text", event = "VeryLazy", opts = {} },
 
 	-- Python LSP
 	{
