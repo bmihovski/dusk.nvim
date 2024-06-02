@@ -95,9 +95,6 @@ vim.opt.shortmess:append("sI")
 
 -- Load rplugin.vim required for Copilot Chat
 vim.cmd([[silent! runtime plugin/rplugin.vim]])
--- disable lsp logs to save resources of huge logs
--- Enable if you need to debug something
-vim.lsp.set_log_level(vim.lsp.log_levels.OFF)
 
 -- disable lsp logs to save resources of huge logs
 -- Enable if you need to debug something
