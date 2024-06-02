@@ -11,29 +11,31 @@ vim.api.nvim_create_autocmd({ "User" }, {
 
 --Close specific windows with q
 vim.api.nvim_create_autocmd({ "FileType" }, {
-	pattern = { "qf",
-	"help",
-	"man",
-	"lspinfo",
-	"spectre_panel",
-	"startuptime",
-	"notify",
-	"nofile",
-	"lspinfo",
-	"terminal",
-	"prompt",
-	"toggleterm",
-	"copilot",
-	"startuptime",
-	"tsplayground",
-	"PlenaryTestPopup",
-	"fugitive",
-	"dap-repl",
-	"Jaq", },
+	pattern = {
+		"qf",
+		"help",
+		"man",
+		"lspinfo",
+		"spectre_panel",
+		"startuptime",
+		"notify",
+		"nofile",
+		"lspinfo",
+		"terminal",
+		"prompt",
+		"toggleterm",
+		"copilot",
+		"startuptime",
+		"tsplayground",
+		"PlenaryTestPopup",
+		"fugitive",
+		"dap-repl",
+		"Jaq",
+	},
 	callback = function()
 		vim.cmd([[
-      nnoremap <silent> <buffer> q :close<CR> 
-      set nobuflisted 
+      nnoremap <silent> <buffer> q :close<CR>
+      set nobuflisted
     ]])
 	end,
 })
@@ -59,11 +61,11 @@ vim.api.nvim_create_autocmd({ "BufEnter" }, {
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
-local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
-vim.api.nvim_create_autocmd('TextYankPost', {
-  callback = function()
-    vim.highlight.on_yank()
-  end,
-  group = highlight_group,
-  pattern = '*',
+local highlight_group = vim.api.nvim_create_augroup("YankHighlight", { clear = true })
+vim.api.nvim_create_autocmd("TextYankPost", {
+	callback = function()
+		vim.highlight.on_yank()
+	end,
+	group = highlight_group,
+	pattern = "*",
 })
