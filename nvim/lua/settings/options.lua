@@ -98,11 +98,6 @@ vim.cmd([[silent! runtime plugin/rplugin.vim]])
 -- disable lsp logs to save resources of huge logs
 -- Enable if you need to debug something
 vim.lsp.set_log_level(vim.lsp.log_levels.OFF)
--- vim.lsp.set_log_level(vim.lsp.log_levels.DEBUG)
-
--- disable lsp logs to save resources of huge logs
--- Enable if you need to debug something
-vim.lsp.set_log_level(vim.lsp.log_levels.OFF)
 
 -- disable some default providers
 vim.g["loaded_node_provider"] = 0
