@@ -45,14 +45,11 @@ local function get_jdtls_paths()
 	---
 	local java_test_path = require("mason-registry").get_package("java-test"):get_install_path()
 
-  local java_test_bundle = vim.split(
-    vim.fn.glob(java_test_path .. '/extension/server/*.jar'),
-    '\n'
-  )
+	local java_test_bundle = vim.split(vim.fn.glob(java_test_path .. "/extension/server/*.jar"), "\n")
 
-  if java_test_bundle[1] ~= '' then
-    vim.list_extend(path.bundles, java_test_bundle)
-  end
+	if java_test_bundle[1] ~= "" then
+		vim.list_extend(path.bundles, java_test_bundle)
+	end
 
 	---
 	-- Include java-debug-adapter bundle if present
@@ -92,7 +89,7 @@ local function get_jdtls_paths()
 end
 
 local function enable_codelens(bufnr)
-  pcall(vim.lsp.codelens.refresh)
+	pcall(vim.lsp.codelens.refresh)
 
 	vim.api.nvim_create_autocmd("BufWritePost", {
 		buffer = bufnr,
@@ -124,28 +121,28 @@ local function add_jdtls_keymaps()
 		nowait = true, -- use `nowait` when creating keymaps
 	}
 
-  local vmappings = {
-    j = {
-      name = "Java",
-      v = { "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", "Extract Variable" },
-      c = { "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", "Extract Constant" },
-      m = { "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", "Extract Method" },
-    },
-  }
+	local vmappings = {
+		j = {
+			name = "Java",
+			v = { "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", "Extract Variable" },
+			c = { "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", "Extract Constant" },
+			m = { "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", "Extract Method" },
+		},
+	}
 
 	which_key.register(vmappings, vopts)
 end
 
 local function jdtls_on_attach(client, bufnr)
-  add_jdtls_keymaps()
+	add_jdtls_keymaps()
 
-  if features.codelens then
-    enable_codelens(bufnr)
-  end
+	if features.codelens then
+		enable_codelens(bufnr)
+	end
 
-  if features.debugger then
-    enable_debugger(bufnr)
-  end
+	if features.debugger then
+		enable_debugger(bufnr)
+	end
 end
 
 local basic_capabilities = {
@@ -161,20 +158,14 @@ local basic_capabilities = {
 local function jdtls_setup(event)
 	local jdtls = require("jdtls")
 
-  local path = get_jdtls_paths()
+	local path = get_jdtls_paths()
 
-  local workspace_dir = path.workspace_dir .. '/' .. vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
-  local project_root_dir = require('jdtls.setup').find_root(root_markers)
+	local workspace_dir = path.workspace_dir .. "/" .. vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+	local project_root_dir = require("jdtls.setup").find_root(root_markers)
 
-  if cache_vars.capabilities == nil then
-    jdtls.extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
-  end
-
-  -- The command that starts the language server
-  -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
-  local cmd = {
-    -- 💀
-    'java',
+	if cache_vars.capabilities == nil then
+		jdtls.extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
+	end
 
 	-- The command that starts the language server
 	-- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
@@ -202,103 +193,107 @@ local function jdtls_setup(event)
 		"-configuration",
 		path.platform_config,
 
-  local lsp_settings = {
-    java = {
-      -- jdt = {
-      --   ls = {
-      --     -- You can define the java home especially for the JDTLS server here. In this way it doesn't matter what is your JAVA_HOME environmental variable anymore.
-      --     -- Convenient to solve version mismatches for some old projects
-      --     java = { home = vim.fn.expand('~/.sdkman/candidates/java/17.0.11-tem') },
-      --     vmargs =
-      --     "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms256m -Xlog:disable"
-      --   }
-      -- },
-      eclipse = {
-        downloadSources = true,
-      },
-      configuration = {
-        updateBuildConfiguration = 'interactive',
-        runtimes = path.runtimes,
-      },
-      maven = {
-        downloadSources = true,
-      },
-      implementationsCodeLens = {
-        enabled = true,
-      },
-      referencesCodeLens = {
-        enabled = true,
-      },
-      -- saveActions = {
-      --   organizeImports = true, -- Organize imports on save
-      -- },
-      -- inlayHints = {
-      --   parameterNames = {
-      --     enabled = 'all' -- literals, all, none
-      --   }
-      -- },
-      format = {
-        enabled = true,
-        -- settings = {
-        --   profile = 'asdf'
-        -- },
-      }
-    },
-    signatureHelp = {
-      enabled = true,
-    },
-    completion = {
-      favoriteStaticMembers = {
-        'org.hamcrest.MatcherAssert.assertThat',
-        'org.hamcrest.Matchers.*',
-        'org.hamcrest.CoreMatchers.*',
-        'org.junit.jupiter.api.Assertions.*',
-        'java.util.Objects.requireNonNull',
-        'java.util.Objects.requireNonNullElse',
-        'org.mockito.Mockito.*',
-      },
-      filteredTypes = {
-        "com.sun.*",
-        "io.micrometer.shaded.*",
-        "java.awt.*",
-        "jdk.*",
-        "sun.*",
-      },
-    },
-    contentProvider = {
-      preferred = 'fernflower',
-    },
-    extendedClientCapabilities = jdtls.extendedClientCapabilities,
-    sources = {
-      organizeImports = {
-        starThreshold = 9999,
-        staticStarThreshold = 9999,
-      }
-    },
-    codeGeneration = {
-      toString = {
-        template = '${object.className}{${member.name()}=${member.value}, ${otherMembers}}',
-      },
-      useBlocks = true,
-    },
+		-- 💀
+		"-data",
+		workspace_dir,
+	}
 
-  }
+	local lsp_settings = {
+		java = {
+			-- jdt = {
+			--   ls = {
+			--     -- You can define the java home especially for the JDTLS server here. In this way it doesn't matter what is your JAVA_HOME environmental variable anymore.
+			--     -- Convenient to solve version mismatches for some old projects
+			--     java = { home = vim.fn.expand('~/.sdkman/candidates/java/17.0.11-tem') },
+			--     vmargs =
+			--     "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms256m -Xlog:disable"
+			--   }
+			-- },
+			eclipse = {
+				downloadSources = true,
+			},
+			configuration = {
+				updateBuildConfiguration = "interactive",
+				runtimes = path.runtimes,
+			},
+			maven = {
+				downloadSources = true,
+			},
+			implementationsCodeLens = {
+				enabled = true,
+			},
+			referencesCodeLens = {
+				enabled = true,
+			},
+			-- saveActions = {
+			--   organizeImports = true, -- Organize imports on save
+			-- },
+			-- inlayHints = {
+			--   parameterNames = {
+			--     enabled = 'all' -- literals, all, none
+			--   }
+			-- },
+			format = {
+				enabled = true,
+				-- settings = {
+				--   profile = 'asdf'
+				-- },
+			},
+		},
+		signatureHelp = {
+			enabled = true,
+		},
+		completion = {
+			favoriteStaticMembers = {
+				"org.hamcrest.MatcherAssert.assertThat",
+				"org.hamcrest.Matchers.*",
+				"org.hamcrest.CoreMatchers.*",
+				"org.junit.jupiter.api.Assertions.*",
+				"java.util.Objects.requireNonNull",
+				"java.util.Objects.requireNonNullElse",
+				"org.mockito.Mockito.*",
+			},
+			filteredTypes = {
+				"com.sun.*",
+				"io.micrometer.shaded.*",
+				"java.awt.*",
+				"jdk.*",
+				"sun.*",
+			},
+		},
+		contentProvider = {
+			preferred = "fernflower",
+		},
+		extendedClientCapabilities = jdtls.extendedClientCapabilities,
+		sources = {
+			organizeImports = {
+				starThreshold = 9999,
+				staticStarThreshold = 9999,
+			},
+		},
+		codeGeneration = {
+			toString = {
+				template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+			},
+			useBlocks = true,
+		},
+	}
 
-  -- This starts a new client & server,
-  -- or attaches to an existing client & server depending on the `root_dir`.
-  jdtls.start_or_attach({
-    cmd = cmd,
-    settings = lsp_settings,
-    on_attach = jdtls_on_attach,
-    capabilities = basic_capabilities,
-    root_dir = project_root_dir,
-    flags = {
-      allow_incremental_sync = true,
-    },
-    init_options = {
-      bundles = path.bundles,
-    },
-  })
+	-- This starts a new client & server,
+	-- or attaches to an existing client & server depending on the `root_dir`.
+	jdtls.start_or_attach({
+		cmd = cmd,
+		settings = lsp_settings,
+		on_attach = jdtls_on_attach,
+		capabilities = basic_capabilities,
+		root_dir = project_root_dir,
+		flags = {
+			allow_incremental_sync = true,
+		},
+		init_options = {
+			bundles = path.bundles,
+		},
+	})
 end
 
 vim.api.nvim_create_autocmd("FileType", {
