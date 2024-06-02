@@ -93,25 +93,13 @@ return {
 
 	-- Session management
 	-- auto save and restore the last session
-	-- {
-	-- 	"olimorris/persisted.nvim",
-	-- 	lazy = false,
-	-- 	config = function()
-	-- 		require("persisted").setup({
-	-- 			ignored_dirs = {
-	-- 				"~/.config",
-	-- 				"~/.local/nvim",
-	-- 				{ "/", exact = true },
-	-- 				{ "/tmp", exact = true },
-	-- 			},
-	-- 			autoload = true,
-	-- 			on_autoload_no_session = function()
-	-- 				vim.notify("No existing session to load.")
-	-- 			end,
-	-- 		})
-	-- 	end,
-	-- },
-
+	{
+		"folke/persistence.nvim",
+		event = "BufReadPre", -- this will only start session saving when an actual file was opened
+		opts = {
+			-- add any custom options here
+		},
+	},
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
