@@ -13,6 +13,13 @@ return {
 		},
 	},
 
+	-- Lsp server status updates
+	{
+		"j-hui/fidget.nvim",
+		event = "LspAttach",
+		opts = {},
+	},
+
 	-- Electric indentation
 	{
 		"nmac427/guess-indent.nvim",

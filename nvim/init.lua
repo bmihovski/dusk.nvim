@@ -385,7 +385,7 @@ require("lazy").setup({
 		opts = {
 			hint_enable = false,
 			cursorhold_update = false, -- Fixes errors from some LSP servers (ex. angularls)
-			zindex = 45, -- avoid overlap with nvim.cmp
+			zindex = 45,            -- avoid overlap with nvim.cmp
 		},
 		config = function(_, opts)
 			require("lsp_signature").setup(opts)
