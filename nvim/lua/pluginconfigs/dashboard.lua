@@ -28,7 +28,7 @@ dashboard.section.header.val = {
 }
 
 dashboard.section.buttons.val = {
-	dashboard.button("s", "  Restore Session", [[:lua require("persistence").load() <cr>]]),
+	dashboard.button("s", "  Restore Session", "<cmd>lua require('persistence').load() <cr>"),
 	dashboard.button("r", "  Recent files", ":Telescope oldfiles <CR>"),
 	dashboard.button("e", "  New file", ":ene <BAR> startinsert <CR>"),
 	dashboard.button("f", "󰈞  Find file", ":Telescope find_files hidden=true <CR>"),
