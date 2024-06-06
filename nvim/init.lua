@@ -429,7 +429,6 @@ require("lazy").setup({
 					"vscode-java-decompiler",
 					"clang-format",
 					"codelldb",
-					"cpptools",
 					"checkstyle",
 					"cpplint",
 					"beautysh",

@@ -19,7 +19,6 @@ return {
 					"js",
 					"bash",
 					"python",
-					"cppdbg",
 					"javadbg",
 					"javatest",
 					"codelldb",
