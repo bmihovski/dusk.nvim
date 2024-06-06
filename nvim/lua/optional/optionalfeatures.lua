@@ -192,6 +192,12 @@ return {
 		},
 		opts = {
 			debug = false, -- Disable debugging
+			mappings = {
+				reset = {
+					normal = "<C-r>",
+					insert = "<C-r>",
+				},
+			},
 		},
 		build = function()
 			vim.cmd("UpdateRemotePlugins") -- You need to restart to make it works
