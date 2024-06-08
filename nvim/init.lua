@@ -82,6 +82,7 @@ require("lazy").setup({
 					},
 				},
 				lualine_c = { { "filename", path = 3 } },
+				-- lualine_x = { "rest" },
 			},
 		},
 	},
@@ -346,6 +347,7 @@ require("lazy").setup({
 			"hrsh7th/cmp-path",
 			"hrsh7th/cmp-cmdline",
 			"amarakon/nvim-cmp-buffer-lines",
+			"p00f/clangd_extensions.nvim",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
@@ -532,7 +534,12 @@ require("lazy").setup({
 			require("conform").setup({
 				formatters_by_ft = {
 					lua = { "stylua" },
-					cpp = { "clang-format " },
+					c = { "clang-format" },
+					cpp = { "clang-format" },
+					objc = { "clang-format" },
+					objcpp = { "clang-format" },
+					cuda = { "clang-format" },
+					proto = { "clang-format" },
 					python = function(bufnr)
 						if require("conform").get_formatter_info("ruff_format", bufnr).available then
 							return { "ruff_format" }

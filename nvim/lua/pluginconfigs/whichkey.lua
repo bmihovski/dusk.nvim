@@ -251,6 +251,13 @@ local mappings = {
 		r = { "<cmd>CMakeRun<cr>", "Run code cmake" },
 		d = { "<cmd>CMakeDebug<cr>", "Run Debug cmake" },
 		c = { "<cmd>CMakeCloseExecutor <CR><cmd>CMakeCloseRunner<cr>", "Close and stop cmake Runner" },
+		w = { "<cmd>ClangdSwitchSourceHeader<cr>", "Switch Source/Header" },
+		a = { "<cmd>ClangdAST<cr>", "Display AST" },
+		h = { "<cmd>ClangdToggleInlayHints<cr>", "Toggle Inlay Hints" },
+		t = { "<cmd>ClangdTypeHierarchy<cr>", "Display Type Hierarchy" },
+		m = { "<cmd>ClangdMemoryUsage<cr>", "Display Memory Usage" },
+		s = { "<cmd>ClangdSymbolInfo<cr>", "Display Symbol Info" },
+		y = { "<cmd>ClangdCallHierarchy<cr>", "Display Call Hierarchy" },
 	},
 
 	j = {

@@ -294,4 +294,53 @@ return {
 			vim.keymap.set({ "v", "n" }, "gf", require("actions-preview").code_actions)
 		end,
 	},
+	{
+	  "ThePrimeagen/refactoring.nvim",
+	  dependencies = {
+	    "nvim-lua/plenary.nvim",
+	    "nvim-treesitter/nvim-treesitter",
+	  },
+	  config = function()
+	    require("refactoring").setup({
+		    prompt_func_return_type = {
+		        java = true,
+		        cpp = true,
+		        c = true,
+		        h = true,
+		        hpp = true,
+		        cxx = true,
+		    },
+		    prompt_func_param_type = {
+		        java = true,
+		        cpp = true,
+		        c = true,
+		        h = true,
+		        hpp = true,
+		        cxx = true,
+		    },
+		    show_success_message = true, -- shows a message with information about the refactor on success
+		                                  -- i.e. [Refactor] Inlined 3 variable occurrences
+		    -- load refactoring Telescope extension
+		    require("telescope").load_extension("refactoring")
+		})
+	  end,
+	},
+     -- rest client 
+	-- {
+	--   "vhyrro/luarocks.nvim",
+	--   priority = 1000,
+	--   config = true,
+	--   opts = {
+	--     rocks = { "lua-curl", "nvim-nio", "mimetypes", "xml2lua" }
+	--   }
+	-- },
+	-- {
+	--   "rest-nvim/rest.nvim",
+	--   ft = "http",
+	--   dependencies = { "luarocks.nvim", "nvim-telescope/telescope.nvim" },
+	--   config = function()
+	--     require("rest-nvim").setup()
+	--     require("telescope").load_extension("rest")
+	--   end,
+	-- }
 }

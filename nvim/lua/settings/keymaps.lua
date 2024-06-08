@@ -115,18 +115,21 @@ keymap("n", "<leader>ll", '<cmd>lua require("lint").try_lint<cr>', opts)
 -- formatter
 keymap(
 	"n",
-	"<leader>l",
+	"<leader>c",
 	'<cmd>lua require("conform").conform.format{lsp_fallback = true,async = false,timeout_ms = 500,}<cr>',
 	opts
 )
 keymap(
 	"v",
-	"<leader>l",
+	"<leader>c",
 	'<cmd>lua require("conform").conform.format{lsp_fallback = true,async = false,timeout_ms = 500,}<cr>',
 	opts
 )
 -- undo
 keymap("n", "<leader>u", "<cmd>Telescope undo<cr>", opts)
+-- refactoring
+keymap("n", "<leader>rf", "<cmd>lua require('telescope').extensions.refactoring.refactors()<cr>", opts)
+keymap("x", "<leader>rf", "<cmd>lua require('telescope').extensions.refactoring.refactors()<cr>", opts)
 -- DAP
 keymap("n", "<F5>", "<cmd> DapToggleBreakpoint <cr>", opts)
 keymap("n", "<leader>o", "<cmd> DapStepOut <cr>", opts)
@@ -143,8 +146,8 @@ keymap(
 	'<cmd>lua require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) <cr>',
 	opts
 )
--- check failed tests from dap repl
-keymap("n", "<leader>xx", "<cmd> DapToggleRepl <CR>", opts)
+-- check problems
+keymap("n", "<leader>xx", "<cmd> Trouble quickfix <CR>", opts)
 -- ESC to clear highlights after search
 keymap("n", "<Esc>", ":noh<CR> :helpclose<CR>", opts)
 -- dap ui icons
