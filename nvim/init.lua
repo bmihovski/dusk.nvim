@@ -480,7 +480,7 @@ require("lazy").setup({
 	-- Sonarlint plugin
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		event = "VeryLazy",
+		ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html" },
 		config = function()
 			require("sonarlint").setup({
 				server = {
