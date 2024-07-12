@@ -65,7 +65,14 @@ keymap("n", "<C-f>", "<cmd> !tmux neww tmux-sessionizer <CR>", opts)
 keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", opts)
 -- cmake run
 keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", opts)
-keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", opts)
+--keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", opts)
+keymap('n', '<leader>m', ':lua MyTestFunction()<CR>', opts)
+
+function MyTestFunction()
+  local test_number = vim.fn.input("Enter number of tests: ")
+  vim.cmd('TermExec cmd="./run_tests.sh ' .. test_number .. '"')
+end
+
 keymap("n", "<leader>s", "<cmd> CMakeCloseExecutor <CR><cmd> CMakeCloseRunner <CR>", opts)
 -- copilot chat
 keymap("n", "<leader>t", "<cmd> CopilotChatToggle <CR>", opts)
