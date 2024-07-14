@@ -66,11 +66,21 @@ keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", opts)
 -- cmake run
 keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", opts)
 --keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", opts)
-keymap('n', '<leader>m', ':lua MyTestFunction()<CR>', opts)
+keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.sh"<CR>', opts)
 
-function MyTestFunction()
-  local test_number = vim.fn.input("Enter number of tests: ")
-  vim.cmd('TermExec cmd="./run_tests.sh ' .. test_number .. '"')
+keymap("n", "<leader>q", ":lua ZipFiles()<CR>", opts)
+
+function ZipFiles()
+	local dir = vim.fn.input("Enter directory (default: src/Skeleton): ")
+	if dir == "" then
+		dir = "src/Skeleton"
+	end
+	local filename = vim.fn.input("Enter zip file names: ")
+	if filename == "" then
+		filename = "*"
+	end
+	local cmd = string.format("cd %s && zip solution.zip %s && cd -", dir, filename)
+	vim.cmd("!" .. cmd .. " && exit")
 end
 
 keymap("n", "<leader>s", "<cmd> CMakeCloseExecutor <CR><cmd> CMakeCloseRunner <CR>", opts)
@@ -215,11 +225,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		-- Displays hover information about the symbol under the cursor
 		bufmap("n", "K", "<cmd>Lspsaga hover_doc<cr>")
 
-    -- Peek definition
-    bufmap('n', 'gd', '<cmd>Lspsaga peek_definition<cr>')
+		-- Peek definition
+		bufmap("n", "gd", "<cmd>Lspsaga peek_definition<cr>")
 
-    -- Jump to definition
-    bufmap('n', 'gD', '<cmd>lua vim.lsp.buf.definition()<cr>')
+		-- Jump to definition
+		bufmap("n", "gD", "<cmd>lua vim.lsp.buf.definition()<cr>")
 
 		-- Lists all the implementations for the symbol under the cursor
 		bufmap("n", "gi", "<cmd>Lspsaga finder imp<cr>")
@@ -244,10 +254,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		-- Show diagnostics in a floating window
 		bufmap("n", "gl", "<cmd>lua vim.diagnostic.open_float()<cr>")
 
-    -- Move to the previous diagnostic
-    bufmap('n', 'gp', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
+		-- Move to the previous diagnostic
+		bufmap("n", "gp", "<cmd>lua vim.diagnostic.goto_prev()<cr>")
 
-    -- Move to the next diagnostic
-    bufmap('n', 'gn', '<cmd>lua vim.diagnostic.goto_next()<cr>')
-  end
+		-- Move to the next diagnostic
+		bufmap("n", "gn", "<cmd>lua vim.diagnostic.goto_next()<cr>")
+	end,
 })
+
