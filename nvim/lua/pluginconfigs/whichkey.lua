@@ -58,7 +58,7 @@ local function ToggleVirtualText()
 	print("Virtual text " .. (new_value and "enabled" or "disabled"))
 end
 
-vim.api.nvim_create_user_command('ToggleVirtualText', ToggleVirtualText, {})
+vim.api.nvim_create_user_command("ToggleVirtualText", ToggleVirtualText, {})
 
 -- Open test results after execution
 local function print_test_results(items)
@@ -71,16 +71,16 @@ end
 
 --remove unused imports from the whole project
 local function remove_unused_imports_from_project()
-	vim.diagnostic.setqflist { severity = vim.diagnostic.severity.WARN }
-	vim.cmd('packadd cfilter')
-	vim.cmd('Cfilter /main/')
-	vim.cmd('Cfilter /The import/')
-	vim.cmd('cdo normal dd')
-	vim.cmd('cclose')
-	vim.cmd('wa')
+	vim.diagnostic.setqflist({ severity = vim.diagnostic.severity.WARN })
+	vim.cmd("packadd cfilter")
+	vim.cmd("Cfilter /main/")
+	vim.cmd("Cfilter /The import/")
+	vim.cmd("cdo normal dd")
+	vim.cmd("cclose")
+	vim.cmd("wa")
 end
 
-vim.api.nvim_create_user_command('RemoveUnusedImportsFromProject', remove_unused_imports_from_project, {})
+vim.api.nvim_create_user_command("RemoveUnusedImportsFromProject", remove_unused_imports_from_project, {})
 
 --------------------------------------
 -- Keymaps --
@@ -98,12 +98,12 @@ local setup = {
 		-- No actual key bindings are created
 		presets = {
 			operators = false, -- adds help for operators like d, y, ... and registers them for motion / text object completion
-			motions = false,  -- adds help for motions
+			motions = false, -- adds help for motions
 			text_objects = true, -- help for text objects triggered after entering an operator
-			windows = false,  -- default bindings on <c-w>
-			nav = false,      -- misc bindings to work with windows
-			z = true,         -- bindings for folds, spelling and others prefixed with z
-			g = true,         -- bindings for prefixed with g
+			windows = false, -- default bindings on <c-w>
+			nav = false, -- misc bindings to work with windows
+			z = true, -- bindings for folds, spelling and others prefixed with z
+			g = true, -- bindings for prefixed with g
 		},
 	},
 	-- add operators that will trigger motion and text object completion
@@ -162,268 +162,300 @@ local opts = {
 }
 
 local mappings = {
-	["a"] = { ":Alpha", "Dashboard" },
-	["R"] = { ":%d+<cr>", "Remove All Text" },
-	["y"] = { ":%y+<cr>", "Yank All Text" },
-	["e"] = { ":NvimTreeToggle<cr>", "Tree Explorer" },
-	["z"] = { ":ZenMode<cr>", "Zen Mode" },
-
-	b = {
-		name = "Buffer",
-		p = { "<Cmd>bprevious<cr>", "Previous buffer" },
-		n = { "<Cmd>bnext<cr>", "Next buffer" },
-		k = { "<Cmd>bd<Cr>", "Close current buffer" },
-		K = { "<cmd>BufDelOthers<cr>", "Close all buffers except current" },
-		b = { "<cmd>Telescope buffers theme=dropdown<cr>", "Buffer List" },
+	{ "<leader>C", group = "Containers - Docker" },
+	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
+	{ "<leader>D", group = "Database" },
+	{ "<leader>Db", "<cmd>DBUIFindBuffer<cr>", desc = "Find Buffer" },
+	{ "<leader>Di", "<cmd>DBUILastQueryInfo<cr>", desc = "Last Query Info" },
+	{ "<leader>Dr", "<cmd>DBUIRenameBuffer<cr>", desc = "Rename Buffer" },
+	{ "<leader>Dt", "<cmd>DBUIToggle<cr>", desc = "Toggle UI" },
+	{ "<leader>P", group = "Python" },
+	{
+		"<leader>PT",
+		"<Cmd>lua require('dap-python').test_class()<CR>",
+		desc = "Test Class",
 	},
-
-	D = {
-		name = "Database",
-		t = { "<cmd>DBUIToggle<cr>", "Toggle UI" },
-		b = { "<cmd>DBUIFindBuffer<cr>", "Find Buffer" },
-		r = { "<cmd>DBUIRenameBuffer<cr>", "Rename Buffer" },
-		i = { "<cmd>DBUILastQueryInfo<cr>", "Last Query Info" },
+	{
+		"<leader>Pc",
+		"<Cmd>VenvSelectCached<CR>",
+		desc = "Select Cached Virtual Environment",
 	},
-
-	p = {
-		name = "Package Manager",
-		x = { ":Lazy clean<cr>", "Clean" },
-		C = { ":Lazy check<cr>", "Check" },
-		d = { ":Lazy debug<cr>", "Debug" },
-		i = { ":Lazy install<cr>", "Install" },
-		s = { ":Lazy sync<cr>", "Sync" },
-		l = { ":Lazy log<cr>", "Log" },
-		h = { ":Lazy home<cr>", "Home" },
-		H = { ":Lazy help<cr>", "Help" },
-		p = { ":Lazy profile<cr>", "Profile" },
-		u = { ":Lazy update<cr>", "Update" },
+	{
+		"<leader>Pd",
+		"<Cmd>lua require('dap-python').debug_selection()<CR>",
+		desc = "Debug Selection",
 	},
-
-	f = {
-		name = "Find",
-		a = { ":Telescope autocommands<cr>", "Autocommmands" },
-		c = { "<cmd>Telescope colorscheme<cr>", "Colorschemes" },
-		f = {
-			"<cmd>Telescope find_files hidden=true <cr>",
-			"Files",
-		},
-		p = { "<cmd>Telescope projects <CR>", "Projects" },
-		b = { "<cmd>Telescope buffers<cr>", "Buffers" },
-		h = { "<cmd>Telescope help_tags<cr>", "Help" },
-		r = { "<cmd>Telescope oldfiles<cr>", "Recent Files" },
-		k = { "<cmd>Telescope keymaps<cr>", "Keymaps" },
-		C = { "<cmd>Telescope commands<cr>", "Commands" },
-		d = { "<cmd>Telescope diagnostics<cr>", "Diagnostics" },
+	{
+		"<leader>Pt",
+		"<Cmd>lua require('dap-python').test_method()<CR>",
+		desc = "Test Method",
 	},
-
-	c = {
-		name = "Code",
-		a = { ":lua vim.lsp.buf.code_action()<cr>", "Code Action" },
-		-- e = { ":Jaq<cr>", "Execute Code" },
-		e = { ":Trouble diagnostics filter.severity=vim.diagnostic.severity.ERROR<cr>", "Show Workspace Errors" },
-		x = { ":Trouble diagnostics toggle focus = true<cr>", "Workspace Diagnostics" },
-		X = { ":Trouble diagnostics toggle filter.buf=0 focus = true<cr>", "Current buffer Diagnostics" },
-		R = { ":Lspsaga rename ++project<cr>", "Rename in Project" },
-		r = { ":Lspsaga rename<cr>", "Rename in current buffer" },
-		o = { ":Lspsaga outline<cr>", "Code Outline" },
-		f = { "<cmd>lua vim.lsp.buf.format({async = true})<cr>", "Format" },
-		n = {
-			":Lspsaga diagnostic_jump_next<cr>",
-			"Next Diagnostic",
-		},
-		p = {
-			":Lspsaga diagnostic_jump_prev<cr>",
-			"Prev Diagnostic",
-		},
-		q = { ":Trouble quickfix focus = true<cr>", "Diagnostics Quickfix" },
-
+	{ "<leader>Pv", "<Cmd>VenvSelect<CR>", desc = "Select New Virtual Environment" },
+	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
+	{ "<leader>S", group = "C++" },
+	{ "<leader>Sa", "<cmd>ClangdAST<cr>", desc = "Display AST" },
+	{
+		"<leader>Sc",
+		"<cmd>CMakeCloseExecutor <CR><cmd>CMakeCloseRunner<cr>",
+		desc = "Close and stop cmake Runner",
 	},
-
-	r = {
-		name = "Replace",
-		r = { "<cmd>lua require('spectre').open()<cr>", "Replace in path" },
-		w = { "<cmd>lua require('spectre').open_visual({select_word=true})<cr>", "Replace Word" },
-		b = { "<cmd>lua require('spectre').open_file_search()<cr>", "Replace in the current Buffer" },
+	{ "<leader>Sd", "<cmd>CMakeDebug<cr>", desc = "Run Debug cmake" },
+	{ "<leader>Sh", "<cmd>ClangdToggleInlayHints<cr>", desc = "Toggle Inlay Hints" },
+	{ "<leader>Sm", "<cmd>ClangdMemoryUsage<cr>", desc = "Display Memory Usage" },
+	{ "<leader>Sr", "<cmd>CMakeRun<cr>", desc = "Run code cmake" },
+	{ "<leader>Ss", "<cmd>ClangdSymbolInfo<cr>", desc = "Display Symbol Info" },
+	{ "<leader>St", "<cmd>ClangdTypeHierarchy<cr>", desc = "Display Type Hierarchy" },
+	{ "<leader>Sw", "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch Source/Header" },
+	{ "<leader>Sy", "<cmd>ClangdCallHierarchy<cr>", desc = "Display Call Hierarchy" },
+	{ "<leader>a", ":Alpha", desc = "Dashboard" },
+	{ "<leader>b", group = "Buffer" },
+	{ "<leader>bK", "<cmd>BufDelOthers<cr>", desc = "Close all buffers except current" },
+	{ "<leader>bb", "<cmd>Telescope buffers theme=dropdown<cr>", desc = "Buffer List" },
+	{ "<leader>bk", "<Cmd>bd<Cr>", desc = "Close current buffer" },
+	{ "<leader>bn", "<Cmd>bnext<cr>", desc = "Next buffer" },
+	{ "<leader>bp", "<Cmd>bprevious<cr>", desc = "Previous buffer" },
+	{ "<leader>c", group = "Code" },
+	{ "<leader>cR", ":Lspsaga rename ++project<cr>", desc = "Rename in Project" },
+	{
+		"<leader>cX",
+		":Trouble diagnostics toggle filter.buf=0 focus = true<cr>",
+		desc = "Current buffer Diagnostics",
 	},
-
-	S = {
-		name = "C++",
-		r = { "<cmd>CMakeRun<cr>", "Run code cmake" },
-		d = { "<cmd>CMakeDebug<cr>", "Run Debug cmake" },
-		c = { "<cmd>CMakeCloseExecutor <CR><cmd>CMakeCloseRunner<cr>", "Close and stop cmake Runner" },
-		w = { "<cmd>ClangdSwitchSourceHeader<cr>", "Switch Source/Header" },
-		a = { "<cmd>ClangdAST<cr>", "Display AST" },
-		h = { "<cmd>ClangdToggleInlayHints<cr>", "Toggle Inlay Hints" },
-		t = { "<cmd>ClangdTypeHierarchy<cr>", "Display Type Hierarchy" },
-		m = { "<cmd>ClangdMemoryUsage<cr>", "Display Memory Usage" },
-		s = { "<cmd>ClangdSymbolInfo<cr>", "Display Symbol Info" },
-		y = { "<cmd>ClangdCallHierarchy<cr>", "Display Call Hierarchy" },
+	{ "<leader>ca", ":lua vim.lsp.buf.code_action()<cr>", desc = "Code Action" },
+	{
+		"<leader>ce",
+		":Trouble diagnostics filter.severity=vim.diagnostic.severity.ERROR<cr>",
+		desc = "Show Workspace Errors",
 	},
-
-	j = {
-		name = "Java",
-		o = { "<Cmd>lua require'jdtls'.organize_imports()<CR>", "Organize Imports" },
-		t = {
-			"<Cmd>lua require'jdtls'.test_nearest_method({ config = { console = 'console' }})<CR>",
-			"Test/Debug Method",
-		},
-		T = {
-			"<Cmd>lua require'jdtls'.test_class({ config = { console = 'console' }})<CR>",
-			"Test/Debug Class",
-		},
-		f = { "<cmd>lua require('conform').format({async = true})<cr>", "Format with Google Java Format" },
-		g = { "<cmd>lua require('jdtls.tests').generate()<cr>", "Generate tests for current Class" },
-		i = { "<cmd>lua require('jdtls.tests').goto_subjects()<cr>", "Go to corresponding Test/Subject Class" },
-		R = { "<cmd>JdtWipeDataAndRestart<cr>", "Wipe project data and Restart server" },
-		v = { "<Cmd>lua require('jdtls').extract_variable()<CR>", "Extract Variable" },
-		c = { "<Cmd>lua require('jdtls').extract_constant()<CR>", "Extract Constant" },
-		u = { "<Cmd>lua require('jdtls').update_project_config()<CR>", "Refresh java config" },
-		e = { "<Cmd>JdtSetRuntime<CR>", "Choose Java Runtime" },
-		C = { "<Cmd>JdtCompile full<CR>", "Compile Java" },
-		d = {
-			":lua require('jdtls').setup_dap({ hotcodereplace = 'auto' })<cr>; :lua require'jdtls.dap'.setup_dap_main_class_configs()<cr>",
-			"Refresh DAP Debugger" },
-		r = { function()
+	{ "<leader>cf", "<cmd>lua vim.lsp.buf.format({async = true})<cr>", desc = "Format" },
+	{ "<leader>cn", ":Lspsaga diagnostic_jump_next<cr>", desc = "Next Diagnostic" },
+	{ "<leader>co", ":Lspsaga outline<cr>", desc = "Code Outline" },
+	{ "<leader>cp", ":Lspsaga diagnostic_jump_prev<cr>", desc = "Prev Diagnostic" },
+	{ "<leader>cq", ":Trouble quickfix focus = true<cr>", desc = "Diagnostics Quickfix" },
+	{ "<leader>cr", ":Lspsaga rename<cr>", desc = "Rename in current buffer" },
+	{
+		"<leader>cx",
+		":Trouble diagnostics toggle focus = true<cr>",
+		desc = "Workspace Diagnostics",
+	},
+	{ "<leader>d", group = "Debug" },
+	{ "<leader>db", ":lua require'dap'.toggle_breakpoint()<cr>", desc = "Breakpoint" },
+	{ "<leader>dc", ":lua require'dap'.continue()<cr>", desc = "Start/Continue" },
+	{ "<leader>dd", ":lua require'dapui'.toggle()<cr>", desc = "Dap UI" },
+	{ "<leader>di", ":lua require'dap'.step_into()<cr>", desc = "Step Into" },
+	{ "<leader>do", ":lua require'dap'.step_over()<cr>", desc = "Step Over" },
+	{ "<leader>dr", ":lua require'dap'.repl.open()<cr>", desc = "Repl Console" },
+	{ "<leader>dt", ":lua require'dap'.terminate()<cr>", desc = "Terminate session" },
+	{ "<leader>du", ":lua require'dap'.step_out()<cr>", desc = "Step Out" },
+	{ "<leader>e", ":NvimTreeToggle<cr>", desc = "Tree Explorer" },
+	{ "<leader>f", group = "Find" },
+	{ "<leader>fC", "<cmd>Telescope commands<cr>", desc = "Commands" },
+	{ "<leader>fa", ":Telescope autocommands<cr>", desc = "Autocommmands" },
+	{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+	{ "<leader>fc", "<cmd>Telescope colorscheme<cr>", desc = "Colorschemes" },
+	{ "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics" },
+	{ "<leader>ff", "<cmd>Telescope find_files hidden=true <cr>", desc = "Files" },
+	{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help" },
+	{ "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
+	{ "<leader>fp", "<cmd>Telescope projects <CR>", desc = "Projects" },
+	{ "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
+	{ "<leader>g", group = "Git" },
+	{ "<leader>gD", ":DiffviewClose<cr>", desc = "Close Diff" },
+	{ "<leader>gP", ":lua require 'gitsigns'.preview_hunk()<cr>", desc = "Preview Hunk" },
+	{ "<leader>gR", ":lua require 'gitsigns'.reset_buffer()<cr>", desc = "Reset Buffer" },
+	{ "<leader>gb", ":Telescope git_branches<cr>", desc = "Checkout branch" },
+	{ "<leader>gc", ":Telescope git_commits<cr>", desc = "Checkout commit" },
+	{ "<leader>gd", ":DiffviewOpen<cr>", desc = "Open Diff" },
+	{ "<leader>gg", ":LazyGit<cr>", desc = "Lazygit" },
+	{ "<leader>gl", ":lua require 'gitsigns'.blame_line()<cr>", desc = "Blame" },
+	{ "<leader>gn", ":lua require 'gitsigns'.next_hunk()<cr>", desc = "Next Hunk" },
+	{ "<leader>go", ":Telescope git_status<cr>", desc = "Open changed file" },
+	{ "<leader>gp", ":lua require 'gitsigns'.prev_hunk()<cr>", desc = "Prev Hunk" },
+	{ "<leader>gr", ":lua require 'gitsigns'.reset_hunk()<cr>", desc = "Reset Hunk" },
+	{ "<leader>gs", ":lua require 'gitsigns'.stage_hunk()<cr>", desc = "Stage Hunk" },
+	{
+		"<leader>gu",
+		":lua require 'gitsigns'.undo_stage_hunk()<cr>",
+		desc = "Undo Stage Hunk",
+	},
+	{ "<leader>j", group = "Java" },
+	{ "<leader>jC", "<Cmd>JdtCompile full<CR>", desc = "Compile Java" },
+	{
+		"<leader>jR",
+		"<cmd>JdtWipeDataAndRestart<cr>",
+		desc = "Wipe project data and Restart server",
+	},
+	{
+		"<leader>jT",
+		"<Cmd>lua require'jdtls'.test_class({ config = { console = 'console' }})<CR>",
+		desc = "Test/Debug Class",
+	},
+	{
+		"<leader>jc",
+		"<Cmd>lua require('jdtls').extract_constant()<CR>",
+		desc = "Extract Constant",
+	},
+	{
+		"<leader>jd",
+		":lua require('jdtls').setup_dap({ hotcodereplace = 'auto' })<cr>; :lua require'jdtls.dap'.setup_dap_main_class_configs()<cr>",
+		desc = "Refresh DAP Debugger",
+	},
+	{ "<leader>je", "<Cmd>JdtSetRuntime<CR>", desc = "Choose Java Runtime" },
+	{
+		"<leader>jf",
+		"<cmd>lua require('conform').format({async = true})<cr>",
+		desc = "Format with Google Java Format",
+	},
+	{
+		"<leader>jg",
+		"<cmd>lua require('jdtls.tests').generate()<cr>",
+		desc = "Generate tests for current Class",
+	},
+	{
+		"<leader>ji",
+		"<cmd>lua require('jdtls.tests').goto_subjects()<cr>",
+		desc = "Go to corresponding Test/Subject Class",
+	},
+	{
+		"<leader>jo",
+		"<Cmd>lua require'jdtls'.organize_imports()<CR>",
+		desc = "Organize Imports",
+	},
+	{
+		"<leader>jr",
+		function()
 			require("jdtls").pick_test({ after_test = print_test_results })
-		end, "Run test and open results" },
-		x = { "<Cmd>RemoveUnusedImportsFromProject<CR>", "Remove unused imports from whole project" },
-
-
+		end,
+		desc = "Run test and open results",
 	},
-
-
-	s = {
-		name = "Search String",
-		b = {
-			function()
-				-- You can pass additional configuration to telescope to change theme, layout, etc.
-				require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
-					winblend = 10,
-					previewer = false,
-				}))
-			end,
-			"In current buffer",
-		},
-		p = { "<cmd>LiveGrepGitRoot<cr>", "In Git root (Project)" },
-		c = { "<cmd>Telescope live_grep theme=ivy<cr>", "In current working directory" },
-		r = { "<cmd>Telescope resume<cr>", "Resume last Search" },
-		o = { telescope_live_grep_open_files, "In currently open files" },
-		u = { "<cmd>Telescope undo<cr>", "In File History" }
+	{
+		"<leader>jt",
+		"<Cmd>lua require'jdtls'.test_nearest_method({ config = { console = 'console' }})<CR>",
+		desc = "Test/Debug Method",
 	},
-
-	g = {
-		name = "Git",
-		g = { ":LazyGit<cr>", "Lazygit" },
-		-- G = { ":Git<cr>", "Git Fugitive" },
-		n = { ":lua require 'gitsigns'.next_hunk()<cr>", "Next Hunk" },
-		p = { ":lua require 'gitsigns'.prev_hunk()<cr>", "Prev Hunk" },
-		l = { ":lua require 'gitsigns'.blame_line()<cr>", "Blame" },
-		P = { ":lua require 'gitsigns'.preview_hunk()<cr>", "Preview Hunk" },
-		r = { ":lua require 'gitsigns'.reset_hunk()<cr>", "Reset Hunk" },
-		R = { ":lua require 'gitsigns'.reset_buffer()<cr>", "Reset Buffer" },
-		s = { ":lua require 'gitsigns'.stage_hunk()<cr>", "Stage Hunk" },
-		u = {
-			":lua require 'gitsigns'.undo_stage_hunk()<cr>",
-			"Undo Stage Hunk",
-		},
-		o = { ":Telescope git_status<cr>", "Open changed file" },
-		b = { ":Telescope git_branches<cr>", "Checkout branch" },
-		c = { ":Telescope git_commits<cr>", "Checkout commit" },
-		d = {
-			":DiffviewOpen<cr>",
-			"Open Diff",
-		},
-		D = {
-			":DiffviewClose<cr>",
-			"Close Diff",
-		},
+	{
+		"<leader>ju",
+		"<Cmd>lua require('jdtls').update_project_config()<CR>",
+		desc = "Refresh java config",
 	},
-
-	l = {
-		name = "LSP - Language",
-		f = { ":lua vim.lsp.buf.format({ async = true })<cr>", "Format" },
-		i = { ":LspInfo<cr>", "Info" },
-		m = { ":Mason<cr>", "Install Language" },
-		w = {
-			name = "LSP Workspace",
-			l = {
-				function()
-					print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-				end,
-				"List Workspace Folders",
-			},
-		},
+	{
+		"<leader>jv",
+		"<Cmd>lua require('jdtls').extract_variable()<CR>",
+		desc = "Extract Variable",
 	},
-
-	d = {
-		name = "Debug",
-		c = { ":lua require'dap'.continue()<cr>", "Start/Continue" },
-		o = { ":lua require'dap'.step_over()<cr>", "Step Over" },
-		i = { ":lua require'dap'.step_into()<cr>", "Step Into" },
-		u = { ":lua require'dap'.step_out()<cr>", "Step Out" },
-		b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Breakpoint" },
-		r = { ":lua require'dap'.repl.open()<cr>", "Repl Console" },
-		d = { ":lua require'dapui'.toggle()<cr>", "Dap UI" },
-		t = { ":lua require'dap'.terminate()<cr>", "Terminate session" },
+	{
+		"<leader>jx",
+		"<Cmd>RemoveUnusedImportsFromProject<CR>",
+		desc = "Remove unused imports from whole project",
 	},
-
-	o = {
-		name = "Open",
-		f = { ":ToggleTerm direction=float<cr>", "Float Terminal" },
-		t = { ":ToggleTerm size=16 direction=horizontal<cr>", "Horizontal Terminal" },
-		v = { ":ToggleTerm size=50 direction=vertical<cr>", "Vertical Terminal" },
+	{ "<leader>l", group = "LSP - Language" },
+	{ "<leader>lf", ":lua vim.lsp.buf.format({ async = true })<cr>", desc = "Format" },
+	{ "<leader>li", ":LspInfo<cr>", desc = "Info" },
+	{ "<leader>lm", ":Mason<cr>", desc = "Install Language" },
+	{ "<leader>lw", group = "LSP Workspace" },
+	{
+		"<leader>lwl",
+		function()
+			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+		end,
+		desc = "List Workspace Folders",
 	},
-
-	P = {
-		name = "Python",
-		v = { "<Cmd>VenvSelect<CR>", "Select New Virtual Environment" },
-		c = {
-			"<Cmd>VenvSelectCached<CR>",
-			"Select Cached Virtual Environment",
-		},
-		T = {
-			"<Cmd>lua require('dap-python').test_class()<CR>",
-			"Test Class",
-		},
-		t = { "<Cmd>lua require('dap-python').test_method()<CR>", "Test Method" },
-		d = { "<Cmd>lua require('dap-python').debug_selection()<CR>", "Debug Selection" },
+	{ "<leader>m", group = "Markdown" },
+	{ "<leader>mp", ":MarkdownPreview<CR>", desc = "Preview in browser" },
+	{ "<leader>ms", ":MarkdownPreviewStop<CR>", desc = "Stop Preview" },
+	{ "<leader>o", group = "Open" },
+	{ "<leader>of", ":ToggleTerm direction=float<cr>", desc = "Float Terminal" },
+	{
+		"<leader>ot",
+		":ToggleTerm size=16 direction=horizontal<cr>",
+		desc = "Horizontal Terminal",
 	},
-
-	t = {
-		name = "Toggle option",
-		s = { '<cmd>ASToggle<cr>', "Toggle Autosave" },
-		l = { '<cmd>lua require("lsp_lines").toggle()<cr>', "Toggle Lsp_Lines plugin" },
-		w = { '<cmd>lua require("settings.options").toggle_option("wrap")<cr>', "Wrap Text" },
-		r = {
-			'<cmd>lua require("settings.options").toggle_option("relativenumber")<cr>',
-			"Relative Code Line Numbers",
-		},
-		a = {
-			'<cmd>lua require("settings.options").toggle_option("number")<cr>',
-			"Absolute Code Line Numbers",
-		},
-		c = { "<cmd>let &cole=(&cole == 2) ? 0 : 2 <bar> echo 'conceallevel ' . &cole <CR>", "ConcealLevel" },
-		v = { '<cmd>ToggleVirtualText<cr>', "Toggle Diagnostic Virtual Lines" },
+	{
+		"<leader>ov",
+		":ToggleTerm size=50 direction=vertical<cr>",
+		desc = "Vertical Terminal",
 	},
-
-	C = {
-		name = "Containers - Docker",
-		d = { "<cmd>LazyDocker<cr>", "Run LazyDocker" },
+	{ "<leader>p", group = "Package Manager" },
+	{ "<leader>pC", ":Lazy check<cr>", desc = "Check" },
+	{ "<leader>pH", ":Lazy help<cr>", desc = "Help" },
+	{ "<leader>pd", ":Lazy debug<cr>", desc = "Debug" },
+	{ "<leader>ph", ":Lazy home<cr>", desc = "Home" },
+	{ "<leader>pi", ":Lazy install<cr>", desc = "Install" },
+	{ "<leader>pl", ":Lazy log<cr>", desc = "Log" },
+	{ "<leader>pp", ":Lazy profile<cr>", desc = "Profile" },
+	{ "<leader>ps", ":Lazy sync<cr>", desc = "Sync" },
+	{ "<leader>pu", ":Lazy update<cr>", desc = "Update" },
+	{ "<leader>px", ":Lazy clean<cr>", desc = "Clean" },
+	{ "<leader>r", group = "Replace" },
+	{
+		"<leader>rb",
+		"<cmd>lua require('spectre').open_file_search()<cr>",
+		desc = "Replace in the current Buffer",
 	},
-
-	w = {
-		name = "Window",
-		w = { "<C-w>w", "Last window" },
-		q = { "<cmd>q!<cr>", "Kill window" },
+	{ "<leader>rr", "<cmd>lua require('spectre').open()<cr>", desc = "Replace in path" },
+	{
+		"<leader>rw",
+		"<cmd>lua require('spectre').open_visual({select_word=true})<cr>",
+		desc = "Replace Word",
 	},
-
-	m = {
-		name = "Markdown",
-		p = { ":MarkdownPreview<CR>", "Preview in browser" },
-		s = { ":MarkdownPreviewStop<CR>", "Stop Preview" },
+	{ "<leader>s", group = "Search String" },
+	{
+		"<leader>sb",
+		function()
+			-- You can pass additional configuration to telescope to change theme, layout, etc.
+			require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
+				winblend = 10,
+				previewer = false,
+			}))
+		end,
+		desc = "In current buffer",
 	},
+	{
+		"<leader>sc",
+		"<cmd>Telescope live_grep theme=ivy<cr>",
+		desc = "In current working directory",
+	},
+	{ "<leader>so", telescope_live_grep_open_files, desc = "In currently open files" },
+	{ "<leader>sp", "<cmd>LiveGrepGitRoot<cr>", desc = "In Git root (Project)" },
+	{ "<leader>sr", "<cmd>Telescope resume<cr>", desc = "Resume last Search" },
+	{ "<leader>su", "<cmd>Telescope undo<cr>", desc = "In File History" },
+	{ "<leader>t", group = "Toggle option" },
+	{
+		"<leader>ta",
+		'<cmd>lua require("settings.options").toggle_option("number")<cr>',
+		desc = "Absolute Code Line Numbers",
+	},
+	{
+		"<leader>tc",
+		"<cmd>let &cole=(&cole == 2) ? 0 : 2 <bar> echo 'conceallevel ' . &cole <CR>",
+		desc = "ConcealLevel",
+	},
+	{
+		"<leader>tl",
+		'<cmd>lua require("lsp_lines").toggle()<cr>',
+		desc = "Toggle Lsp_Lines plugin",
+	},
+	{
+		"<leader>tr",
+		'<cmd>lua require("settings.options").toggle_option("relativenumber")<cr>',
+		desc = "Relative Code Line Numbers",
+	},
+	{ "<leader>ts", "<cmd>ASToggle<cr>", desc = "Toggle Autosave" },
+	{
+		"<leader>tv",
+		"<cmd>ToggleVirtualText<cr>",
+		desc = "Toggle Diagnostic Virtual Lines",
+	},
+	{
+		"<leader>tw",
+		'<cmd>lua require("settings.options").toggle_option("wrap")<cr>',
+		desc = "Wrap Text",
+	},
+	{ "<leader>w", group = "Window" },
+	{ "<leader>wq", "<cmd>q!<cr>", desc = "Kill window" },
+	{ "<leader>ww", "<C-w>w", desc = "Last window" },
+	{ "<leader>y", ":%y+<cr>", desc = "Yank All Text" },
+	{ "<leader>z", ":ZenMode<cr>", desc = "Zen Mode" },
 }
-
-
 which_key.setup(setup)
-which_key.register(mappings, opts)
+which_key.add(mappings, opts)
