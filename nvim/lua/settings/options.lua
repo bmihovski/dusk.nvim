@@ -32,7 +32,7 @@ local options = {
 	spell = false, -- disable spell checking
 	softtabstop = 2,
 	guicursor = "",
-	scrolloff = 999,
+	-- scrolloff = 999,
 }
 
 for k, v in pairs(options) do

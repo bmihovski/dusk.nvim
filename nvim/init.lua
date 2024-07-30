@@ -42,6 +42,7 @@ require("lazy").setup({
 	-- Functions for buffer management
 	{ "ojroques/nvim-bufdel", cmd = { "BufDel", "BufDelOthers" } },
 	{ "nvim-tree/nvim-web-devicons", lazy = true },
+	{ "echasnovski/mini.icons", version = false, lazy = true },
 
 	-- Shows available keys
 	{
@@ -737,6 +738,7 @@ require("lazy").setup({
 		config = function()
 			require("lazydocker").setup({})
 		end,
+		event = "VeryLazy",
 	},
 
 	-- Database Management
