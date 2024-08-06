@@ -117,24 +117,18 @@ local function add_jdtls_keymaps()
 	end
 
 	local vopts = {
-		mode = "v", -- VISUAL mode
-		prefix = "<leader>",
-		buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
-		silent = true, -- use `silent` when creating keymaps
-		noremap = true, -- use `noremap` when creating keymaps
+		remap = false, -- use `noremap` when creating keymaps
 		nowait = true, -- use `nowait` when creating keymaps
 	}
 
 	local vmappings = {
-		j = {
-			name = "Java",
-			v = { "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", "Extract Variable" },
-			c = { "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", "Extract Constant" },
-			m = { "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", "Extract Method" },
-		},
+		mode = { "v" },
+		{ "<leader>j", group = "Java" },
+		{ "<leader>jc", "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", desc = "Extract Constant" },
+		{ "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", desc = "Extract Method" },
+		{ "<leader>jv", "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", desc = "Extract Variable" },
 	}
-
-	which_key.register(vmappings, vopts)
+	which_key.add(vmappings, vopts)
 end
 
 local function jdtls_on_attach(client, bufnr)
@@ -309,4 +303,3 @@ vim.api.nvim_create_autocmd("FileType", {
 	desc = "Setup jdtls",
 	callback = jdtls_setup,
 })
-
