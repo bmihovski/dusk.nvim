@@ -130,8 +130,8 @@ local setup = {
 		title_pos = "bottom", -- bottom, top
 		padding = { 1, 1, 1, 1 }, -- extra window padding [top, right, bottom, left]
 		wo = {
-		   winblend = 0,
-		}
+			winblend = 0,
+		},
 	},
 	layout = {
 		height = { min = 4, max = 25 }, -- min and max height of the columns
@@ -159,6 +159,7 @@ local mappings = {
 	{ "<leader>Di", "<cmd>DBUILastQueryInfo<cr>", desc = "Last Query Info" },
 	{ "<leader>Dr", "<cmd>DBUIRenameBuffer<cr>", desc = "Rename Buffer" },
 	{ "<leader>Dt", "<cmd>DBUIToggle<cr>", desc = "Toggle UI" },
+	{ "<leader>Dd", "<cmd>lua require('dbee').open()<cr>", desc = "DBee UI" },
 	{ "<leader>P", group = "Python" },
 	{
 		"<leader>PT",
@@ -301,6 +302,7 @@ local mappings = {
 		"<cmd>lua require('jdtls.tests').generate()<cr>",
 		desc = "Generate tests for current Class",
 	},
+	{ "<leader>jl", ":FzfLua lsp_live_workspace_symbols<CR>", desc = "Find Beans" },
 	{
 		"<leader>ji",
 		"<cmd>lua require('jdtls.tests').goto_subjects()<cr>",
@@ -446,6 +448,19 @@ local mappings = {
 	{ "<leader>ww", "<C-w>w", desc = "Last window" },
 	{ "<leader>y", ":%y+<cr>", desc = "Yank All Text" },
 	{ "<leader>z", ":ZenMode<cr>", desc = "Zen Mode" },
+	{ "<leader>J", group = "Java Spring Helpers" },
+	-- set a vim motion to <Space> + <Shift>J + r to run the spring boot project in a vim terminal
+	{ "<leader>Jr", '<cmd>:lua require("springboot-nvim").boot_run()<cr>', desc = "[J]ava [R]un Spring Boot" },
+	-- set a vim motion to <Space> + <Shift>J + c to open the generate class ui to create a class
+	{ "<leader>Jc", '<cmd>:lua require("springboot-nvim").generate_class()<cr>', desc = "[J]ava Create [C]lass" },
+	-- set a vim motion to <Space> + <Shift>J + i to open the generate interface ui to create an interface
+	{
+		"<leader>Ji",
+		'<cmd>:lua require("springboot-nvim").generate_interface()<cr>',
+		desc = "[J]ava Create [I]nterface",
+	},
+	-- set a vim motion to <Space> + <Shift>J + e to open the generate enum ui to create an enum
+	{ "<leader>Je", '<cmd>:lua require("springboot-nvim").generate_enum()<cr>', desc = "[J]ava Create [E]num" },
 }
 which_key.setup(setup)
 which_key.add(mappings, opts)

@@ -289,7 +289,12 @@ require("lazy").setup({
 				end
 			end)
 
-			require("mason").setup({})
+			require("mason").setup({
+				registries = {
+					"github:mason-org/mason-registry",
+					"github:nvim-java/mason-registry",
+				},
+			})
 			require("mason-lspconfig").setup({
 
 				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
@@ -352,6 +357,14 @@ require("lazy").setup({
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
+			{
+        "MattiasMTS/cmp-dbee",
+        dependencies = {
+          {"kndndrj/nvim-dbee"}
+        },
+        ft = "sql", -- optional but good to have
+        opts = {}, -- needed
+      },
 		},
 		config = function()
 			require("pluginconfigs.cmp")
@@ -401,7 +414,7 @@ require("lazy").setup({
 		event = "LspAttach",
 		branch = "main",
 		config = function()
-			require("lsp_lines").setup({})
+			require("lsp_lines").setup()
 		end,
 	},
 
@@ -465,6 +478,66 @@ require("lazy").setup({
 		ft = "java",
 		config = function()
 			require("pluginconfigs.jdtls")
+		end,
+	},
+
+	-- Java Spring addons
+	{
+		"elmcgill/springboot-nvim",
+		lazy = true,
+		dependencies = {
+			"neovim/nvim-lspconfig",
+			"mfussenegger/nvim-jdtls",
+		},
+		config = function()
+			-- gain acces to the springboot nvim plugin and its functions
+			local springboot_nvim = require("springboot-nvim")
+
+			-- set a vim motion to <Space> + <Shift>J + r to run the spring boot project in a vim terminal
+			vim.keymap.set("n", "<leader>Jr", springboot_nvim.boot_run, { desc = "[J]ava [R]un Spring Boot" })
+			-- set a vim motion to <Space> + <Shift>J + c to open the generate class ui to create a class
+			vim.keymap.set("n", "<leader>Jc", springboot_nvim.generate_class, { desc = "[J]ava Create [C]lass" })
+			-- set a vim motion to <Space> + <Shift>J + i to open the generate interface ui to create an interface
+			vim.keymap.set(
+				"n",
+				"<leader>Ji",
+				springboot_nvim.generate_interface,
+				{ desc = "[J]ava Create [I]nterface" }
+			)
+			-- set a vim motion to <Space> + <Shift>J + e to open the generate enum ui to create an enum
+			vim.keymap.set("n", "<leader>Je", springboot_nvim.generate_enum, { desc = "[J]ava Create [E]num" })
+
+			-- run the setup function with default configuration
+			springboot_nvim.setup({})
+		end,
+	},
+	{
+		"niT-Tin/springboot-start.nvim",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"nvim-telescope/telescope.nvim",
+			"MunifTanjim/nui.nvim",
+		},
+		config = function()
+			require("springboot-start").setup({
+				-- your configuration comes here
+				-- or leave it empty to use the default settings
+				-- refer to the configuration section below
+			})
+		end,
+	},
+
+	{
+		"JavaHello/spring-boot.nvim",
+		ft = "java",
+		dependencies = {
+			"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
+			"ibhagwan/fzf-lua", -- optional
+		},
+		config = function()
+			require("spring_boot").setup({
+				ls_path = vim.fn.expand("$MASON/packages/spring-boot-tools/extension/language-server"),
+			})
 		end,
 	},
 
@@ -751,6 +824,21 @@ require("lazy").setup({
 		},
 		config = function()
 			require("pluginconfigs.dadbod").setup()
+		end,
+	},
+	{
+		"kndndrj/nvim-dbee",
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+		},
+		build = function()
+			-- Install tries to automatically detect the install method.
+			-- if it fails, try calling it with one of these parameters:
+			--    "curl", "wget", "bitsadmin", "go"
+			require("dbee").install()
+		end,
+		config = function()
+			require("dbee").setup(--[[optional config]])
 		end,
 	},
 

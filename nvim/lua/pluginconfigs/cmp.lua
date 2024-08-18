@@ -26,6 +26,7 @@ cmp.setup({
   },
   sources = {
     { name = "copilot" },
+    { name = "cmp-dbee" },
     { name = "nvim_lsp" },
     { name = "luasnip" },
     {

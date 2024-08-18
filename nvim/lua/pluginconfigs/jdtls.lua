@@ -18,6 +18,8 @@ local features = {
 	-- change this to `true` if you have `nvim-dap`,
 	-- `java-test` and `java-debug-adapter` installed
 	debugger = true,
+	-- change this to `true` if you have `spring-boot-tools` installed
+	spring_boot_tools = true,
 }
 
 local function get_jdtls_paths()
@@ -65,6 +67,14 @@ local function get_jdtls_paths()
 
 	if java_debug_bundle[1] ~= "" then
 		vim.list_extend(path.bundles, java_debug_bundle)
+	end
+
+	---
+	--- Include spring-boot-tools bundle if present
+	---
+	local spring_extensions_bundle = require("spring_boot").java_extensions()
+	if spring_extensions_bundle[1] ~= "" and features.spring_boot_tools then
+		vim.list_extend(path.bundles, spring_extensions_bundle)
 	end
 
 	---
@@ -140,6 +150,10 @@ local function jdtls_on_attach(client, bufnr)
 
 	if features.debugger then
 		enable_debugger(bufnr)
+	end
+
+	if features.spring_boot_tools then
+		require("spring_boot").init_lsp_commands()
 	end
 end
 
