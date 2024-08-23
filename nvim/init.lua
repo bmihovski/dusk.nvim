@@ -358,13 +358,13 @@ require("lazy").setup({
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
 			{
-        "MattiasMTS/cmp-dbee",
-        dependencies = {
-          {"kndndrj/nvim-dbee"}
-        },
-        ft = "sql", -- optional but good to have
-        opts = {}, -- needed
-      },
+				"MattiasMTS/cmp-dbee",
+				dependencies = {
+					{ "kndndrj/nvim-dbee" },
+				},
+				ft = "sql", -- optional but good to have
+				opts = {}, -- needed
+			},
 		},
 		config = function()
 			require("pluginconfigs.cmp")
@@ -513,6 +513,7 @@ require("lazy").setup({
 	},
 	{
 		"niT-Tin/springboot-start.nvim",
+		lazy = true,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"nvim-telescope/telescope.nvim",
@@ -828,6 +829,7 @@ require("lazy").setup({
 	},
 	{
 		"kndndrj/nvim-dbee",
+		lazy = true,
 		dependencies = {
 			"MunifTanjim/nui.nvim",
 		},
