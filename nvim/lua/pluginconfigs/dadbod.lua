@@ -75,12 +75,6 @@ function M.setup()
 				.. urlencode(">_eH!44{BaiST7Lh")
 				.. "@localhost:5432/cmpc-pulp-cl-backend-ms-auth-z",
 		},
-		{
-			name = "test",
-			url = "postgres://postgres:"
-				.. urlencode("sUASz=B5asxVIq2_=h9kQG9I.YK4mXIw")
-				.. "@localhost:5432/test_metadata",
-		},
 	}
 
 	vim.api.nvim_create_autocmd("FileType", {

@@ -159,7 +159,6 @@ local mappings = {
 	{ "<leader>Di", "<cmd>DBUILastQueryInfo<cr>", desc = "Last Query Info" },
 	{ "<leader>Dr", "<cmd>DBUIRenameBuffer<cr>", desc = "Rename Buffer" },
 	{ "<leader>Dt", "<cmd>DBUIToggle<cr>", desc = "Toggle UI" },
-	{ "<leader>Dd", "<cmd>lua require('dbee').open()<cr>", desc = "DBee UI" },
 	{ "<leader>P", group = "Python" },
 	{
 		"<leader>PT",

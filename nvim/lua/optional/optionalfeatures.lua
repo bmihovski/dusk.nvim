@@ -199,9 +199,7 @@ return {
 				},
 			},
 		},
-		build = function()
-			vim.cmd("UpdateRemotePlugins") -- You need to restart to make it works
-		end,
+		build = "make tiktoken",
 	},
 
 	{

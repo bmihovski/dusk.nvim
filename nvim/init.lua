@@ -827,22 +827,6 @@ require("lazy").setup({
 			require("pluginconfigs.dadbod").setup()
 		end,
 	},
-	{
-		"kndndrj/nvim-dbee",
-		lazy = true,
-		dependencies = {
-			"MunifTanjim/nui.nvim",
-		},
-		build = function()
-			-- Install tries to automatically detect the install method.
-			-- if it fails, try calling it with one of these parameters:
-			--    "curl", "wget", "bitsadmin", "go"
-			require("dbee").install()
-		end,
-		config = function()
-			require("dbee").setup(--[[optional config]])
-		end,
-	},
 
 	--------------------------------------
 	-- Language specific --
