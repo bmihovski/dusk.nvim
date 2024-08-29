@@ -555,7 +555,7 @@ require("lazy").setup({
 	-- Sonarlint plugin
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html" },
+		ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html", "text", "yaml", "yml", "toml" },
 		config = function()
 			require("sonarlint").setup({
 				server = {
@@ -570,6 +570,9 @@ require("lazy").setup({
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjava.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjs.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarhtml.jar"),
+						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonartext.jar.jar"),
+						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonariac.jar"),
+						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjavasymbolicexecution.jar"),
 					},
 					settings = {
 						sonarlint = {
