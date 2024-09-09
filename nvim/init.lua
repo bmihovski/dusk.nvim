@@ -357,14 +357,6 @@ require("lazy").setup({
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
-			{
-				"MattiasMTS/cmp-dbee",
-				dependencies = {
-					{ "kndndrj/nvim-dbee" },
-				},
-				ft = "sql", -- optional but good to have
-				opts = {}, -- needed
-			},
 		},
 		config = function()
 			require("pluginconfigs.cmp")
