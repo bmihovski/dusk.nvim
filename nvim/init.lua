@@ -300,7 +300,7 @@ require("lazy").setup({
 				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
 				ensure_installed = {
 					"jdtls",
-					"tsserver",
+					"ts_ls",
 					"lua_ls",
 					"jsonls",
 					"lemminx",
