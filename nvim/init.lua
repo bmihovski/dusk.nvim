@@ -319,6 +319,7 @@ require("lazy").setup({
 					"taplo",
 					"ruff_lsp",
 					"cmake",
+					"cucumber-language-server",
 				},
 				handlers = {
 
