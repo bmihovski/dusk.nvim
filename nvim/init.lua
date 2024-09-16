@@ -291,8 +291,8 @@ require("lazy").setup({
 
 			require("mason").setup({
 				registries = {
+					"github:bmihovski/mason-registry",
 					"github:mason-org/mason-registry",
-					"github:nvim-java/mason-registry",
 				},
 			})
 			require("mason-lspconfig").setup({
