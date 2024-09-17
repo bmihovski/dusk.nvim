@@ -32,8 +32,10 @@ local function get_jdtls_paths()
 	path.workspace_dir = vim.fn.stdpath("cache") .. "/nvim-jdtls"
 
 	local jdtls_install = require("mason-registry").get_package("jdtls"):get_install_path()
+	-- require custom mason registry
+	local lombok_root = require("mason-registry").get_package("lombok-nightly"):get_install_path()
 
-	path.lombok = jdtls_install .. "/lombok.jar"
+	path.lombok = lombok_root .. "/lombok.jar"
 	path.launcher_jar = vim.fn.glob(jdtls_install .. "/plugins/org.eclipse.equinox.launcher_*.jar")
 
 	if vim.fn.has("mac") == 1 then

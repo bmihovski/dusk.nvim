@@ -296,31 +296,6 @@ require("lazy").setup({
 				},
 			})
 			require("mason-lspconfig").setup({
-
-				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
-				ensure_installed = {
-					"jdtls",
-					"ts_ls",
-					"lua_ls",
-					"jsonls",
-					"lemminx",
-					"marksman",
-					"emmet_ls",
-					"gradle_ls",
-					"html",
-					"cssls",
-					"bashls",
-					"angularls",
-					"quick_lint_js",
-					"pyright",
-					"clangd",
-					"helm_ls",
-					"yamlls",
-					"taplo",
-					"ruff_lsp",
-					"cmake",
-					"cucumber_language_server",
-				},
 				handlers = {
 
 					-- Don't setup jdtls here, it's configured in pluginconfigs/jdtls.lua
@@ -425,7 +400,29 @@ require("lazy").setup({
 		config = function()
 			require("mason-tool-installer").setup({
 
+				-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
 				ensure_installed = {
+					"jdtls",
+					"ts_ls",
+					"lua_ls",
+					"jsonls",
+					"lemminx",
+					"marksman",
+					"emmet_ls",
+					"gradle_ls",
+					"html",
+					"cssls",
+					"bashls",
+					"angularls",
+					"quick_lint_js",
+					"pyright",
+					"clangd",
+					"helm_ls",
+					"yamlls",
+					"taplo",
+					"ruff_lsp",
+					"cmake",
+					"cucumber_language_server",
 					"bash-language-server",
 					"google-java-format",
 					"stylua",
@@ -450,17 +447,26 @@ require("lazy").setup({
 					"debugpy", -- debugger
 					"black", -- formatter
 					"isort", -- organize imports
+					"ansible-language-server",
+					"ansible-lint",
+					-- "spring-boot-tools", -- still not available with mason
+					-- "lombok-nightly", -- still not available with mason
 				},
 				-- if set to true this will check each tool for updates. If updates
 				-- are available the tool will be updated. This setting does not
 				-- affect :MasonToolsUpdate or :MasonToolsInstall.
 				-- Default: false
-				auto_update = false,
+				auto_update = true,
 				-- set a delay (in ms) before the installation starts. This is only
 				-- effective if run_on_start is set to true.
 				-- e.g.: 5000 = 5 second delay, 10000 = 10 second delay, etc...
 				-- Default: 0
 				start_delay = 3000, -- 3 second delay
+				integrations = {
+					["mason-lspconfig"] = true,
+					["mason-null-ls"] = false,
+					["mason-nvim-dap"] = true,
+				},
 			})
 		end,
 	},
