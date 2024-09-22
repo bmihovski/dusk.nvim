@@ -101,6 +101,10 @@ return {
 		},
 	},
 	{
+		"tpope/vim-obsession",
+		lazy = true,
+	},
+	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
 		opts = {},
