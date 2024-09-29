@@ -172,14 +172,10 @@ return {
 	{
 		"AndreM222/copilot-lualine",
 		event = "VeryLazy",
-		config = function()
-			require("lualine").setup()
-		end,
 	},
 
 	{
 		"zbirenbaum/copilot-cmp",
-		event = "InsertEnter",
 		dependencies = { "zbirenbaum/copilot.lua" },
 		config = function()
 			require("copilot_cmp").setup()
@@ -202,6 +198,9 @@ return {
 					insert = "<C-r>",
 				},
 			},
+			context = "buffers",
+			history_path = vim.fn.stdpath("data") .. "/copilotchat_history",
+			auto_follow_cursor = false,
 		},
 		build = "make tiktoken",
 	},
@@ -212,8 +211,18 @@ return {
 		event = "InsertEnter",
 		config = function()
 			require("copilot").setup({
-				suggestion = { enabled = false },
-				panel = { enabled = false },
+				suggestion = { enabled = false, auto_trigger = false, debounce = 75 },
+				panel = {
+					enabled = false,
+
+					layout = {
+						position = "bottom", -- | top | left | right
+						ratio = 0.4,
+						event = { "BufEnter" },
+					},
+				},
+				copilot_node_command = "node",
+				server_opts_overrides = {},
 			})
 		end,
 	},
