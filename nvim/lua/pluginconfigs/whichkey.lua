@@ -234,7 +234,7 @@ local mappings = {
 	{ "<leader>dd", ":lua require'dapui'.toggle()<cr>", desc = "Dap UI" },
 	{
 		"<leader>de",
-	":lua require'dapui'.eval(vim.fn.input('eval: '))<cr>",
+		":lua require'dapui'.eval(vim.fn.input('eval: '))<cr>",
 		desc = "Evaluate expression",
 	},
 	{ "<leader>di", ":lua require'dap'.step_into()<cr>", desc = "Step Into" },
@@ -452,6 +452,7 @@ local mappings = {
 	{ "<leader>ww", "<C-w>w", desc = "Last window" },
 	{ "<leader>y", ":%y+<cr>", desc = "Yank All Text" },
 	{ "<leader>z", ":ZenMode<cr>", desc = "Zen Mode" },
+	{ "<leader>n", ":NoNeckPain<cr>", desc = "Center buffer no ZenMode" },
 	{ "<leader>J", group = "Java Spring Helpers" },
 	-- set a vim motion to <Space> + <Shift>J + r to run the spring boot project in a vim terminal
 	{ "<leader>Jr", '<cmd>:lua require("springboot-nvim").boot_run()<cr>', desc = "[J]ava [R]un Spring Boot" },

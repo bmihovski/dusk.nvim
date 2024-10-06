@@ -124,6 +124,12 @@ return {
 			require("pqf").setup()
 		end,
 	},
+	{
+   "shortcuts/no-neck-pain.nvim",
+		version = "*",
+		event = "VeryLazy",
+		opts = {},
+	},
 
 	{
 		"tris203/precognition.nvim",
