@@ -232,6 +232,11 @@ local mappings = {
 	{ "<leader>db", ":lua require'dap'.toggle_breakpoint()<cr>", desc = "Breakpoint" },
 	{ "<leader>dc", ":lua require'dap'.continue()<cr>", desc = "Start/Continue" },
 	{ "<leader>dd", ":lua require'dapui'.toggle()<cr>", desc = "Dap UI" },
+	{
+		"<leader>de",
+	":lua require'dapui'.eval(vim.fn.input('eval: '))<cr>",
+		desc = "Evaluate expression",
+	},
 	{ "<leader>di", ":lua require'dap'.step_into()<cr>", desc = "Step Into" },
 	{ "<leader>do", ":lua require'dap'.step_over()<cr>", desc = "Step Over" },
 	{ "<leader>dr", ":lua require'dap'.repl.open()<cr>", desc = "Repl Console" },
