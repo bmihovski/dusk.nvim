@@ -438,7 +438,6 @@ require("lazy").setup({
 					"checkstyle",
 					"cpplint",
 					"beautysh",
-					"yamlfix",
 					"prettierd",
 					"ruff",
 					"prettier",
@@ -449,6 +448,8 @@ require("lazy").setup({
 					"isort", -- organize imports
 					"ansible-language-server",
 					"ansible-lint",
+					"jq",
+					"yamlfmt",
 					-- "spring-boot-tools", -- still not available with mason
 					-- "lombok-nightly", -- still not available with mason
 				},
@@ -616,7 +617,6 @@ require("lazy").setup({
 					objc = { "clang-format" },
 					objcpp = { "clang-format" },
 					cuda = { "clang-format" },
-					proto = { "clang-format" },
 					python = function(bufnr)
 						if require("conform").get_formatter_info("ruff_format", bufnr).available then
 							return { "ruff_format" }
@@ -628,7 +628,7 @@ require("lazy").setup({
 					typescript = { { "prettierd", "prettier" } },
 					javascriptreact = { { "prettierd", "prettier" } },
 					typescriptreact = { { "prettierd", "prettier" } },
-					json = { { "prettierd", "prettier" } },
+					json = { "jq" },
 					graphql = { { "prettierd", "prettier" } },
 					java = { "google-java-format" },
 					kotlin = { "ktlint" },
@@ -637,7 +637,7 @@ require("lazy").setup({
 					html = { "htmlbeautifier" },
 					bash = { "beautysh" },
 					proto = { "buf" },
-					yaml = { "yamlfix" },
+					yaml = { "yamlfmt" },
 					toml = { "taplo" },
 					css = { { "prettierd", "prettier" } },
 					scss = { { "prettierd", "prettier" } },
