@@ -125,7 +125,7 @@ return {
 		end,
 	},
 	{
-   "shortcuts/no-neck-pain.nvim",
+		"shortcuts/no-neck-pain.nvim",
 		version = "*",
 		event = "VeryLazy",
 		opts = {},
@@ -293,14 +293,6 @@ return {
 	},
 
 	{
-		"rockerBOO/symbols-outline.nvim",
-		event = "VeryLazy",
-		config = function(_, opts)
-			require("symbols-outline").setup(opts)
-		end,
-	},
-
-	{
 		"aznhe21/actions-preview.nvim",
 		event = "VeryLazy",
 		dependencies = { "MunifTanjim/nui.nvim", "nvim-telescope/telescope.nvim" },
@@ -341,6 +333,12 @@ return {
 				require("telescope").load_extension("refactoring"),
 			})
 		end,
+	},
+	-- misc
+	{
+		"norcalli/nvim-colorizer.lua",
+		config = true,
+		cmd = "ColorizerToggle",
 	},
 	-- rest client
 	-- {

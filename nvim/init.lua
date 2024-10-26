@@ -8,7 +8,27 @@ vim.g.loaded_netrwPlugin = 1
 vim.keymap.set({ "n", "v" }, "-", "<Nop>", { silent = true })
 vim.g.mapleader = "-"
 vim.g.maplocalleader = "-"
-
+local ft = {
+	dap = { cppdbg = { "c", "cpp" } },
+	doc = { "markdown", "asciidoc" },
+	fmt = { sh = { "shfmt" } },
+	lsp = { "c", "cpp", "lua", "python", "sh", "java" },
+	sonar = {
+		"java",
+		"python",
+		"c",
+		"cpp",
+		"typescript",
+		"typescriptreact",
+		"html",
+		"text",
+		"yaml",
+		"yml",
+		"toml",
+		"xml",
+	},
+	ts = { "c", "cpp", "jsonc", "lua", "python", "java" },
+}
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -71,6 +91,7 @@ require("lazy").setup({
 				component_separators = "|",
 				section_separators = "",
 			},
+			extensions = { "aerial", "toggleterm", "quickfix" },
 
 			sections = {
 				lualine_b = {
@@ -182,6 +203,7 @@ require("lazy").setup({
 		-- cmd = "Telescope",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
+			"jvgrootveld/telescope-zoxide",
 			{
 				"ahmedkhalf/project.nvim",
 				config = function()
@@ -204,6 +226,16 @@ require("lazy").setup({
 			require("telescope").setup({
 				defaults = {
 					path_display = { "filename_first" },
+					file_ignore_patterns = { "%.jpg", "%.jpeg", "%.png", "%.otf", "%.ttf" },
+					prompt_prefix = "   ",
+					selection_caret = "  ",
+					entry_prefix = "  ",
+					layout_strategy = "flex",
+					layout_config = {
+						horizontal = {
+							preview_width = 0.6,
+						},
+					},
 				},
 				pickers = {
 					find_files = {
@@ -226,7 +258,9 @@ require("lazy").setup({
 						previewer = false,
 					},
 				},
+				extensions = { zoxide = {} },
 			})
+			require("telescope").load_extension("zoxide")
 		end,
 	},
 
@@ -260,6 +294,21 @@ require("lazy").setup({
 	--------------------------------------
 	-- LSP & Autocompletion --
 	--------------------------------------
+	{ "folke/lazydev.nvim", ft = "lua" },
+	{
+		"stevearc/aerial.nvim",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
+		config = function()
+			require("aerial").setup({
+				backends = { "treesitter", "lsp" },
+			})
+			local lualine_require = require("lualine_require")
+			local modules = lualine_require.lazy_require({ config_module = "lualine.config" })
+			local current_config = modules.config_module.get_config()
+			current_config.sections.lualine_c = { "hostname", { "filename", path = 1 }, "aerial" }
+			require("lualine").setup(current_config)
+		end,
+	},
 	{
 		-- LSP Configuration & Plugins
 		"neovim/nvim-lspconfig",
@@ -450,6 +499,7 @@ require("lazy").setup({
 					"ansible-lint",
 					"jq",
 					"yamlfmt",
+					"omnisharp",
 					-- "spring-boot-tools", -- still not available with mason
 					-- "lombok-nightly", -- still not available with mason
 				},
@@ -470,6 +520,13 @@ require("lazy").setup({
 				},
 			})
 		end,
+	},
+	{
+		"danymat/neogen",
+		dependencies = { "nvim-treesitter/nvim-treesitter" },
+		opts = { snippet_engine = "luasnip" },
+		ft = ft.lsp,
+		cmd = { "Neogen" },
 	},
 
 	-- The Java LSP server
@@ -555,7 +612,7 @@ require("lazy").setup({
 	-- Sonarlint plugin
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		ft = { "java", "python", "cpp", "typescript", "typescriptreact", "html", "text", "yaml", "yml", "toml" },
+		ft = ft.sonar,
 		config = function()
 			require("sonarlint").setup({
 				server = {
@@ -570,6 +627,7 @@ require("lazy").setup({
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjava.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjs.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarhtml.jar"),
+						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarxml.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonartext.jar.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonariac.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjavasymbolicexecution.jar"),
@@ -580,14 +638,7 @@ require("lazy").setup({
 						},
 					},
 				},
-				filetypes = {
-					-- Tested and working
-					"python",
-					"cpp",
-					"java",
-					"typescript",
-					"html",
-				},
+				filetypes = ft.sonar,
 			})
 		end,
 	},

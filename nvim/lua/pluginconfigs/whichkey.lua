@@ -212,6 +212,7 @@ local mappings = {
 		desc = "Current buffer Diagnostics",
 	},
 	{ "<leader>ca", ":lua vim.lsp.buf.code_action()<cr>", desc = "Code Action" },
+	{ "<leader>cd", ":Neogen<cr>", desc = "generate code docs" },
 	{
 		"<leader>ce",
 		":Trouble diagnostics filter.severity=vim.diagnostic.severity.ERROR<cr>",
@@ -223,6 +224,8 @@ local mappings = {
 	{ "<leader>cp", ":Lspsaga diagnostic_jump_prev<cr>", desc = "Prev Diagnostic" },
 	{ "<leader>cq", ":Trouble quickfix focus = true<cr>", desc = "Diagnostics Quickfix" },
 	{ "<leader>cr", ":Lspsaga rename<cr>", desc = "Rename in current buffer" },
+	{ "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", desc = "Documents Symbols" },
+	{ "<leader>cW", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", desc = "Workspace Symbols" },
 	{
 		"<leader>cx",
 		":Trouble diagnostics toggle focus = true<cr>",
@@ -254,6 +257,8 @@ local mappings = {
 	{ "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
 	{ "<leader>fp", "<cmd>Telescope projects <CR>", desc = "Projects" },
 	{ "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
+	{ "<leader>fR", "<cmd>Telescope resume<cr>", desc = "Telescope Resume" },
+	{ "<leader>fz", "<cmd>Telescope zoxide list<cr>", desc = "zoxide list" },
 	{ "<leader>g", group = "Git" },
 	{ "<leader>gD", ":DiffviewClose<cr>", desc = "Close Diff" },
 	{ "<leader>gP", ":lua require 'gitsigns'.preview_hunk()<cr>", desc = "Preview Hunk" },

@@ -94,7 +94,7 @@ keymap("n", "<leader>8", "<cmd> Telescope live_grep <CR>", opts)
 keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)
 
 -- outline symbols
-keymap("n", "<F3>", "<Cmd>SymbolsOutline<CR>", opts)
+keymap("n", "<F3>", "<Cmd>AerialToggle!<CR>", opts)
 -- java test
 keymap("n", "<A-o>", "<Cmd>lua require'jdtls'.organize_imports()<CR>", opts)
 keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", opts)
@@ -261,4 +261,3 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		bufmap("n", "gn", "<cmd>lua vim.diagnostic.goto_next()<cr>")
 	end,
 })
-
