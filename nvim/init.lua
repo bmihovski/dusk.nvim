@@ -806,11 +806,29 @@ require("lazy").setup({
 		},
 	},
 
+	-- Code documentation
+	{
+		"folke/todo-comments.nvim",
+		event = "InsertEnter",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		opts = {},
+	},
+
 	-- Distraction free mode
 	{
 		"folke/zen-mode.nvim",
 		event = "VeryLazy",
 		dependencies = { "folke/twilight.nvim" },
+		config = function()
+			require("zen-mode").setup({
+				plugins = {
+					tmux = { enabled = true },
+					gitsigns = { enabled = true },
+					todo = { enabled = true },
+					alacrity = { enabled = true, font = "14" },
+				},
+			})
+		end,
 	},
 
 	--Terminal
