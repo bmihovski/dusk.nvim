@@ -522,6 +522,14 @@ require("lazy").setup({
 		end,
 	},
 	{
+		"zapling/mason-lock.nvim",
+		init = function()
+			require("mason-lock").setup({
+				lockfile_path = vim.fn.stdpath("config") .. "/mason-lock.json", -- (default)
+			})
+		end,
+	},
+	{
 		"danymat/neogen",
 		dependencies = { "nvim-treesitter/nvim-treesitter" },
 		opts = { snippet_engine = "luasnip" },
