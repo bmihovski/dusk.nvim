@@ -189,7 +189,7 @@ return {
 	},
 
 	{
-		"bmihovski/CopilotChat.nvim",
+		"CopilotC-Nvim/CopilotChat.nvim",
 		event = "VeryLazy",
 		branch = "canary",
 		dependencies = {
