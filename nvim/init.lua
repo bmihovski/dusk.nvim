@@ -469,7 +469,6 @@ require("lazy").setup({
 					"helm_ls",
 					"yamlls",
 					"taplo",
-					"ruff_lsp",
 					"cmake",
 					"cucumber_language_server",
 					"bash-language-server",
