@@ -1,5 +1,5 @@
 {
-  "angular-language-server": "19.0.2",
+  "angular-language-server": "19.0.3",
   "ansible-language-server": "1.2.3",
   "ansible-lint": "24.10.0",
   "bash-debug-adapter": "untagged-438733f35feb8659d939",
@@ -27,7 +27,7 @@
   "java-test": "0.41.1",
   "jdtls": "v1.41.0",
   "jq": "jq-1.7",
-  "js-debug-adapter": "v1.95.1",
+  "js-debug-adapter": "v1.95.3",
   "json-lsp": "4.10.0",
   "ktlint": "1.4.1",
   "lemminx": "0.27.2",
@@ -42,7 +42,7 @@
   "pyright": "1.1.389",
   "quick-lint-js": "3.2.0",
   "ruff": "0.8.1",
-  "ruff-lsp": "0.0.58",
+  "ruff-lsp": "0.0.59",
   "shellcheck": "v0.10.0",
   "shfmt": "v3.10.0",
   "sonarlint-language-server": "4.9.0+76673",
@@ -54,5 +54,5 @@
   "yaml-language-server": "1.15.0",
   "yamlfix": "1.17.0",
   "yamlfmt": "v0.14.0",
-  "yq": "v4.44.3"
+  "yq": "v4.44.5"
 }
