@@ -256,6 +256,13 @@ return {
 		cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
 	},
 
+	-- bazel
+	{
+		"mrheinen/bazelbub.nvim",
+		version = "v0.2",
+	},
+	{ "bazelbuild/vim-bazel", dependencies = { "google/vim-maktaba" } },
+
 	{
 		"gen740/SmoothCursor.nvim",
 		event = { "BufRead", "BufNewFile" },
