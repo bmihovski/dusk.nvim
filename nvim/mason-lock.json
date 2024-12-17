@@ -44,7 +44,7 @@
   "ruff": "0.8.3",
   "shellcheck": "v0.10.0",
   "shfmt": "v3.10.0",
-  "sonarlint-language-server": "4.13.2+77052",
+  "sonarlint-language-server": "4.14.0+77092",
   "spring-boot-tools": "1.59.0",
   "stylua": "v0.20.0",
   "taplo": "0.9.3",
