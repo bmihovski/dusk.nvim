@@ -14,6 +14,7 @@
   "cmake-language-server": "0.1.10",
   "codelldb": "v1.11.1",
   "cpplint": "2.0.0",
+  "cpptools": "v1.22.11",
   "css-lsp": "4.10.0",
   "cucumber-language-server": "1.6.0",
   "debugpy": "1.8.11",

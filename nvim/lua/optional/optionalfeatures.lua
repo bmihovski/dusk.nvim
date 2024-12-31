@@ -256,6 +256,12 @@ return {
 		cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
 	},
 
+
+	{
+		"bfrg/vim-c-cpp-modern",
+		ft = { "hpp", "h", "cpp" },
+	},
+
 	-- bazel
 	{
 		"mrheinen/bazelbub.nvim",
@@ -345,6 +351,25 @@ return {
 		"norcalli/nvim-colorizer.lua",
 		config = true,
 		cmd = "ColorizerToggle",
+	},
+	{
+		"EthanJWright/vs-tasks.nvim",
+		dependencies = {
+			"nvim-lua/popup.nvim",
+			"nvim-lua/plenary.nvim",
+			"nvim-telescope/telescope.nvim",
+		},
+		config = function()
+			require("vstask").setup({
+				json_parser = require("json5").parse,
+			})
+		end,
+	},
+	{
+		"Joakker/lua-json5",
+		build = "./install.sh && mv lua/json5.dylib lua/json5.so",
+		lazy = false,
+		priority = 1000,
 	},
 	-- rest client
 	-- {

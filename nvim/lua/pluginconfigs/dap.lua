@@ -2,6 +2,15 @@ return {
 
 	-- DAP
 	{ "mfussenegger/nvim-dap", event = "VeryLazy" },
+	{
+	"julianolf/nvim-dap-lldb",
+		"julianolf/nvim-dap-lldb",
+		ft = "c,cpp,hpp,h,cpp,cc",
+		dependencies = { "mfussenegger/nvim-dap" },
+		config = function()
+			require("dap-lldb").setup({})
+		end,
+	},
 
 	-- Required to configure DAP for languages other than Java
 	{
@@ -10,6 +19,7 @@ return {
 		dependencies = {
 			"williamboman/mason.nvim",
 			"mfussenegger/nvim-dap",
+			"julianolf/nvim-dap-lldb",
 		},
 		config = function()
 			require("mason-nvim-dap").setup({
@@ -21,6 +31,7 @@ return {
 					"python",
 					"javadbg",
 					"javatest",
+					"cpptools",
 					"codelldb",
 				},
 				automatic_installation = true,
