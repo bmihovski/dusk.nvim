@@ -104,15 +104,6 @@ return {
 		"tpope/vim-obsession",
 		lazy = true,
 	},
-	{
-		"folke/noice.nvim",
-		event = "VeryLazy",
-		opts = {},
-		dependencies = {
-			-- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
-			"MunifTanjim/nui.nvim",
-		},
-	},
 
 	{
 		"https://gitlab.com/yorickpeterse/nvim-pqf.git",
@@ -232,6 +223,24 @@ return {
 		end,
 	},
 
+	-- Python helpers
+	{
+		"AckslD/swenv.nvim",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"stevearc/dressing.nvim",
+		},
+		lazy = false,
+		config = function()
+			require("swenv").setup({
+				venvs_path = vim.fn.expand("~/.cache/pypoetry/virtualenvs"),
+				post_set_venv = function()
+					vim.cmd("LspRestart")
+				end,
+			})
+		end,
+	},
+
 	-- C++ build
 	{
 		"Civitasv/cmake-tools.nvim",
@@ -255,7 +264,6 @@ return {
 		end,
 		cmd = { "TSCppDefineClassFunc", "TSCppMakeConcreteClass", "TSCppRuleOf3", "TSCppRuleOf5" },
 	},
-
 
 	{
 		"bfrg/vim-c-cpp-modern",

@@ -63,6 +63,23 @@ require("lazy").setup({
 	{ "ojroques/nvim-bufdel", cmd = { "BufDel", "BufDelOthers" } },
 	{ "nvim-tree/nvim-web-devicons", lazy = true },
 	{ "echasnovski/mini.icons", version = false, lazy = true },
+	{
+		"stevearc/overseer.nvim",
+		dependencies = { "stevearc/dressing.nvim" },
+		opts = {},
+		lazy = false,
+		config = function()
+			require("overseer").setup()
+		end,
+	},
+	{
+		"stevearc/dressing.nvim",
+		config = function()
+			require("dressing").setup({
+				input = { enabled = false },
+			})
+		end,
+	},
 
 	-- Shows available keys
 	{
@@ -78,6 +95,18 @@ require("lazy").setup({
 		"goolord/alpha-nvim",
 		config = function()
 			require("pluginconfigs.dashboard")
+		end,
+	},
+	{
+		"folke/noice.nvim",
+		event = "VeryLazy",
+		opts = {},
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+			-- "rcarriga/nvim-notify",
+		},
+		config = function()
+			require("pluginconfigs.noice")
 		end,
 	},
 

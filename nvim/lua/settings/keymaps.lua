@@ -114,12 +114,6 @@ keymap("n", "<leader>jp", "<Cmd>lua require('jdtls').super_implementation<CR>", 
 keymap("n", "<leader>js", "<Cmd>lua require('jdtls').jshell()<CR>", opts)
 -- markdown
 keymap("n", "<F6>", "<cmd> MarkdownPreviewToggle<CR>", opts)
--- python
-keymap("n", "<leader>vl", "<cmd>VenvSelect<CR>", opts)
-keymap("n", "<leader>vh", "<cmd>VenvSelectCached<CR>", opts)
-keymap("n", "<leader>kw", "<cmd>lua require('dap-python').test_method()<CR>", opts)
-keymap("n", "<leader>kf", "<cmd>lua require('dap-python').test_class()<CR>", opts)
-keymap("n", "<leader>ks", "<cmd>lua require('dap-python').debug_selection()<CR>", opts)
 
 -- tmux
 keymap("n", "<C-\\>", '<cmd>lua require("nvim-tmux-navigation").NvimTmuxNavigateLastActive<cr>', opts)

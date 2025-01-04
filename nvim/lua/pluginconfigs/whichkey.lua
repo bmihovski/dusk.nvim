@@ -152,6 +152,7 @@ local opts = {
 }
 
 local mappings = {
+	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
 	{ "<leader>C", group = "Containers - Docker" },
 	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
 	{ "<leader>D", group = "Database" },
@@ -181,7 +182,7 @@ local mappings = {
 		desc = "Test Method",
 	},
 	{ "<leader>Pv", "<Cmd>VenvSelect<CR>", desc = "Select New Virtual Environment" },
-	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
+	{ "<leader>PC", "<cmd>lua require('swenv.api').pick_venv()<cr>", desc = "Choose Venv" },
 	{ "<leader>S", group = "C++" },
 	{ "<leader>Sa", "<cmd>ClangdAST<cr>", desc = "Display AST" },
 	{
@@ -218,7 +219,7 @@ local mappings = {
 		":Trouble diagnostics filter.severity=vim.diagnostic.severity.ERROR<cr>",
 		desc = "Show Workspace Errors",
 	},
-	{ "<leader>cf", "<cmd>lua vim.lsp.buf.format({async = true})<cr>", desc = "Format" },
+	{ "<leader>cf", "<cmd>lua require('conform').format({async = true})<CR>", desc = "Format Document" },
 	{ "<leader>cn", ":Lspsaga diagnostic_jump_next<cr>", desc = "Next Diagnostic" },
 	{ "<leader>co", ":Lspsaga outline<cr>", desc = "Code Outline" },
 	{ "<leader>cp", ":Lspsaga diagnostic_jump_prev<cr>", desc = "Prev Diagnostic" },
@@ -477,6 +478,12 @@ local mappings = {
 	},
 	-- set a vim motion to <Space> + <Shift>J + e to open the generate enum ui to create an enum
 	{ "<leader>Je", '<cmd>:lua require("springboot-nvim").generate_enum()<cr>', desc = "[J]ava Create [E]num" },
+	{ "<leader>O", group = "Run tasks" },
+	-- overseer.nvim
+	{ "<leader>Os", "<cmd>OverseerRun<cr>", desc = "Overseer Run" },
+	{ "<leader>OS", "<cmd>OverseerToggle!<cr>", desc = "Overseer Toggle" },
+	{ "<leader>Oa", "<cmd>OverseerQuickAction<cr>", desc = "Overseer Quick Action" },
+	{ "<leader>OA", "<cmd>OverseerTaskAction<cr>", desc = "Overseer Task Action" },
 }
 which_key.setup(setup)
 which_key.add(mappings, opts)
