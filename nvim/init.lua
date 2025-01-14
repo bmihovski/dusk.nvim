@@ -529,6 +529,7 @@ require("lazy").setup({
 					"jq",
 					"yamlfmt",
 					"omnisharp",
+					"vscode-spring-boot-tools",
 					-- "spring-boot-tools", -- still not available with mason
 					-- "lombok-nightly", -- still not available with mason
 				},
@@ -624,16 +625,13 @@ require("lazy").setup({
 
 	{
 		"JavaHello/spring-boot.nvim",
-		ft = "java",
+		ft = { "java", "yaml", "jproperties" },
 		dependencies = {
 			"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
 			"ibhagwan/fzf-lua", -- optional
 		},
-		config = function()
-			require("spring_boot").setup({
-				ls_path = vim.fn.expand("$MASON/packages/spring-boot-tools/extension/language-server"),
-			})
-		end,
+		---@type bootls.Config
+		opts = {},
 	},
 
 	-- Rename packages and imports also when renaming/moving files via nvim-tree (for Java)
