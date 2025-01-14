@@ -6,7 +6,7 @@
   "bash-language-server": "5.4.3",
   "beautysh": "6.2.1",
   "black": "24.10.0",
-  "buf": "v1.48.0",
+  "buf": "v1.49.0",
   "checkstyle": "checkstyle-10.12.6",
   "chrome-debug-adapter": "v4.13.0",
   "clang-format": "19.1.6",
@@ -21,7 +21,7 @@
   "emmet-ls": "0.4.2",
   "google-java-format": "v1.25.2",
   "gradle-language-server": "3.15.0",
-  "helm-ls": "v0.1.0",
+  "helm-ls": "v0.1.1",
   "html-lsp": "4.10.0",
   "isort": "5.13.2",
   "java-debug-adapter": "0.58.1",
@@ -42,7 +42,7 @@
   "prettierd": "0.26.0",
   "pyright": "1.1.391",
   "quick-lint-js": "3.2.0",
-  "ruff": "0.8.6",
+  "ruff": "0.9.1",
   "shellcheck": "v0.10.0",
   "shfmt": "v3.10.0",
   "sonarlint-language-server": "4.14.1+77101",
@@ -53,6 +53,6 @@
   "vscode-java-decompiler": "57691a5fdacbc67a8b606e34fb636fa89687430b",
   "yaml-language-server": "1.15.0",
   "yamlfix": "1.17.0",
-  "yamlfmt": "v0.14.0",
-  "yq": "v4.44.6"
+  "yamlfmt": "v0.15.0",
+  "yq": "v4.45.1"
 }
