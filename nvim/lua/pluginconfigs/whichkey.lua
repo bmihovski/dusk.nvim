@@ -60,6 +60,42 @@ end
 
 vim.api.nvim_create_user_command("ToggleVirtualText", ToggleVirtualText, {})
 
+local function CopilotChatAsk()
+	local input = vim.fn.input("Ask AI: ")
+	if input ~= "" then
+		require("CopilotChat").ask(input)
+	end
+end
+vim.api.nvim_create_user_command("CopilotChatAsk", CopilotChatAsk, {})
+
+local function CopilotChatHelpActions()
+	local actions = require("CopilotChat.actions").help_actions()
+	if actions == nil then
+		vim.notify("No help actions found.", "warn")
+	else
+		require("CopilotChat.integrations.fzflua").pick(actions)
+	end
+end
+vim.api.nvim_create_user_command("CopilotChatHelpActions", CopilotChatHelpActions, {})
+
+local function CopilotChatPromptActions()
+	local actions = require("CopilotChat.actions").prompt_actions()
+	require("CopilotChat.integrations.fzflua").pick(actions)
+end
+vim.api.nvim_create_user_command("CopilotChatPromptActions", CopilotChatPromptActions, {})
+
+-- Ask the Perplexity agent a quick question
+local function CopilotChatPerplexitySearch()
+	local input = vim.fn.input("Perplexity: ")
+	if input ~= "" then
+		require("CopilotChat").ask(input, {
+			agent = "perplexityai",
+			selection = false,
+		})
+	end
+end
+vim.api.nvim_create_user_command("CopilotChatPerplexitySearch", CopilotChatPerplexitySearch, {})
+
 -- Open test results after execution
 local function print_test_results(items)
 	if #items > 0 then
@@ -153,6 +189,24 @@ local opts = {
 
 local mappings = {
 	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
+	{ "<leader>a", group = "AI" },
+	{
+		"<leader>aca",
+		"<cmd>CopilotChatAsk",
+		desc = "CopilotChat: Ask AI",
+	},
+	{ "<leader>acw", "<cmd>CopilotChatToggle<cr>", desc = "CopilotChat: Toggle chat window." },
+	{ "<leader>acd", "<cmd>CopilotChatHelpActions<cr>", desc = "CopilotChat: Diagnostic help actions" },
+	{
+		"<leader>acp",
+		"<cmd>CopilotChatPromptActions<cr>",
+		desc = "CopilotChat: Prompt actions",
+	},
+	{
+		"<leader>acs",
+		"<cmd>CopilotChatPerplexitySearch<cr>",
+		desc = "CopilotChat - Perplexity Search",
+	},
 	{ "<leader>C", group = "Containers - Docker" },
 	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
 	{ "<leader>D", group = "Database" },
@@ -198,7 +252,7 @@ local mappings = {
 	{ "<leader>St", "<cmd>ClangdTypeHierarchy<cr>", desc = "Display Type Hierarchy" },
 	{ "<leader>Sw", "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch Source/Header" },
 	{ "<leader>Sy", "<cmd>ClangdCallHierarchy<cr>", desc = "Display Call Hierarchy" },
-	{ "<leader>a", ":Alpha", desc = "Dashboard" },
+	{ "<leader>add", ":Alpha", desc = "Dashboard" },
 	{ "<leader>b", group = "Buffer" },
 	{ "<leader>bK", "<cmd>BufDelOthers<cr>", desc = "Close all buffers except current" },
 	{ "<leader>bb", "<cmd>Telescope buffers theme=dropdown<cr>", desc = "Buffer List" },

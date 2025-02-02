@@ -395,6 +395,7 @@ require("lazy").setup({
 	{
 		"hrsh7th/nvim-cmp",
 		lazy = true,
+		version = "v2.*",
 		event = { "InsertEnter", "CmdLineEnter" },
 		dependencies = {
 			-- Snippet Engine & its associated nvim-cmp source
@@ -408,6 +409,7 @@ require("lazy").setup({
 			"hrsh7th/cmp-cmdline",
 			"amarakon/nvim-cmp-buffer-lines",
 			"p00f/clangd_extensions.nvim",
+			"olimorris/codecompanion.nvim",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
@@ -666,6 +668,9 @@ require("lazy").setup({
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonartext.jar.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonariac.jar"),
 						vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjavasymbolicexecution.jar"),
+					},
+					flags = {
+						debounce_text_changes = 1000,
 					},
 					settings = {
 						sonarlint = {

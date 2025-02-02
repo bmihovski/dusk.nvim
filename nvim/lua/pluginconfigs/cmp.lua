@@ -13,6 +13,178 @@ end
 -- load VSCode-like snippets from plugins (e.g., friendly-snippets)
 require("luasnip/loaders/from_vscode").lazy_load()
 
+local ts_utils = require("nvim-treesitter.ts_utils")
+
+local s = luasnip.snippet
+local sn = luasnip.snippet_node
+local t = luasnip.text_node
+local i = luasnip.insert_node
+local f = luasnip.function_node
+
+local function copy(args)
+	return args[1]
+end
+
+local function get_class_name()
+	local bufnr = vim.api.nvim_get_current_buf()
+	local curr = ts_utils.get_node_at_cursor()
+	local expr = curr
+	while expr do
+		if expr:type() == "class_specifier" or expr:type() == "struct_specifier" then
+			break
+		end
+		expr = expr:parent()
+	end
+	if not expr then
+		return ""
+	end
+	return vim.treesitter.get_node_text(expr:child(1), bufnr)
+end
+
+local c_cpp_snippets = {
+	s("disablecopymove", {
+		t({ "// disable copy and move", "" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "(const " }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "&) = delete;", "" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "(" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "&&) = delete;", "" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "& operator=(const " }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "&) = delete;", "" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "& operator=(" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "&&) = delete;", "" }),
+	}),
+	s("defaultcopymove", {
+		t({ "// default copy and move", "" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "(const " }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "&) = default;", "" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "(" }),
+		f(function()
+			return get_class_name()
+		end, {}, {}),
+		t({ "&&) = default;", "" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "& operator=(const " }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "&) = default;", "" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "& operator=(" }),
+		f(function()
+			return get_class_name()
+		end),
+		t({ "&&) = default;", "" }),
+	}),
+	s({
+		trig = "#ifdef condition",
+		name = "Snippet for C/C++ condition macro",
+	}, {
+		t("#ifdef "),
+		i(1, "condition"),
+		t({ "", "", "" }),
+		i(0),
+		t({ "", "", "#endif  // " }),
+		f(copy, { 1 }),
+	}),
+	s({
+		trig = "if (condition)",
+		name = "Snippet for C/C++ if statement",
+	}, {
+		t("if ("),
+		i(1, "condition"),
+		t(") {"),
+		t({ "", "  " }),
+		i(2),
+		t({ "", "}", "" }),
+		i(0),
+	}),
+	s({
+		trig = "if-else",
+		name = "Snippet for C/C++ if-else statement",
+	}, {
+		t("if ("),
+		i(1, "condition"),
+		t(") {"),
+		t({ "", "  " }),
+		i(2),
+		t({ "", "} else {" }),
+		t({ "", "  " }),
+		i(3),
+		t({ "", "}", "" }),
+		i(0),
+	}),
+	s({
+		trig = "if-elif",
+		name = "Snippet for C/C++ if-elif statement",
+	}, {
+		t("if ("),
+		i(1, "condition"),
+		t(") {"),
+		t({ "", "  " }),
+		i(3),
+		t({ "", "} else if (" }),
+		i(2),
+		t(") {"),
+		t({ "", "  " }),
+		i(4),
+		t({ "", "} else {" }),
+		t({ "", "  " }),
+		i(5),
+		t({ "", "}", "" }),
+		i(0),
+	}),
+	s({
+		trig = "elif",
+		name = "Snippet for C/C++ elif statement",
+	}, {
+		t({ "else if (" }),
+		i(1),
+		t(") {"),
+		t({ "", "  " }),
+		i(2),
+		t({ "", "}" }),
+	}),
+}
+
+luasnip.add_snippets(c_cpp_snippets)
+
 cmp.setup({
 	window = {
 		completion = cmp.config.window.bordered(),
@@ -22,14 +194,21 @@ cmp.setup({
 		completeopt = "menu,menuone,noselect,noinsert",
 	},
 	sources = {
-		{ name = "copilot" },
+		{
+			name = "lazydev",
+			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
+			group_index = 0,
+		},
 		{ name = "nvim_lsp" },
 		{ name = "luasnip" },
 		{
 			name = "buffer-lines",
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
+		{ name = "copilot" },
+		{ name = "codecompanion" },
 		{ name = "path" },
+		{ name = "render-markdown" },
 	},
 	sorting = {
 		comparators = {

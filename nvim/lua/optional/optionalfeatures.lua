@@ -1,5 +1,4 @@
 return {
-
 	-- Autosave feature
 	{
 		"okuuva/auto-save.nvim",
@@ -153,6 +152,52 @@ return {
 		end,
 	},
 
+	{
+		"pteroctopus/faster.nvim",
+		cmd = { "FasterDisableAllFeatures", "FasterEnableSonarlint", "FasterDisableSonarlint" },
+		opts = {
+			behaviours = {
+				bigfile = {
+					on = true,
+					features_disabled = {
+						"sonarlint",
+						"matchparen",
+						"lsp",
+						"treesitter",
+						"syntax",
+						"filetype",
+					},
+					filesize = 5,
+					pattern = "*",
+					extra_patterns = {
+						{ filesize = 0.5, pattern = "*.json" },
+					},
+				},
+				fastmacro = {
+					on = true,
+					features_disabled = { "lualine" },
+				},
+			},
+			-- Feature table contains configuration for features faster.nvim will disable
+			-- and enable according to rules defined in behaviours.
+			-- Defined feature will be used by faster.nvim only if it is on (`on=true`).
+			-- Defer will be used if some features need to be disabled after others.
+			-- defer=false features will be disabled first and defer=true features last.
+      -- stylua: ignore
+			features = {
+				filetype = { on = true, defer = true },
+				illuminate = { on = true, defer = false },
+				indent_blankline = { on = true, defer = false },
+				lsp = { on = true, defer = false },
+				lualine = { on = true, defer = false },
+				matchparen = { on = true, defer = false },
+				syntax = { on = true, defer = true },
+				treesitter = { on = true, defer = false },
+				vimopts = { on = true, defer = false },
+			},
+		},
+	},
+
 	-- Tmux Integration
 	{
 		"alexghergh/nvim-tmux-navigation",
@@ -181,13 +226,17 @@ return {
 
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
-		event = "VeryLazy",
 		dependencies = {
-			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim zbirenbaum/copilot.lua
+			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
 			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
 		},
+		build = "make tiktoken", -- Only on MacOS or Linux
 		opts = {
-			debug = false, -- Disable debugging
+			highlight_headers = false,
+			separator = "---",
+			error_header = "> [!ERROR] Error",
+			debug = false, -- Enable debugging
+			model = "o3-mini",
 			mappings = {
 				reset = {
 					normal = "<C-r>",
@@ -197,9 +246,72 @@ return {
 			context = "buffers",
 			history_path = vim.fn.stdpath("data") .. "/copilotchat_history",
 			auto_follow_cursor = false,
+			prompts = {
+				PullRequest = {
+					prompt = "Please provide a pull request description for this git diff.",
+					selection = function(source)
+						local default_branch = require("lib.git").find_default_branch()
+
+						local select = require("CopilotChat.select")
+						local select_buffer = select.buffer(source)
+						if not select_buffer then
+							return nil
+						end
+
+						local dir = vim.fn.getcwd():gsub(".git$", "")
+
+						local cmd = "git -C " .. dir .. " diff --no-color --no-ext-diff " .. default_branch
+						local handle = io.popen(cmd)
+						if not handle then
+							return nil
+						end
+
+						local result = handle:read("*a")
+						handle:close()
+						if not result or result == "" then
+							return nil
+						end
+
+						select_buffer.filetype = "diff"
+						select_buffer.lines = result
+						return select_buffer
+					end,
+				},
+				Explain = "Please explain how the following code works.",
+				Tests = "Please explain how the selected code works, then generate unit tests for it.",
+				Review = "Please review the following code and provide suggestions for improvement.",
+				Refactor = "Please refactor the following code to improve its clarity and readability.",
+				FixCode = "Please fix the following code to make it work as intended.",
+				FixError = "Please explain the error in the following text and provide a solution.",
+				BetterNamings = "Please provide better names for the following variables and functions.",
+				Documentation = "Please provide documentation for the following code.",
+				Summarize = "Please summarize the following text.",
+				Spelling = "Please correct any grammar and spelling errors in the following text.",
+				Wording = "Please improve the grammar and wording of the following text.",
+				Concise = "Please rewrite the following text to make it more concise.",
+			},
 		},
-		build = "make tiktoken",
+		-- See Commands section for default commands if you want to lazy load on them
+		config = function(_, opts)
+			local existing_prompts = require("CopilotChat.config").prompts
+
+			-- Add existing_prompts to opts.prompts, if the key doesn't already exist
+			for k, v in pairs(existing_prompts) do
+				if not opts.prompts[k] then
+					opts.prompts[k] = v
+				elseif type(opts.prompts[k]) == "string" and type(v) == "table" then
+					-- If our prompt is a string and the default prompt is a table, merge the two
+					local prompt = opts.prompts[k]
+					opts.prompts[k] = v
+					opts.prompts[k].prompt = prompt
+				end
+			end
+
+			require("CopilotChat").setup(opts)
+		end,
 	},
+	-- codecompanion
+	{ import = "pluginconfigs.codecompanion.init" },
 
 	{
 		"zbirenbaum/copilot.lua",
@@ -220,6 +332,102 @@ return {
 				copilot_node_command = "node",
 				server_opts_overrides = {},
 			})
+		end,
+	},
+	{
+		"yetone/avante.nvim",
+		event = "VeryLazy",
+		lazy = true,
+		-- dev = true,
+		version = false,
+		build = "make",
+		opts = {
+			provider = "openai",
+			auto_suggestions_provider = "openai",
+			openai = {
+				endpoint = "https://api.deepseek.com/v1",
+				model = "deepseek-chat",
+				timeout = 30000,
+				temperature = 0,
+				max_tokens = 4096,
+			},
+			copilot = {
+				model = "claude-3.5-sonnet",
+				temperature = 0.5,
+			},
+			windows = {
+				sidebar_header = {
+					enabled = false,
+				},
+			},
+			mappings = {
+				sidebar = {
+					switch_windows = "<C-Tab>",
+					reverse_switch_windows = "<C-S-Tab>",
+				},
+			},
+			file_selector = {
+				--- @alias FileSelectorProvider "native" | "fzf" | "telescope" | string
+				provider = "fzf",
+				-- Options override for custom providers
+				provider_opts = {},
+			},
+			suggestion = {
+				dismiss = "<C-e>",
+			},
+			on_error = function(err)
+				vim.notify("Avante error: " .. err, vim.log.levels.ERROR)
+			end,
+		},
+		dependencies = {
+			{ "stevearc/dressing.nvim", lazy = true },
+			{ "nvim-lua/plenary.nvim", lazy = true },
+			{ "MunifTanjim/nui.nvim", lazy = true },
+			{ "nvim-tree/nvim-web-devicons", lazy = true },
+			{ "hrsh7th/nvim-cmp", lazy = true },
+			{ "zbirenbaum/copilot.lua", lazy = true },
+			--- The below dependencies are optional,
+			{ "echasnovski/mini.pick", lazy = true }, -- for file_selector provider mini.pick
+			{ "nvim-telescope/telescope.nvim", lazy = true }, -- for file_selector provider telescope
+			{ "hrsh7th/nvim-cmp", lazy = true }, -- autocompletion for avante commands and mentions
+			{ "ibhagwan/fzf-lua", lazy = true }, -- for file_selector provider fzf
+			{ "nvim-tree/nvim-web-devicons", lazy = true }, -- or echasnovski/mini.icons
+			{ "zbirenbaum/copilot.lua", lazy = true }, -- for providers='copilot'
+			{ "MeanderingProgrammer/render-markdown.nvim", lazy = true },
+			{
+				"HakonHarnes/img-clip.nvim",
+				event = "VeryLazy",
+				opts = {
+					default = {
+						embed_image_as_base64 = false,
+						prompt_for_file_name = false,
+						drag_and_drop = {
+							insert_mode = true,
+						},
+						use_absolute_path = true,
+					},
+				},
+			},
+		},
+	},
+	{
+		"MeanderingProgrammer/render-markdown.nvim",
+		opts = {
+			file_types = {
+				"Avante",
+				"codecompanion",
+				"markdown",
+				"copilot-chat",
+			},
+		},
+		ft = {
+			"Avante",
+			"codecompanion",
+			"markdown",
+			"copilot-chat",
+		},
+		config = function(_, opts)
+			require("render-markdown").setup(opts)
 		end,
 	},
 
@@ -249,6 +457,19 @@ return {
 		opts = {
 			handlers = {},
 		},
+	},
+
+	{
+		"pogyomo/cppguard.nvim",
+		dependencies = {
+			"L3MON4D3/LuaSnip", -- If you're using luasnip.
+		},
+		config = function()
+			local luasnip = require("luasnip")
+			luasnip.add_snippets("cpp", {
+				require("cppguard").snippet_luasnip("guard"),
+			})
+		end,
 	},
 
 	{
