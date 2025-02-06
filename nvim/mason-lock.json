@@ -1,7 +1,7 @@
 {
   "angular-language-server": "19.0.4",
   "ansible-language-server": "1.2.3",
-  "ansible-lint": "25.1.1",
+  "ansible-lint": "25.1.2",
   "bash-debug-adapter": "untagged-438733f35feb8659d939",
   "bash-language-server": "5.4.3",
   "beautysh": "6.2.1",

@@ -650,6 +650,7 @@ require("lazy").setup({
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
 		ft = ft.sonar,
+		enabled = false,
 		config = function()
 			require("sonarlint").setup({
 				server = {

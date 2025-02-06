@@ -206,9 +206,7 @@ cmp.setup({
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
 		{ name = "copilot" },
-		{ name = "codecompanion" },
 		{ name = "path" },
-		{ name = "render-markdown" },
 	},
 	sorting = {
 		comparators = {
