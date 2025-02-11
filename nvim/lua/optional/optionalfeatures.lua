@@ -554,7 +554,7 @@ return {
         *   Build System Best Practices (especially Bazel):  Focus on dependency management (explicit `deps`), visibility control, efficient build rules, avoiding `glob` overuse, and hermeticity.
         *   Language-Specific Best Practices:
             *   **Java/Spring Boot:** Dependency injection, proper exception handling, validation, REST API best practices, use of Spring Boot features (e.g., `@ConfigurationProperties`, `@Enable*` annotations), efficient data access (e.g., using Spring Data JPA), security best practices (e.g., Spring Security).  **Emphasize appropriate use of Spring testing annotations.**
-            *   **C++:**  Memory management (smart pointers), const correctness, Rule of Five/Zero, modern C++ features (C++11/14/17/20), avoiding undefined behavior, exception safety.
+            *   **C++:**  Memory management (smart pointers), const correctness, Rule of Five/Zero, modern C++ features (C++11/14/17/20/23), avoiding undefined behavior, exception safety.
             *  **Python**: List comprehension, type hints.
         *   Professional Tone: Be constructive and respectful.
         *   Context Awareness: Understand the overall purpose of the changes.
