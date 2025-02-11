@@ -203,10 +203,26 @@ local mappings = {
 		desc = "CopilotChat: Prompt actions",
 	},
 	{
-		"<leader>acs",
+		"<leader>acsp",
 		"<cmd>CopilotChatPerplexitySearch<cr>",
 		desc = "CopilotChat - Perplexity Search",
 	},
+	-- Code related commands
+	{ "<leader>ace", "<cmd>CopilotChatExplain<cr>", desc = "Explain Code" },
+	{ "<leader>act", "<cmd>CopilotChatTests<cr>", desc = "Generate Tests" },
+	{ "<leader>acr", "<cmd>CopilotChatReview<cr>", desc = "Review Code" },
+	{ "<leader>acR", "<cmd>CopilotChatRefactor<cr>", desc = "Refactor Code" },
+	{ "<leader>acn", "<cmd>CopilotChatBetterNamings<cr>", desc = "Better Naming" },
+	-- Git related commands
+	{ "<leader>acc", "<cmd>CopilotChatCommit<cr>", desc = "Generate Commit Message" },
+	{ "<leader>acs", "<cmd>CopilotChatCommitStaged<cr>", desc = "Commit Staged Changes" },
+	{ "<leader>acu", "<cmd>CopilotChatCommitUnstaged<cr>", desc = "Commit Unstaged Changes" },
+	{ "<leader>acpp", "<cmd>CopilotChatPullRequest<cr>", desc = "Generate Pull Request" },
+	-- Debug and fix
+	{ "<leader>acd", "<cmd>CopilotChatDebugInfo<cr>", desc = "Debug Info" },
+	{ "<leader>acf", "<cmd>CopilotChatFixDiagnostic<cr>", desc = "Fix Diagnostic" },
+	-- Models
+	{ "<leader>am", "<cmd>CopilotChatModels<cr>", desc = "Select Models" },
 	{ "<leader>C", group = "Containers - Docker" },
 	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
 	{ "<leader>D", group = "Database" },

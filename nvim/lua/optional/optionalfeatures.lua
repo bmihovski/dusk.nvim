@@ -231,85 +231,425 @@ return {
 			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
 		},
 		build = "make tiktoken", -- Only on MacOS or Linux
-		opts = {
-			highlight_headers = false,
-			separator = "---",
-			error_header = "> [!ERROR] Error",
-			debug = false, -- Enable debugging
-			model = "o3-mini",
-			mappings = {
-				reset = {
-					normal = "<C-r>",
-					insert = "<C-r>",
+		opts = function()
+			local user = vim.env.USER or "User"
+			user = user:sub(1, 1):upper() .. user:sub(2)
+
+			-- Base commit prompt template
+			local commit_prompt =
+				"Take a deep breath and analyze the changes made in the git diff. Then, write a commit message for the %s with commitizen convention, only use lower-case letters. Output the full multi-line command starting with `git commit -m` ready to be pasted into the terminal. If there are references to filenames or the backtics in the commit message, escape them with backslashes. i.e. \\` text with backticks \\`"
+
+			return {
+				separator = "---",
+				debug = false, -- Enable debugging
+				model = "gemini-2.0-flash-001",
+				mappings = {
+					reset = {
+						normal = "<C-r>",
+						insert = "<C-r>",
+					},
 				},
-			},
-			context = "buffers",
-			history_path = vim.fn.stdpath("data") .. "/copilotchat_history",
-			auto_follow_cursor = false,
-			prompts = {
-				PullRequest = {
-					prompt = "Please provide a pull request description for this git diff.",
-					selection = function(source)
-						local default_branch = require("lib.git").find_default_branch()
+				history_path = vim.fn.stdpath("data") .. "/copilotchat_history",
+				auto_follow_cursor = false,
 
-						local select = require("CopilotChat.select")
-						local select_buffer = select.buffer(source)
-						if not select_buffer then
-							return nil
-						end
-
-						local dir = vim.fn.getcwd():gsub(".git$", "")
-
-						local cmd = "git -C " .. dir .. " diff --no-color --no-ext-diff " .. default_branch
-						local handle = io.popen(cmd)
-						if not handle then
-							return nil
-						end
-
-						local result = handle:read("*a")
-						handle:close()
-						if not result or result == "" then
-							return nil
-						end
-
-						select_buffer.filetype = "diff"
-						select_buffer.lines = result
-						return select_buffer
-					end,
+				auto_insert_mode = true,
+				question_header = "  " .. user .. " ",
+				answer_header = "  Copilot ",
+				error_header = "## Error ",
+				window = {
+					width = 0.4,
 				},
-				Explain = "Please explain how the following code works.",
-				Tests = "Please explain how the selected code works, then generate unit tests for it.",
-				Review = "Please review the following code and provide suggestions for improvement.",
-				Refactor = "Please refactor the following code to improve its clarity and readability.",
-				FixCode = "Please fix the following code to make it work as intended.",
-				FixError = "Please explain the error in the following text and provide a solution.",
-				BetterNamings = "Please provide better names for the following variables and functions.",
-				Documentation = "Please provide documentation for the following code.",
-				Summarize = "Please summarize the following text.",
-				Spelling = "Please correct any grammar and spelling errors in the following text.",
-				Wording = "Please improve the grammar and wording of the following text.",
-				Concise = "Please rewrite the following text to make it more concise.",
-			},
-		},
-		-- See Commands section for default commands if you want to lazy load on them
+				-- Register custom contexts
+				contexts = {
+					pr_diff = {
+						description = "Get the diff between the current branch and target branch",
+						resolve = function()
+							-- Check if we're in a git repository
+							local is_git = vim.fn.system("git rev-parse --is-inside-work-tree 2>/dev/null")
+							if vim.v.shell_error ~= 0 then
+								return { { content = "Not in a git repository", filename = "error", filetype = "text" } }
+							end
+
+							-- Get target branch (main/master/develop)
+							local target_branch = vim.fn
+								.system(
+									"git for-each-ref --format='%(refname:short)' refs/heads/ | grep -E '^(main|master|develop)' | head -n 1"
+								)
+								:gsub("\n", "")
+							if vim.v.shell_error ~= 0 or target_branch == "" then
+								return {
+									{
+										content = "Failed to determine target branch",
+										filename = "error",
+										filetype = "text",
+									},
+								}
+							end
+
+							-- Fetch the latest changes from the remote repository
+							local fetch_result = vim.fn.system("git fetch origin " .. target_branch .. " 2>&1")
+							if vim.v.shell_error ~= 0 then
+								return {
+									{
+										content = "Failed to fetch from remote: " .. fetch_result,
+										filename = "error",
+										filetype = "text",
+									},
+								}
+							end
+
+							-- Get current branch
+							local current_branch =
+								vim.fn.system("git rev-parse --abbrev-ref HEAD 2>/dev/null"):gsub("\n", "")
+							if vim.v.shell_error ~= 0 or current_branch == "" then
+								return {
+									{ content = "Failed to get current branch", filename = "error", filetype = "text" },
+								}
+							end
+
+							-- Get the diff
+							local cmd = string.format(
+								"git diff --no-color --no-ext-diff origin/%s...%s 2>&1",
+								target_branch,
+								current_branch
+							)
+							local handle = io.popen(cmd)
+							if not handle then
+								return {
+									{ content = "Failed to execute git diff", filename = "error", filetype = "text" },
+								}
+							end
+
+							local result = handle:read("*a")
+							handle:close()
+
+							-- If there's no diff, return a meaningful message
+							if not result or result == "" then
+								return {
+									{
+										content = "No changes found between current branch and " .. target_branch,
+										filename = "info",
+										filetype = "text",
+									},
+								}
+							end
+
+							return {
+								{
+									content = result,
+									filename = "pr_diff",
+									filetype = "diff",
+								},
+							}
+						end,
+					},
+				},
+				-- Custom prompts incorporating git staged/unstaged functionality
+				prompts = {
+					-- Code related prompts
+					Explain = {
+						prompt = "Please explain how the following code works.",
+						system_prompt = "You are an expert software developer and teacher. Explain the code in a clear, concise way.",
+					},
+					Review = {
+						prompt = "Please review the following code and provide suggestions for improvement.",
+						system_prompt = "You are an expert code reviewer. Focus on best practices, performance, and potential issues.",
+					},
+					GithubReview = {
+						prompt = "> #pr_diff\n\nPerform a comprehensive code review of the following git diff. Provide specific, actionable feedback in the form of individual comments targeted at specific lines and files.  Do NOT provide a general summary; focus on line-by-line analysis.",
+						system_prompt = [[You are a senior software engineer performing a thorough code review. Your goal is to provide actionable feedback that improves code quality, maintainability, performance, and security.  You are reviewing code for a colleague, so maintain a constructive and professional tone.
+
+    Input: You will receive a git diff representing changes in a pull request.
+
+    Output:  Your output MUST be a series of individual comments, each formatted as follows:
+
+]]
+							.. "    ```\n"
+							.. [[    File: [File Path and Name]
+    Line: [Line Number]
+    Comment: [Your detailed review comment. Be specific and explain the reasoning behind your suggestion.  Consider not only syntax and best practices, but also potential functional bugs, architectural improvements, and maintainability concerns.]
+    ```
+
+    Example (Illustrative - Adapt to the specific diff):
+
+]]
+							.. "    ```\n"
+							.. [[    File: src/main/java/com/example/MyService.java
+    Line: 42
+    Comment: Consider using try-with-resources here to ensure the `InputStream` is closed properly, even if an exception occurs. This prevents potential resource leaks.
+    ```
+
+]]
+							.. "    ```\n"
+							.. [[    File: src/main/java/com/example/MyService.java
+    Line: 45
+    Comment: The variable name `temp` could be more descriptive.  Consider renaming it to something like `processedData` to improve readability.
+    ```
+
+]]
+							.. "    ```\n"
+							.. [[    File: src/test/java/com/example/MyServiceTest.java
+    Line: 120
+    Comment: This test seems to be missing an assertion.  Make sure to verify the expected outcome of the `processData` method.  Consider adding an `assertEquals` or similar assertion.
+    ```
+]]
+							.. "        ```\n"
+							.. [[    File: config/application.yml
+    Line: 12
+    Comment: The database password is hardcoded here. It is recomended to store secrets safely, consider using a secrets manager or environment variables.
+    ```
+
+    Key Considerations:
+
+    *   Line-Specific Feedback:  Each comment *must* be associated with a specific file and line number.
+    *   Actionable Suggestions: Don't just point out problems; suggest concrete solutions.
+    *   Beyond Syntax: Go beyond basic syntax checks.  Consider:
+        *   Functional Bugs: Look for logic errors, edge cases, and potential unexpected behavior.
+        *   Architectural Improvements: Suggest better design patterns, improved modularity, or adherence to SOLID principles (where applicable).  Don't propose major refactorings, but point out areas for improvement.
+        *   Performance: Identify potential bottlenecks, inefficient algorithms, or unnecessary resource usage.
+        *   Maintainability:  Assess code clarity, readability, and the presence of adequate comments/documentation.
+        *   Security: Look for potential vulnerabilities (e.g., SQL injection, XSS, hardcoded credentials).
+        *   Testing: Check for adequate test coverage, missing test cases, and proper assertion usage.
+        * Framework best practices: Check the code for specific language/framework, Springboot, Java, Javascript, React, etc.
+    *   Professional Tone: Be constructive and respectful in your feedback.
+    *   Context Awareness**: Understand the overall purpose of the code changes, do not suggest things that would break it.
+
+    Optimization for Gemini 2.0 Flash:
+
+    *   Clear, Concise Instructions: The prompt is structured clearly and avoids unnecessary jargon.
+    *   Specific Output Format:  The required output format is explicitly defined and demonstrated with examples.
+    *   Emphasis on Actionable Feedback: The prompt stresses the need for concrete suggestions, not just general observations.
+    * Avoid Summaries: Do not provide a general PR Summary.
+    * Multiple examples: Provide multiple examples covering different files types and suggestions.
+    ]],
+					},
+					Tests = {
+						prompt = "Please explain how the selected code works, then generate unit tests for it.",
+						system_prompt = "You are an expert in software testing. Generate thorough test cases covering edge cases.",
+					},
+					Refactor = {
+						prompt = "Please refactor the following code to improve its clarity and readability.",
+						system_prompt = "You are an expert in code refactoring. Focus on making the code more maintainable and easier to understand.",
+					},
+					FixCode = {
+						prompt = "Please fix the following code to make it work as intended.",
+						system_prompt = "You are an expert programmer. Help fix code issues while maintaining code style and best practices.",
+					},
+					FixError = {
+						prompt = "Please explain the error in the following text and provide a solution.",
+						system_prompt = "You are an expert in debugging. Help identify and fix the error while explaining the solution.",
+					},
+					BetterNamings = {
+						prompt = "Please provide better names for the following variables and functions.",
+						system_prompt = "You are an expert in code readability. Suggest clear, descriptive names following naming conventions.",
+					},
+					Documentation = {
+						prompt = "Please provide documentation for the following code.",
+						system_prompt = "You are an expert technical writer. Create clear, comprehensive documentation.",
+					},
+					SwaggerApiDocs = {
+						prompt = "Please provide documentation for the following API using Swagger.",
+						system_prompt = "You are an expert in API documentation. Create comprehensive Swagger/OpenAPI documentation.",
+					},
+					SwaggerJsDocs = {
+						prompt = "Please write JSDoc for the following API using Swagger.",
+						system_prompt = "You are an expert in JavaScript documentation. Create comprehensive JSDoc with Swagger annotations.",
+					},
+					SwaggerApiSpringDocs = {
+						prompt = "Please generate Spring Boot REST controller method annotations (for OpenAPI 3 specification) for the following Java method. Include annotations for request parameters, response types, and descriptions. Consider the method's purpose and parameters to create appropriate annotations.",
+						system_prompt = [[You are an expert in Java and Spring Boot REST API documentation using OpenAPI 3.  You will be provided with a Java method signature and potentially some surrounding context. Your task is to generate the appropriate Spring Boot annotations to fully document that method for OpenAPI generation using a library like springdoc-openapi-ui.
+
+                        Focus on these key annotations:
+
+                        *   `@Operation`:  Provide a `summary` (short description) and a more detailed `description`.
+                        *   `@Parameter`: For each method parameter, use `@Parameter` to describe it.  Include `description`, `required` (if applicable), and `in` (e.g., `ParameterIn.PATH`, `ParameterIn.QUERY`, `ParameterIn.HEADER`, `ParameterIn.COOKIE`).
+                        *   `@ApiResponses`: Define possible API responses. Use `@ApiResponse` for each status code (e.g., 200, 400, 404, 500). Include a `description` and, importantly, a `content` attribute specifying the `@Content` (media type and schema).
+                        *   `@RequestBody`: If the method accepts a request body, use `@RequestBody` to describe it.  Include a `description` and `content` (with media type and schema).
+                        * `@Schema`: Use to fully define return types.
+                        *   `@PathVariable`: Use as needed with `@Parameter` for path variables.
+                        *   `@RequestParam`: Use as needed with `@Parameter` for query parameters.
+                        *   `@RequestHeader`:  Use as needed with `@Parameter` for header parameters.
+                        *  Consider adding the annotation @Tag to improve documentation.
+
+                        Example:
+
+                        Input Java Method:
+                        ```java
+                        public ResponseEntity<User> getUserById(long id) {
+                            // ... implementation ...
+                        }
+                        ```
+
+                        Desired Output Annotations:
+                        ```java
+                        @Operation(summary = "Get a user by ID", description = "Retrieves a user based on their unique identifier.")
+                        @ApiResponses(value = {
+                            @ApiResponse(responseCode = "200", description = "Successful operation",
+                                    content = @Content(mediaType = "application/json",
+                                            schema = @Schema(implementation = User.class))),
+                            @ApiResponse(responseCode = "404", description = "User not found",
+                                    content = @Content)
+                        })
+                        public ResponseEntity<User> getUserById(
+                            @Parameter(description = "The ID of the user to retrieve.", required = true, in = ParameterIn.PATH)
+                            @PathVariable long id
+                        ) {
+                            // ... implementation ...
+                        }
+                        ```
+                    ]],
+					},
+					-- Git related prompts
+					Commit = {
+						prompt = "> #git:staged\n\n" .. string.format(commit_prompt, "change"),
+						system_prompt = "You are an expert in writing clear, concise git commit messages following best practices.",
+					},
+					CommitStaged = {
+						prompt = "> #git:staged\n\n" .. string.format(commit_prompt, "staged changes"),
+						system_prompt = "You are an expert in writing clear, concise git commit messages following best practices.",
+					},
+					CommitUnstaged = {
+						prompt = "> #git:unstaged\n\n" .. string.format(commit_prompt, "unstaged changes"),
+						system_prompt = "You are an expert in writing clear, concise git commit messages following best practices.",
+					},
+					PullRequest = {
+						prompt = "> #pr_diff\n\nWrite a pull request description for these changes. Include a clear title, summary of changes, and any important notes.",
+						system_prompt = [[You are an experienced software engineer about to open a PR. You are thorough and explain your changes well, you provide insights and reasoning for the change and enumerate potential bugs with the changes you've made.
+
+          Your task is to create a pull request for the given code changes. Follow these steps:
+
+          1. Analyze the git diff changes provided.
+          2. Draft a comprehensive description of the pull request based on the input.
+          3. Create the gh CLI command to create a GitHub pull request.
+
+          Output Instructions:
+          - The command should start with `gh pr create`.
+          - Do not use the new line character in the command since it does not work
+          - Output needs to be a multi-line command
+          - Include the `--base $(git parent)` flag
+          - Use the `--title` flag with a concise, descriptive title matching the commitzen convention.
+          - Use the `--body` flag for the PR description.
+          - Include the following sections in the body:
+            - '## Summary' with a brief overview of changes
+            - '## Changes' listing specific modifications
+            - '## Additional Notes' for any extra information
+          - Escape any backticks in the message body to avoid shell interpretation issues
+          - Wrap the entire command in a code block for easy copy-pasting.
+
+          Desired Output:
+          ```sh
+          gh pr create \
+            --base $(git parent) \
+            --title "feat: your title here" \
+            --body "## Summary
+          Your summary here
+
+          ## Changes
+          - Change 1
+          - Change 2
+          - Change 3 \`with backticks\`
+
+          ## Additional Notes
+          Your notes here"
+          ```]],
+					},
+					CustomPullRequest = {
+						prompt = "> #pr_diff\n\nWrite a pull request description for these changes. Include a clear title, summary of changes, and any important notes.",
+						system_prompt = [[You are an experienced software engineer about to open a PR. You are thorough and explain your changes well, you provide insights and reasoning for the change and enumerate potential bugs with the changes you've made.
+
+    Your task is to create a pull request for the given code changes. Follow these steps:
+
+    1. Analyze the git diff changes provided.
+    2. Draft a comprehensive description of the pull request based on the input.  **Crucially, structure the description according to the template below.**
+    3. Create the gh CLI command to create a GitHub pull request.
+
+    Output Instructions:
+    - The command should start with `gh pr create`.
+    - Do not use the new line character in the command since it does not work
+    - Output needs to be a multi-line command
+    - Include the `--base $(git parent)` flag
+    - Use the `--title` flag with a concise, descriptive title matching the commitzen convention.
+    - Use the `--body` flag for the PR description.
+    - Include the following sections in the body:
+      - '#### Why?' explaining the *reason* for the proposed change.  Why is this change necessary or beneficial?
+      - '#### What?' providing a *high-level overview* of what the PR changes.  Don't just repeat the diff, but describe the changes conceptually.
+    - Escape any backticks in the message body to avoid shell interpretation issues
+    - Wrap the entire command in a code block for easy copy-pasting.
+
+    Desired Output:
+    ```sh
+    gh pr create \
+      --base $(git parent) \
+      --title "feat: your title here" \
+      --body "#### Why?
+
+    _Your reasoning for the changes goes here._
+
+    #### What?
+
+    _A high-level description of the changes goes here.  Example:  This PR refactors the user authentication module to improve security and maintainability. It replaces the old hashing algorithm with a more robust one and adds input validation to prevent common injection attacks._
+    "
+    ```]],
+					},
+					-- Text related prompts
+					Summarize = {
+						prompt = "Please summarize the following text.",
+						system_prompt = "You are an expert in technical writing. Create clear, concise summaries.",
+					},
+					Spelling = {
+						prompt = "Please correct any grammar and spelling errors in the following text.",
+						system_prompt = "You are an expert editor. Fix grammar and spelling while maintaining the original meaning.",
+					},
+					Wording = {
+						prompt = "Please improve the grammar and wording of the following text.",
+						system_prompt = "You are an expert writer. Improve clarity and readability while maintaining the original meaning.",
+					},
+					Concise = {
+						prompt = "Please rewrite the following text to make it more concise.",
+						system_prompt = "You are an expert in technical writing. Make the text more concise while preserving key information.",
+					},
+				},
+			}
+		end,
 		config = function(_, opts)
-			local existing_prompts = require("CopilotChat.config").prompts
+			local chat = require("CopilotChat")
+			local select = require("CopilotChat.select")
 
-			-- Add existing_prompts to opts.prompts, if the key doesn't already exist
-			for k, v in pairs(existing_prompts) do
-				if not opts.prompts[k] then
-					opts.prompts[k] = v
-				elseif type(opts.prompts[k]) == "string" and type(v) == "table" then
-					-- If our prompt is a string and the default prompt is a table, merge the two
-					local prompt = opts.prompts[k]
-					opts.prompts[k] = v
-					opts.prompts[k].prompt = prompt
-				end
-			end
+			-- Disable line numbers in chat window
+			vim.api.nvim_create_autocmd("BufEnter", {
+				pattern = "copilot-chat",
+				callback = function()
+					vim.opt_local.relativenumber = false
+					vim.opt_local.number = false
+				end,
+			})
 
-			require("CopilotChat").setup(opts)
+			-- Setup CMP integration
+			chat_autocomplete = true
+
+			-- Create commands for visual mode
+			vim.api.nvim_create_user_command("CopilotChatVisual", function(args)
+				chat.ask(args.args, { selection = select.visual })
+			end, { nargs = "*", range = true })
+
+			-- Inline chat with Copilot
+			vim.api.nvim_create_user_command("CopilotChatInline", function(args)
+				chat.ask(args.args, {
+					selection = select.visual,
+					window = {
+						layout = "float",
+						relative = "cursor",
+						width = 1,
+						height = 0.4,
+						row = 1,
+					},
+				})
+			end, { nargs = "*", range = true })
+
+			chat.setup(opts)
 		end,
 	},
+
 	-- codecompanion
 	{ import = "pluginconfigs.codecompanion.init" },
 
@@ -361,6 +701,9 @@ return {
 				model = "gemini-2.0-flash",
 				temperature = 0.2,
 				max_tokens = 16384,
+			},
+			web_search_engine = {
+				provider = "google",
 			},
 			dual_boost = {
 				enabled = true,
