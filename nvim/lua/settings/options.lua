@@ -68,6 +68,9 @@ for _, plugin in pairs(disabled_built_ins) do
 	vim.g["loaded_" .. plugin] = 1
 end
 
+-- remove this after upgrading neovim to 0.11.0+
+vim.opt.completeopt = "menu,menuone,preview,noinsert,popup"
+
 -- Enable folding in markdown files
 vim.g.markdown_folding = 1
 

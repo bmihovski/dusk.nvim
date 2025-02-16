@@ -217,11 +217,10 @@ return {
 	},
 
 	{
-		"zbirenbaum/copilot-cmp",
+		"JosefLitos/cmp-copilot",
 		dependencies = { "zbirenbaum/copilot.lua" },
-		config = function()
-			require("copilot_cmp").setup()
-		end,
+		event = "InsertEnter",
+		opts = {},
 	},
 
 	{
@@ -820,6 +819,18 @@ return {
 				copilot_node_command = "node",
 				server_opts_overrides = {},
 			})
+			-- hide copilot suggestions when cmp menu is open
+			-- to prevent odd behavior/garbled up suggestions
+			local cmp_status_ok, cmp = pcall(require, "cmp")
+			if cmp_status_ok then
+				cmp.event:on("menu_opened", function()
+					vim.b.copilot_suggestion_hidden = true
+				end)
+
+				cmp.event:on("menu_closed", function()
+					vim.b.copilot_suggestion_hidden = false
+				end)
+			end
 		end,
 	},
 	{
@@ -836,27 +847,22 @@ return {
 				endpoint = "https://api.deepseek.com/v1",
 				model = "deepseek-chat",
 				timeout = 30000,
-				temperature = 0,
-				max_tokens = 4096,
 			},
 			copilot = {
 				model = "claude-3.5-sonnet",
 				temperature = 0.5,
 				timeout = 30000, -- Timeout in milliseconds
-				max_tokens = 8192,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
-				temperature = 0.2,
-				max_tokens = 16384,
 			},
 			web_search_engine = {
 				provider = "google",
 			},
 			dual_boost = {
 				enabled = true,
-				first_provider = "copilot",
-				second_provider = "gemini",
+				first_provider = "gemini",
+				second_provider = "copilot",
 				prompt = "Based on the two reference outputs below, generate a response that incorporates elements from both but reflects your own judgment and unique perspective. Provide brief explanation with highlighting the important points. Reference Output 1: [{{provider1_output}}], Reference Output 2: [{{provider2_output}}]",
 				timeout = 60000, -- Timeout in milliseconds
 			},
