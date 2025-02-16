@@ -1,4 +1,5 @@
 local cmp = require("cmp")
+local types = require("cmp.types")
 local cmp_action = require("lsp-zero").cmp_action()
 local cmp_autopairs = require("nvim-autopairs.completion.cmp")
 
@@ -8,6 +9,33 @@ cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 local luasnip_status, luasnip = pcall(require, "luasnip")
 if not luasnip_status then
 	return
+end
+-- custom comparators
+local function get_kind_priority(entry)
+	local kind = entry:get_kind()
+	local priority = 100
+	if kind == types.lsp.CompletionItemKind.Text then
+		priority = 0
+	end
+	if kind == types.lsp.CompletionItemKind.Snippet then
+		priority = 50
+	end
+	if entry:get_completion_item().copilot then
+		priority = 101
+	end
+	return priority
+end
+
+-- display text completion at end of file
+local function set_priority(entry1, entry2)
+	local entry_kind_2 = entry2:get_kind()
+	local entry1_priority = get_kind_priority(entry1)
+	local entry2_priority = get_kind_priority(entry2)
+	if entry1_priority == entry2_priority then
+		return nil
+	else
+		return entry1_priority > entry2_priority
+	end
 end
 
 -- load VSCode-like snippets from plugins (e.g., friendly-snippets)
@@ -199,7 +227,7 @@ local lspkind_format = require("lspkind").cmp_format({
 		Interface = "",
 		Module = "",
 		Property = "󰜢",
-		Unit = "  ",
+		Unit = "",
 		Value = "󰎠",
 		Enum = "",
 		Keyword = "󰌋",
@@ -207,7 +235,7 @@ local lspkind_format = require("lspkind").cmp_format({
 		Color = "󰏘",
 		File = "󰈙",
 		Reference = "󰈇",
-		Folder = "  ",
+		Folder = " ",
 		EnumMember = "",
 		Constant = "󰏿",
 		Struct = "󰙅",
@@ -247,15 +275,19 @@ cmp.setup({
 	sorting = {
 		comparators = {
 			require("cmp_copilot.comparators").prioritize,
-			cmp.config.compare.offset,
+			set_priority,
 			cmp.config.compare.exact,
+			-- cmp.config.compare.scopes,
+			-- cmp.config.compare.score,
 			require("cmp_copilot.comparators").score,
-			cmp.config.compare.recently_used,
 			require("clangd_extensions.cmp_scores"),
+			cmp.config.compare.recently_used,
+			cmp.config.compare.locality,
 			cmp.config.compare.kind,
-			cmp.config.compare.sort_text,
-			cmp.config.compare.length,
+			-- cmp.config.compare.sort_text,
 			cmp.config.compare.order,
+			cmp.config.compare.offset,
+			cmp.config.compare.length,
 		},
 		priority_weight = 2,
 	},
@@ -292,7 +324,7 @@ cmp.setup({
 })
 
 -- `/` cmdline setup.
-cmp.setup.cmdline("/", {
+cmp.setup.cmdline({ "/", "?" }, {
 	mapping = cmp.mapping.preset.cmdline(),
 	sources = {
 		{ name = "buffer" },
@@ -307,9 +339,24 @@ cmp.setup.cmdline(":", {
 	}, {
 		{
 			name = "cmdline",
+			keyword_length = 3,
 			option = {
 				ignore_cmds = { "Man", "!" },
 			},
 		},
 	}),
 })
+
+vim.cmd([[
+        highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080
+        highlight! CmpItemAbbrMatch guibg=NONE guifg=#569CD6
+        highlight! CmpItemAbbrMatchFuzzy guibg=NONE guifg=#569CD6
+        highlight! CmpItemKindVariable guibg=NONE guifg=#9CDCFE
+        highlight! CmpItemKindInterface guibg=NONE guifg=#9CDCFE
+        highlight! CmpItemKindText guibg=NONE guifg=#9CDCFE
+        highlight! CmpItemKindFunction guibg=NONE guifg=#C586C0
+        highlight! CmpItemKindMethod guibg=NONE guifg=#C586C0
+        highlight! CmpItemKindKeyword guibg=NONE guifg=#D4D4D4
+        highlight! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
+        highlight! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
+      ]])
