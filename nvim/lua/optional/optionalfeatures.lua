@@ -734,6 +734,8 @@ return {
       - Why does `helperFunction` return `result` and what plans are there for future implementation. It is currently not filled.
       - The old return type was `void`. Was this method performing some side effect, that has now moved to a different place? Or was it refactored to be more functional, avoiding side effects?
     ```
+
+]]
 							.. "    ```\n"
 							.. [[    File: include/converter.hpp
     Code Block: 8
