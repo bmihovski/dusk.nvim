@@ -3,7 +3,8 @@ local slash_commands_prefix = vim.fn.stdpath("config") .. "/pluginconfigs/codeco
 local just_do_it = require("pluginconfigs.codecompanion.variables.just_do_it")
 
 -- local adapter = "copilot"
-local adapter = "deepseek"
+-- local adapter = "deepseek"
+local adapter = "gemini"
 
 return {
 	"olimorris/codecompanion.nvim",
@@ -20,6 +21,7 @@ return {
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 		"nvim-treesitter/nvim-treesitter",
+		"Davidyz/VectorCode",
 	},
 	config = function()
 		require("codecompanion").setup({
@@ -52,11 +54,24 @@ return {
 						},
 					})
 				end,
+				gemini = function()
+					return require("codecompanion.adapters").extend("gemini", {
+						schema = {
+							temperature = {
+								default = 0.5,
+							},
+							model = {
+								default = "gemini-2.0-flash",
+							},
+						},
+					})
+				end,
 			},
 			strategies = {
 				chat = {
 					adapter = adapter,
 					slash_commands = {
+						codebase = require("vectorcode.integrations").codecompanion.chat.make_slash_command(),
 						["git_commit"] = {
 							description = "Generate git commit message and commit it",
 							callback = slash_commands_prefix .. "git_commit.lua",
@@ -71,6 +86,17 @@ return {
 							description = "Automated",
 							opts = {
 								contains_code = false,
+							},
+						},
+					},
+					agents = {
+						tools = {
+							vectorcode = {
+								description = "Run VectorCode to retrieve the project context.",
+								-- callback = "vectorcode",
+								callback = require("vectorcode.integrations").codecompanion.chat.make_tool({
+									default_num = 15,
+								}),
 							},
 						},
 					},

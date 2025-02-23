@@ -54,6 +54,12 @@ require("settings.autocommands")
 require("lazy").setup({
 
 	--------------------------------------
+	-- Optional Features --
+	--------------------------------------
+
+	-- Take a look at this file to see what features you need enabled
+	{ import = "optional.optionalfeatures" },
+	--------------------------------------
 	-- UI --
 	--------------------------------------
 
@@ -113,7 +119,8 @@ require("lazy").setup({
 	-- Status Line
 	{
 		"nvim-lualine/lualine.nvim",
-		lazy = true,
+		dependencies = { "Davidyz/VectorCode" },
+		lazy = false,
 		event = { "BufReadPost", "BufAdd", "BufNewFile" },
 		opts = {
 			options = {
@@ -134,6 +141,18 @@ require("lazy").setup({
 				},
 				lualine_c = { { "filename", path = 3 } },
 				-- lualine_x = { "rest" },
+			},
+			tabline = {
+				lualine_y = {
+					function()
+						local ok, vectorcode = pcall(require, "vectorcode.integrations")
+						if ok then
+							return vectorcode.lualine({ how_job_count = true })
+						else
+							return ""
+						end
+					end,
+				},
 			},
 		},
 	},
@@ -182,13 +201,6 @@ require("lazy").setup({
 			vim.cmd.colorscheme("vscode")
 		end,
 	},
-
-	--------------------------------------
-	-- Optional Features --
-	--------------------------------------
-
-	-- Take a look at this file to see what features you need enabled
-	{ import = "optional.optionalfeatures" },
 
 	--------------------------------------
 	-- File explorer and Finder --
@@ -718,23 +730,23 @@ require("lazy").setup({
 							return { "isort", "black" }
 						end
 					end,
-					javascript = { { "prettierd", "prettier" } },
-					typescript = { { "prettierd", "prettier" } },
-					javascriptreact = { { "prettierd", "prettier" } },
-					typescriptreact = { { "prettierd", "prettier" } },
+					javascript = { "prettierd", "prettier" },
+					typescript = { "prettierd", "prettier" },
+					javascriptreact = { "prettierd", "prettier" },
+					typescriptreact = { "prettierd", "prettier" },
 					-- json = { "jq" },
-					graphql = { { "prettierd", "prettier" } },
+					graphql = { "prettierd", "prettier" },
 					java = { "google-java-format" },
 					kotlin = { "ktlint" },
-					markdown = { { "prettierd", "prettier" } },
+					markdown = { "prettierd", "prettier" },
 					erb = { "htmlbeautifier" },
 					html = { "htmlbeautifier" },
 					bash = { "beautysh" },
 					proto = { "buf" },
 					-- yaml = { "yamlfmt" },
 					toml = { "taplo" },
-					css = { { "prettierd", "prettier" } },
-					scss = { { "prettierd", "prettier" } },
+					css = { "prettierd", "prettier" },
+					scss = { "prettierd", "prettier" },
 				},
 				format_on_save = {
 					-- These options will be passed to conform.format()

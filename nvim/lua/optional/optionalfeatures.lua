@@ -2,13 +2,38 @@ return {
 	-- Autosave feature
 	{
 		"okuuva/auto-save.nvim",
-		-- cmd = "ASToggle", -- Use this cmd if you want to enable or Space + t + s
+
 		event = { "InsertLeave", "TextChanged" },
 		opts = {
-			execution_message = {
-				enabled = false,
-			},
+
 			debounce_delay = 5000,
+			-- Use Neovim's built-in notification system instead of execution_message
+			on_enable = function()
+				vim.notify("Auto-save enabled", vim.log.levels.INFO, { title = "auto-save.nvim" })
+			end,
+			on_disable = function()
+				vim.notify("Auto-save disabled", vim.log.levels.WARN, { title = "auto-save.nvim" })
+			end,
+		},
+	},
+
+	-- small formatting diagnostic
+	{
+		"rachartier/tiny-inline-diagnostic.nvim",
+		event = { "LspAttach" },
+		dependencies = { "neovim/nvim-lspconfig" },
+		init = function()
+			vim.diagnostic.config({
+				virtual_text = false,
+			})
+		end,
+		main = "tiny-inline-diagnostic",
+		opts = {
+			preset = "nonerdfont",
+			options = {
+				multiple_diag_under_cursor = true,
+				show_source = true,
+			},
 		},
 	},
 
@@ -90,6 +115,40 @@ return {
 		end,
 	},
 
+	{
+		"hiphish/rainbow-delimiters.nvim",
+		event = { "BufReadPost", "BufNewFile" },
+		config = function()
+			local rainbow_delimiters = require("rainbow-delimiters")
+			vim.g.rainbow_delimiters = {
+				strategy = {
+					[""] = rainbow_delimiters.strategy["global"],
+					vim = rainbow_delimiters.strategy["local"],
+				},
+				query = {
+					[""] = "rainbow-delimiters",
+					lua = "rainbow-blocks",
+				},
+				highlight = {
+					"RainbowDelimiterRed",
+					"RainbowDelimiterYellow",
+					"RainbowDelimiterBlue",
+					"RainbowDelimiterOrange",
+					"RainbowDelimiterGreen",
+					"RainbowDelimiterViolet",
+					"RainbowDelimiterCyan",
+				},
+			}
+			vim.api.nvim_set_hl(
+				0,
+				"MatchParen",
+				---@diagnostic disable-next-line: param-type-mismatch
+				vim.tbl_deep_extend("force", vim.api.nvim_get_hl(0, { name = "MatchParen" }), { fg = "NONE" })
+			)
+		end,
+		dependencies = { "nvim-treesitter/nvim-treesitter" },
+	},
+
 	-- Session management
 	-- auto save and restore the last session
 	{
@@ -102,6 +161,12 @@ return {
 	{
 		"tpope/vim-obsession",
 		lazy = true,
+	},
+
+	{
+		"Davidyz/executable-checker.nvim",
+		opts = {},
+		event = "VeryLazy",
 	},
 
 	{
@@ -222,6 +287,155 @@ return {
 		event = "InsertEnter",
 		opts = {},
 	},
+	{ import = "pluginconfigs.vectorcode.init" },
+	{
+		"milanglacier/minuet-ai.nvim",
+		event = "VeryLazy",
+		config = function(_, opts)
+			local has_vc, vectorcode_cacher = pcall(require, "vectorcode.cacher")
+			local num_docs = 10
+			local gemini_prompt = [[
+You are the backend of an AI-powered code completion engine. Your task is to
+provide code suggestions based on the user's input. The user's code will be
+enclosed in markers:
+
+- `<contextAfterCursor>`: Code context after the cursor
+- `<cursorPosition>`: Current cursor location
+- `<contextBeforeCursor>`: Code context before the cursor
+]]
+
+			local gemini_few_shots = {}
+
+			gemini_few_shots[1] = {
+				role = "user",
+				content = [[
+# language: python
+<contextBeforeCursor>
+def fibonacci(n):
+    <cursorPosition>
+<contextAfterCursor>
+
+fib(5)]],
+			}
+
+			gemini_few_shots[2] = require("minuet.config").default_few_shots[2]
+			opts = {
+				add_single_line_entry = true,
+				n_completions = 1,
+				after_cursor_filter_length = 0,
+				provider = "gemini",
+				provider_options = {
+					gemini = {
+						model = "gemini-2.0-flash",
+						system = {
+							prompt = gemini_prompt,
+						},
+						few_shots = gemini_few_shots,
+						chat_input = {
+							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
+							repo_context = function()
+								if has_vc then
+									return vectorcode_cacher.make_prompt_component(0, function(file)
+										return "<|file_separator|>" .. file.path .. "\n" .. file.document
+									end).content
+								else
+									return ""
+								end
+							end,
+						},
+						optional = {
+							generationConfig = {
+								stop_sequences = { "<|file_separator|>" },
+								maxOutputTokens = 256,
+								topP = 0.9,
+							},
+							safetySettings = {
+								{
+									category = "HARM_CATEGORY_DANGEROUS_CONTENT",
+									threshold = "BLOCK_NONE",
+								},
+								{
+									category = "HARM_CATEGORY_HATE_SPEECH",
+									threshold = "BLOCK_NONE",
+								},
+								{
+									category = "HARM_CATEGORY_HARASSMENT",
+									threshold = "BLOCK_NONE",
+								},
+								{
+									category = "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+									threshold = "BLOCK_NONE",
+								},
+							},
+						},
+					},
+				},
+				request_timeout = 10,
+			}
+
+			local ollama_host = os.getenv("OLLAMA_HOST")
+			local ok, _ = pcall(require("plenary.curl").get, ollama_host, { timeout = 1000 })
+			if ok then
+				opts.provider = "openai_fim_compatible"
+				local num_ctx = 1024 * 32
+				opts.provider_options.openai_fim_compatible = {
+					api_key = "TERM",
+					name = "Ollama",
+					stream = false,
+					end_point = os.getenv("OLLAMA_HOST") .. "/v1/completions",
+					model = os.getenv("OLLAMA_CODE_MODEL"),
+					optional = {
+						max_tokens = 256,
+						num_ctx = num_ctx,
+					},
+					template = {
+						prompt = function(pref, suff)
+							local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled in code.]]):format(
+								vim.bo.filetype
+							)
+							if has_vc then
+								local cache_result = vectorcode_cacher.make_prompt_component(0)
+								num_docs = cache_result.count
+								prompt_message = prompt_message .. cache_result.content
+							end
+
+							return prompt_message
+								.. "<|fim_prefix|>"
+								.. pref
+								.. "<|fim_suffix|>"
+								.. suff
+								.. "<|fim_middle|>"
+						end,
+						suffix = false,
+					},
+				}
+			end
+			require("minuet").setup(opts)
+			if ok then
+				local openai_fim_compatible = require("minuet.backends.openai_fim_compatible")
+				local orig_get_text_fn = openai_fim_compatible.get_text_fn
+				openai_fim_compatible.get_text_fn = function(json)
+					local bufnr = vim.api.nvim_get_current_buf()
+					local co = coroutine.create(function()
+						vim.b[bufnr].ai_raw_response = json
+						if vectorcode_cacher.buf_is_registered() then
+							local new_num_query = num_docs
+							if json.usage.total_tokens > num_ctx then
+								new_num_query = math.max(num_docs - 1, 1)
+							elseif json.usage.total_tokens < num_ctx * 0.9 then
+								new_num_query = num_docs + 1
+							end
+							vectorcode_cacher.register_buffer(0, { n_query = new_num_query })
+						end
+					end)
+					coroutine.resume(co)
+					return orig_get_text_fn(json)
+				end
+			end
+		end,
+	},
+
+	{ "mawkler/modicator.nvim", opts = {}, event = { "BufReadPost", "BufNewFile" } },
 
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
@@ -1178,6 +1392,60 @@ return {
 		config = function(_, opts)
 			require("render-markdown").setup(opts)
 		end,
+	},
+
+	{
+		"toppair/peek.nvim",
+		ft = { "markdown" },
+		build = "deno task --quiet build:fast",
+		opts = { theme = "dark", filetype = { "markdown", "pandoc" }, app = "firefox" },
+		main = "peek",
+		keys = {
+			{
+				"mp",
+				function()
+					local peek = require("peek")
+					if peek.is_open() then
+						peek.close()
+					else
+						peek.open()
+					end
+				end,
+			},
+			mode = "n",
+		},
+		cond = function()
+			return vim.fn.executable("deno") ~= 0
+		end,
+	},
+	{
+		"hedyhli/markdown-toc.nvim",
+		ft = { "markdown" },
+		opts = { headings = { before_toc = false } },
+	},
+	{
+		"Myzel394/easytables.nvim",
+		cmd = { "EasyTablesCreateNew", "EasyTablesImportThisTable" },
+		opts = {},
+	},
+	{
+		"cameron-wags/rainbow_csv.nvim",
+		config = true,
+		ft = {
+			"csv",
+			"tsv",
+			"csv_semicolon",
+			"csv_whitespace",
+			"csv_pipe",
+			"rfc_csv",
+			"rfc_semicolon",
+		},
+		cmd = {
+			"RainbowDelim",
+			"RainbowDelimSimple",
+			"RainbowDelimQuoted",
+			"RainbowMultiDelim",
+		},
 	},
 
 	-- Python helpers

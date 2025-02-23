@@ -270,6 +270,7 @@ cmp.setup({
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
 		{ name = "copilot" },
+		{ name = "minuet" },
 		{ name = "path" },
 	},
 	sorting = {
@@ -291,8 +292,21 @@ cmp.setup({
 		},
 		priority_weight = 2,
 	},
+	---@class cmp.PerformanceConfig
+	performance = {
+		fetching_timeout = 2000,
+		debounce = 150,
+		throttle = 1000,
+	},
 	mapping = cmp.mapping.preset.insert({
-		["<CR>"] = cmp.mapping.confirm({ select = false }), -- Enter confirms the autocompletion candidate
+		["<CR>"] = cmp.mapping(function(fallback)
+			-- use the internal non-blocking call to check if cmp is visible
+			if cmp.core.view:visible() then
+				cmp.confirm({ select = false })
+			else
+				fallback()
+			end
+		end),
 		["<Tab>"] = cmp_action.luasnip_supertab({ behavior = cmp.SelectBehavior.Select }),
 		["<S-Tab>"] = cmp_action.luasnip_shift_supertab({ behavior = cmp.SelectBehavior.Select }),
 	}),
