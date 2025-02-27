@@ -375,9 +375,9 @@ fib(5)]],
 
 			local ollama_host = os.getenv("OLLAMA_HOST")
 			local ok, _ = pcall(require("plenary.curl").get, ollama_host, { timeout = 1000 })
+			local num_ctx = 1024 * 32
 			if ok then
 				opts.provider = "openai_fim_compatible"
-				local num_ctx = 1024 * 32
 				opts.provider_options.openai_fim_compatible = {
 					api_key = "TERM",
 					name = "Ollama",
@@ -416,20 +416,25 @@ fib(5)]],
 				local orig_get_text_fn = openai_fim_compatible.get_text_fn
 				openai_fim_compatible.get_text_fn = function(json)
 					local bufnr = vim.api.nvim_get_current_buf()
-					local co = coroutine.create(function()
+					-- Schedule UI updates and buffer operations to run on the main thread
+					local result = orig_get_text_fn(json)
+					vim.schedule(function()
+						-- Store raw response in buffer variable
 						vim.b[bufnr].ai_raw_response = json
+						-- Update vectorcode cache if buffer is registered
 						if vectorcode_cacher.buf_is_registered() then
 							local new_num_query = num_docs
-							if json.usage.total_tokens > num_ctx then
-								new_num_query = math.max(num_docs - 1, 1)
-							elseif json.usage.total_tokens < num_ctx * 0.9 then
-								new_num_query = num_docs + 1
+							if json.usage and json.usage.total_tokens then
+								if json.usage.total_tokens > num_ctx then
+									new_num_query = math.max(num_docs - 1, 1)
+								elseif json.usage.total_tokens < num_ctx * 0.9 then
+									new_num_query = num_docs + 1
+								end
 							end
 							vectorcode_cacher.register_buffer(0, { n_query = new_num_query })
 						end
 					end)
-					coroutine.resume(co)
-					return orig_get_text_fn(json)
+					return result
 				end
 			end
 		end,
@@ -477,19 +482,46 @@ fib(5)]],
 					pr_diff = {
 						description = "Get the diff between the current branch and target branch",
 						resolve = function()
+							local Job = require("plenary.job")
+
 							-- Check if we're in a git repository
-							local is_git = vim.fn.system("git rev-parse --is-inside-work-tree 2>/dev/null")
-							if vim.v.shell_error ~= 0 then
+							local is_git_job = Job:new({
+								command = "git",
+								args = { "rev-parse", "--is-inside-work-tree" },
+								enable_recording = true,
+							})
+
+							local ok, output = pcall(function()
+								return is_git_job:sync()[1] == "true"
+							end)
+
+							if not ok or not output then
 								return { { content = "Not in a git repository", filename = "error", filetype = "text" } }
 							end
 
 							-- Get target branch (main/master/develop)
-							local target_branch = vim.fn
-								.system(
-									"git for-each-ref --format='%(refname:short)' refs/heads/ | grep -E '^(main|master|develop)' | head -n 1"
-								)
-								:gsub("\n", "")
-							if vim.v.shell_error ~= 0 or target_branch == "" then
+							local target_branch_job = Job:new({
+								command = "git",
+								args = { "for-each-ref", "--format=%(refname:short)", "refs/heads/" },
+								enable_recording = true,
+							})
+
+							local target_branch
+							ok, output = pcall(function()
+								local branches = target_branch_job:sync()
+								for _, branch in ipairs(branches) do
+									if
+										branch:match("^main$")
+										or branch:match("^master$")
+										or branch:match("^develop$")
+									then
+										return branch
+									end
+								end
+								return nil
+							end)
+
+							if not ok or not output then
 								return {
 									{
 										content = "Failed to determine target branch",
@@ -498,13 +530,22 @@ fib(5)]],
 									},
 								}
 							end
+							target_branch = output
 
 							-- Fetch the latest changes from the remote repository
-							local fetch_result = vim.fn.system("git fetch origin " .. target_branch .. " 2>&1")
-							if vim.v.shell_error ~= 0 then
+							local fetch_job = Job:new({
+								command = "git",
+								args = { "fetch", "origin", target_branch },
+								enable_recording = true,
+							})
+
+							ok = pcall(function()
+								fetch_job:sync()
+							end)
+							if not ok then
 								return {
 									{
-										content = "Failed to fetch from remote: " .. fetch_result,
+										content = "Failed to fetch from remote",
 										filename = "error",
 										filetype = "text",
 									},
@@ -512,29 +553,50 @@ fib(5)]],
 							end
 
 							-- Get current branch
-							local current_branch =
-								vim.fn.system("git rev-parse --abbrev-ref HEAD 2>/dev/null"):gsub("\n", "")
-							if vim.v.shell_error ~= 0 or current_branch == "" then
+							local current_branch_job = Job:new({
+								command = "git",
+								args = { "rev-parse", "--abbrev-ref", "HEAD" },
+								enable_recording = true,
+							})
+
+							local current_branch
+							ok, output = pcall(function()
+								return current_branch_job:sync()[1]
+							end)
+							if not ok or not output then
 								return {
 									{ content = "Failed to get current branch", filename = "error", filetype = "text" },
 								}
 							end
-
+							current_branch = output
 							-- Get the diff
-							local cmd = string.format(
-								"git diff --no-color --no-ext-diff origin/%s...%s 2>&1",
-								target_branch,
-								current_branch
-							)
-							local handle = io.popen(cmd)
-							if not handle then
+							local diff_job = Job:new({
+								command = "git",
+								args = {
+									"diff",
+									"--no-color",
+									"--no-ext-diff",
+									string.format("origin/%s...%s", target_branch, current_branch),
+								},
+								enable_recording = true,
+							})
+
+							local diff_result
+							ok, output = pcall(function()
+								return diff_job:sync()
+							end)
+							if not ok or not output or #output == 0 then
 								return {
-									{ content = "Failed to execute git diff", filename = "error", filetype = "text" },
+									{
+										content = "No changes found between current branch and " .. target_branch,
+										filename = "info",
+										filetype = "text",
+									},
 								}
 							end
+							diff_result = output
 
-							local result = handle:read("*a")
-							handle:close()
+							local result = table.concat(diff_result, "\n")
 
 							-- If there's no diff, return a meaningful message
 							if not result or result == "" then
@@ -1250,7 +1312,14 @@ fib(5)]],
 		event = "InsertEnter",
 		config = function()
 			require("copilot").setup({
-				suggestion = { enabled = false, auto_trigger = false, debounce = 75 },
+				suggestion = {
+					enabled = function()
+						local file_size = vim.fn.getfsize(vim.fn.expand("%"))
+						return file_size < 1024 * 1024 -- Disable for files > 1MB
+					end,
+					auto_trigger = false,
+					debounce = 75,
+				},
 				panel = {
 					enabled = false,
 
@@ -1262,17 +1331,38 @@ fib(5)]],
 				},
 				copilot_node_command = "node",
 				server_opts_overrides = {},
+				-- Async handling configuration
+				async_completions = true,
+				async_completion_delay = 50,
 			})
-			-- hide copilot suggestions when cmp menu is open
-			-- to prevent odd behavior/garbled up suggestions
+
+			-- Improved async suggestion handling with cmp
 			local cmp_status_ok, cmp = pcall(require, "cmp")
 			if cmp_status_ok then
+				-- Track pending state updates
+				local pending_suggestion_update = false
+
+				-- Safe state update function with async handling
+				local function update_suggestion_state(state)
+					if pending_suggestion_update then
+						return
+					end
+					pending_suggestion_update = true
+
+					vim.schedule(function()
+						if vim.api.nvim_buf_is_valid(0) then
+							vim.b.copilot_suggestion_hidden = state
+							pending_suggestion_update = false
+						end
+					end)
+				end
+
 				cmp.event:on("menu_opened", function()
-					vim.b.copilot_suggestion_hidden = true
+					update_suggestion_state(true)
 				end)
 
 				cmp.event:on("menu_closed", function()
-					vim.b.copilot_suggestion_hidden = false
+					update_suggestion_state(false)
 				end)
 			end
 		end,
@@ -1295,7 +1385,10 @@ fib(5)]],
 			copilot = {
 				model = "claude-3.5-sonnet",
 				temperature = 0.5,
-				timeout = 30000, -- Timeout in milliseconds
+				timeout = function()
+					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
+					return math.min(30000 + (file_size / 1024) * 100, 60000)
+				end,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
@@ -1473,6 +1566,9 @@ fib(5)]],
 		event = "VeryLazy",
 		opts = {
 			handlers = {},
+			on_error = function(err)
+				vim.notify("CMake Tools error: " .. err, vim.log.levels.ERROR)
+			end,
 		},
 	},
 

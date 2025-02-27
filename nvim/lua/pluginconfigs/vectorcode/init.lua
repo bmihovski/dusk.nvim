@@ -2,7 +2,7 @@ return {
 	"Davidyz/VectorCode",
 	-- dir = "~/git/VectorCode/",
 	version = "*",
-	build = "/home/linuxbrew/.linuxbrew/Cellar/pipx upgrade vectorcode",
+	build = "/home/linuxbrew/.linuxbrew/bin/pipx upgrade vectorcode",
 	opts = {
 		notify = true,
 		n_query = 10,

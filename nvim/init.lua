@@ -147,7 +147,7 @@ require("lazy").setup({
 					function()
 						local ok, vectorcode = pcall(require, "vectorcode.integrations")
 						if ok then
-							return vectorcode.lualine({ how_job_count = true })
+							return vectorcode.lualine({ show_job_count = true })
 						else
 							return ""
 						end
