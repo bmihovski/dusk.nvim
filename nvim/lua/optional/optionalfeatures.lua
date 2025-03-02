@@ -445,6 +445,7 @@ fib(5)]],
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
 		dependencies = {
+			{ "Davidyz/VectorCode" },
 			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
 			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
 		},
@@ -469,6 +470,7 @@ fib(5)]],
 				},
 				history_path = vim.fn.stdpath("data") .. "/copilotchat_history",
 				auto_follow_cursor = false,
+				chat_autocomplete = true,
 
 				auto_insert_mode = false,
 				question_header = "  " .. user .. " ",
@@ -476,6 +478,10 @@ fib(5)]],
 				error_header = "## Error ",
 				window = {
 					width = 0.4,
+				},
+				sticky = {
+					"Using the model $claude-3.7-sonnet-thought",
+					"#vectorcode",
 				},
 				-- Register custom contexts
 				contexts = {
@@ -618,6 +624,82 @@ fib(5)]],
 							}
 						end,
 					},
+					vectorcode = {
+						description = "Inject VectorCode context",
+						resolve = function()
+							local log = require("plenary.log")
+							local copilot_utils = require("CopilotChat.utils")
+							local prompt_message =
+								[[The following are relevant files from the repository. Use them as extra context for helping with code completion and understanding:]]
+							-- Try VectorCode
+							local has_vc, vectorcode_cacher = pcall(require, "vectorcode.cacher")
+							if has_vc then
+								-- Get all valid listed buffers
+								local listed_buffers = vim.tbl_filter(function(b)
+									return copilot_utils.buf_valid(b)
+										and vim.fn.buflisted(b) == 1
+										and #vim.fn.win_findbuf(b) > 0
+								end, vim.api.nvim_list_bufs())
+
+								local all_content = ""
+								local total_files = 0
+
+								-- Process each buffer with registered VectorCode cache
+								for _, bufnr in ipairs(listed_buffers) do
+									log.debug("Current buffer name", vim.api.nvim_buf_get_name(bufnr))
+									if vectorcode_cacher.buf_is_registered(bufnr) then
+										log.debug("Current registered buffer name", vim.api.nvim_buf_get_name(bufnr))
+										local cache_result = vectorcode_cacher.make_prompt_component(
+											bufnr,
+											function(file)
+												return string.format(
+													[[
+### File: %s
+```%s
+%s
+```
+
+---
+]], -- Add separator for better visual distinction
+													file.path,
+													copilot_utils.filetype(file.path),
+													file.document
+												)
+											end
+										)
+
+										log.debug("VectorCode context", cache_result)
+										if cache_result and cache_result.content and cache_result.content ~= "" then
+											all_content = all_content .. "\n" .. cache_result.content
+											total_files = total_files + cache_result.count
+										end
+									end
+								end
+
+								if total_files > 0 then
+									prompt_message = prompt_message .. all_content
+									log.debug("VectorCode context when success", prompt_message)
+									return {
+										{
+											content = prompt_message,
+											filename = "vectorcode_context",
+											filetype = "markdown",
+										},
+									}
+								end
+							end
+
+							log.debug("VectorCode context when no success", prompt_message)
+							-- If VectorCode is not available
+							return {
+								{
+									content = "VectorCode is not available",
+									filename = "error",
+									filetype = "markdown",
+								},
+							}
+						end,
+					},
 				},
 				-- Custom prompts incorporating git staged/unstaged functionality
 				prompts = {
@@ -630,6 +712,7 @@ fib(5)]],
 						prompt = "Please review the following code and provide suggestions for improvement.",
 						system_prompt = "You are an expert code reviewer. Focus on best practices, performance, and potential issues.",
 					},
+
 					GitHubReview = {
 						prompt = "> #pr_diff\n\nPerform a comprehensive code review of the following git diff. Provide specific, actionable feedback in the form of individual comments targeted at specific lines and files. This review should cover code in Java (with a strong focus on Spring Boot), C++, Python, build systems (with a strong focus on Bazel), and infrastructure-as-code (IaC) configurations (e.g., GitHub Actions, YAML, JSON, Terraform, CloudFormation, Dockerfiles, Kubernetes manifests). Do NOT provide a general summary; focus on line-by-line analysis.",
 						system_prompt = [[You are a senior software engineer/DevOps engineer performing a thorough code and infrastructure review. Your goal is to provide actionable feedback that improves quality, maintainability, performance, security, and reliability. You are reviewing changes for a colleague, so maintain a constructive and professional tone. You are an expert in a wide range of programming languages, scripting languages, build systems, and infrastructure-as-code technologies, with *deep expertise* in Java/Spring Boot, C++, Python, and Bazel.
@@ -1162,7 +1245,6 @@ fib(5)]],
 						system_prompt = "You are an expert in writing clear, concise git commit messages following best practices.",
 					},
 					CommitUnstaged = {
-						prompt = "> #git:unstaged\n\n" .. string.format(commit_prompt, "unstaged changes"),
 						system_prompt = "You are an expert in writing clear, concise git commit messages following best practices.",
 					},
 					PullRequest = {
@@ -1276,9 +1358,6 @@ fib(5)]],
 					vim.opt_local.number = false
 				end,
 			})
-
-			-- Setup CMP integration
-			chat_autocomplete = true
 
 			-- Create commands for visual mode
 			vim.api.nvim_create_user_command("CopilotChatVisual", function(args)

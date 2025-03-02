@@ -222,11 +222,9 @@ local lspkind_format = require("lspkind").cmp_format({
 		Function = "󰊕",
 		Constructor = "",
 		Field = "󰜢",
-		Variable = "󰀫",
 		Class = "󰠱",
 		Interface = "",
 		Module = "",
-		Property = "󰜢",
 		Unit = "",
 		Value = "󰎠",
 		Enum = "",
@@ -243,9 +241,47 @@ local lspkind_format = require("lspkind").cmp_format({
 		Operator = "󰆕",
 		TypeParameter = " ",
 		Copilot = "",
+		Number = "󰎠",
+		Array = "",
+		Variable = "",
+		Property = "",
+		Boolean = "⊨",
+		Namespace = "",
+		Package = "",
+		Codeium = "󰩂",
+		claude = "󰋦",
+		openai = "󱢆",
+		codestral = "󱎥",
+		mistral = "󱎥",
+		gemini = "",
+		Groq = "",
+		Openrouter = "󱂇",
+		Ollama = "󰳆",
+		["Llama.cpp"] = "󰳆",
+		Deepseek = "",
+		-- FALLBACK
+		fallback = "",
 	},
 })
-
+local source_icons = {
+    minuet = '󱗻',
+    orgmode = '',
+    otter = '󰼁',
+    nvim_lsp = '',
+    lsp = '',
+    buffer = '',
+    luasnip = '',
+    snippets = '',
+    path = '',
+    git = '',
+    tags = '',
+    cmdline = '󰘳',
+    latex_symbols = '',
+    cmp_nvim_r = '󰟔',
+    codeium = '󰩂',
+    -- FALLBACK
+    fallback = '󰜚',
+}
 cmp.setup({
 	window = {
 		completion = cmp.config.window.bordered(),
@@ -299,6 +335,7 @@ cmp.setup({
 		throttle = 1000,
 	},
 	mapping = cmp.mapping.preset.insert({
+		["<A-y>"] = require("minuet").make_cmp_map(),
 		["<CR>"] = cmp.mapping(function(fallback)
 			-- use the internal non-blocking call to check if cmp is visible
 			if cmp.core.view:visible() then
@@ -316,6 +353,7 @@ cmp.setup({
 		fields = { "kind", "abbr" },
 		format = function(entry, vim_item)
 			-- Hide function arguments in the completion menu
+			vim_item.menu = source_icons[entry.source.name] or source_icons.fallback
 			vim_item.menu = vim_item.menu or ""
 			if vim_item.kind == "Function" or vim_item.kind == "Method" or vim_item.kind == "Copilot" then
 				vim_item.abbr = vim_item.abbr:gsub("%b()", "")

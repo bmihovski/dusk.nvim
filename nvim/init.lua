@@ -119,42 +119,42 @@ require("lazy").setup({
 	-- Status Line
 	{
 		"nvim-lualine/lualine.nvim",
-		dependencies = { "Davidyz/VectorCode" },
+		dependencies = { "Davidyz/VectorCode", "echasnovski/mini.icons" },
 		lazy = false,
 		event = { "BufReadPost", "BufAdd", "BufNewFile" },
-		opts = {
-			options = {
-				component_separators = "|",
-				section_separators = "",
-			},
-			extensions = { "aerial", "toggleterm", "quickfix" },
+		config = function()
+			local vectorcode_component = nil
+			local ok, vectorcode = pcall(require, "vectorcode.integrations")
+			if ok then
+				vectorcode_component = vectorcode.lualine({ show_job_count = false })
+			end
+			require("lualine").setup({
+				options = {
+					component_separators = "|",
+					section_separators = "",
+				},
+				extensions = { "aerial", "toggleterm", "quickfix" },
 
-			sections = {
-				lualine_b = {
-					"copilot",
-					"branch",
-					"diff",
-					{
-						"diagnostics",
-						sources = { "nvim_workspace_diagnostic" },
+				sections = {
+					lualine_b = {
+						"copilot",
+						"branch",
+						"diff",
+						{
+							"diagnostics",
+							sources = { "nvim_workspace_diagnostic" },
+						},
+					},
+					lualine_c = { { "filename", path = 3 } },
+					-- lualine_x = { "rest" },
+				},
+				tabline = {
+					lualine_y = {
+						vectorcode_component,
 					},
 				},
-				lualine_c = { { "filename", path = 3 } },
-				-- lualine_x = { "rest" },
-			},
-			tabline = {
-				lualine_y = {
-					function()
-						local ok, vectorcode = pcall(require, "vectorcode.integrations")
-						if ok then
-							return vectorcode.lualine({ show_job_count = true })
-						else
-							return ""
-						end
-					end,
-				},
-			},
-		},
+			})
+		end,
 	},
 
 	-- Breadcrumbs
