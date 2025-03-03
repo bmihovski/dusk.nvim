@@ -196,7 +196,7 @@ local mappings = {
 		desc = "CopilotChat: Ask AI",
 	},
 	{ "<leader>acw", "<cmd>CopilotChatToggle<cr>", desc = "CopilotChat: Toggle chat window." },
-	{ "<leader>acd", "<cmd>CopilotChatHelpActions<cr>", desc = "CopilotChat: Diagnostic help actions" },
+	{ "<leader>acda", "<cmd>CopilotChatHelpActions<cr>", desc = "CopilotChat: Diagnostic help actions" },
 	{
 		"<leader>acp",
 		"<cmd>CopilotChatPromptActions<cr>",
@@ -223,6 +223,8 @@ local mappings = {
 	{ "<leader>acf", "<cmd>CopilotChatFixDiagnostic<cr>", desc = "Fix Diagnostic" },
 	-- Models
 	{ "<leader>am", "<cmd>CopilotChatModels<cr>", desc = "Select Models" },
+	-- VectorCode register buffer
+	{ "<leader>av", "<cmd>VectorCode register<cr>", desc = "VectorCode Register Buffer" },
 	{ "<leader>C", group = "Containers - Docker" },
 	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
 	{ "<leader>D", group = "Database" },
