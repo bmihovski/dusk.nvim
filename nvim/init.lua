@@ -119,39 +119,25 @@ require("lazy").setup({
 	-- Status Line
 	{
 		"nvim-lualine/lualine.nvim",
-		dependencies = { "Davidyz/VectorCode", "echasnovski/mini.icons" },
+		dependencies = { "echasnovski/mini.icons", "catppuccin/nvim" },
 		lazy = false,
 		event = { "BufReadPost", "BufAdd", "BufNewFile" },
 		config = function()
-			local vectorcode_component = nil
-			local ok, vectorcode = pcall(require, "vectorcode.integrations")
-			if ok then
-				vectorcode_component = vectorcode.lualine({ show_job_count = false })
-			end
 			require("lualine").setup({
 				options = {
 					component_separators = "|",
 					section_separators = "",
+					theme = "catppuccin",
 				},
 				extensions = { "aerial", "toggleterm", "quickfix" },
 
 				sections = {
 					lualine_b = {
-						"copilot",
 						"branch",
-						"diff",
-						{
-							"diagnostics",
-							sources = { "nvim_workspace_diagnostic" },
-						},
 					},
-					lualine_c = { { "filename", path = 3 } },
-					-- lualine_x = { "rest" },
-				},
-				tabline = {
-					lualine_y = {
-						vectorcode_component,
-					},
+					lualine_x = {},
+					lualine_y = {},
+					lualine_z = { "location" },
 				},
 			})
 		end,
@@ -166,6 +152,7 @@ require("lazy").setup({
 				"SmiteshP/nvim-navic",
 				config = function()
 					require("nvim-navic").setup({
+						highlight = true,
 						lsp = {
 							auto_attach = true,
 						},
@@ -193,12 +180,114 @@ require("lazy").setup({
 		lazy = true,
 		event = "CursorHold",
 	},
-
 	{
-		"Mofiqul/vscode.nvim",
+		"xzbdmw/colorful-menu.nvim",
+		opts = { max_width = 0.3 },
+	},
+	{
+		"catppuccin/nvim",
+		name = "catppuccin",
+		priority = 1000,
+		config = function(_, opts)
+			require("catppuccin").setup(opts)
+			vim.cmd.colorscheme("catppuccin")
+			vim.api.nvim_set_hl(0, "CursorColumn", { link = "CursorLine" })
+		end,
 		lazy = false,
-		config = function()
-			vim.cmd.colorscheme("vscode")
+		opts = function()
+			local flavour = "mocha"
+			return {
+				flavour = flavour,
+				term_colors = true,
+				custom_highlights = function(colors)
+					return {
+						TelescopeNormal = {
+							bg = colors.mantle,
+							fg = colors.text,
+						},
+						TelescopeBorder = {
+							bg = colors.mantle,
+							fg = colors.mantle,
+						},
+						TelescopePromptNormal = {
+							bg = colors.crust,
+							fg = colors.lavender,
+						},
+						TelescopePromptBorder = {
+							bg = colors.crust,
+							fg = colors.crust,
+						},
+						TelescopePromptTitle = {
+							bg = colors.crust,
+							fg = colors.crust,
+						},
+						TelescopePreviewTitle = {
+							bg = colors.mantle,
+							fg = colors.mantle,
+						},
+						TelescopeResultsTitle = {
+							bg = colors.mantle,
+							fg = colors.mantle,
+						},
+						FloatBorder = { fg = colors.mantle, bg = colors.mantle },
+						FloatTitle = { fg = colors.lavender, bg = colors.mantle },
+						LspInfoBorder = { fg = colors.mantle, bg = colors.mantle },
+						WinSeparator = { bg = colors.base, fg = colors.lavender },
+					}
+				end,
+				dim_inactive = { enabled = false },
+				default_integrations = {
+					cmp = true,
+					dadbod_ui = true,
+					dap = true,
+					dap_ui = true,
+					diffview = true,
+					illuminate = {
+						enabled = true,
+						lsp = false,
+					},
+					fidget = true,
+					lsp_saga = true,
+					lsp_trouble = true,
+					mason = true,
+					mini = { enabled = true },
+					native_lsp = {
+						enabled = true,
+						virtual_text = {
+							errors = { "italic" },
+							hints = { "italic" },
+							warnings = { "italic" },
+							information = { "italic" },
+							ok = { "italic" },
+						},
+						underlines = {
+							errors = { "underline" },
+							hints = { "underline" },
+							warnings = { "underline" },
+							information = { "underline" },
+							ok = { "underline" },
+						},
+						inlay_hints = {
+							background = true,
+						},
+					},
+					navic = { enabled = true },
+					noice = true,
+					notify = true,
+					nvim_surround = true,
+					nvimtree = true,
+					rainbow_delimiters = true,
+					telescope = { enabled = true },
+					treesitter = true,
+					render_markdown = true,
+					which_key = true,
+					fzf = true,
+					gitsigns = true,
+					overseer = true,
+					aerial = true,
+					alpha = true,
+				},
+			}
 		end,
 	},
 
@@ -346,7 +435,7 @@ require("lazy").setup({
 			local lualine_require = require("lualine_require")
 			local modules = lualine_require.lazy_require({ config_module = "lualine.config" })
 			local current_config = modules.config_module.get_config()
-			current_config.sections.lualine_c = { "hostname", { "filename", path = 1 }, "aerial" }
+			current_config.sections.lualine_c = { "aerial" }
 			require("lualine").setup(current_config)
 		end,
 	},
@@ -376,6 +465,18 @@ require("lazy").setup({
 				-- disable semanticTokens because they interfere with treesitter
 				if client.supports_method("textDocument/semanticTokens") then
 					client.server_capabilities.semanticTokensProvider = nil
+				end
+				if client.server_capabilities.inlayHintProvider and vim.bo.filetype ~= "tex" then
+					vim.g.inlay_hints_visible = true
+					---@diagnostic disable-next-line: unused-local
+					local status, err = pcall(vim.lsp.inlay_hint.enable, true, { bufnr = bufnr })
+					if not status then
+						---@diagnostic disable-next-line: param-type-mismatch
+						vim.lsp.inlay_hint.enable(bufnr, true)
+					end
+				end
+				if client.server_capabilities.documentSymbolProvider then
+					require("nvim-navic").attach(client, bufnr)
 				end
 			end)
 
@@ -440,6 +541,7 @@ require("lazy").setup({
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter", -- optional
 			"nvim-tree/nvim-web-devicons", -- optional
+			"catppuccin/nvim",
 		},
 		opts = {
 			lightbulb = {
@@ -454,6 +556,13 @@ require("lazy").setup({
 				win_width = 50,
 			},
 		},
+		config = function()
+			require("lspsaga").setup({
+				ui = {
+					kind = require("catppuccin.groups.integrations.lsp_saga").custom_kind(),
+				},
+			})
+		end,
 	},
 
 	-- Shows signature as you type
@@ -467,16 +576,6 @@ require("lazy").setup({
 		},
 		config = function(_, opts)
 			require("lsp_signature").setup(opts)
-		end,
-	},
-
-	-- Improves the way errors are shown in the buffer
-	{
-		"https://git.sr.ht/~whynothugo/lsp_lines.nvim",
-		event = "LspAttach",
-		branch = "main",
-		config = function()
-			require("lsp_lines").setup()
 		end,
 	},
 
@@ -619,7 +718,7 @@ require("lazy").setup({
 			vim.keymap.set("n", "<leader>Je", springboot_nvim.generate_enum, { desc = "[J]ava Create [E]num" })
 
 			-- run the setup function with default configuration
-			springboot_nvim.setup({})
+			springboot_nvim.setup()
 		end,
 	},
 	{
@@ -646,8 +745,6 @@ require("lazy").setup({
 			"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
 			"ibhagwan/fzf-lua", -- optional
 		},
-		---@type bootls.Config
-		opts = {},
 	},
 
 	-- Rename packages and imports also when renaming/moving files via nvim-tree (for Java)
@@ -809,7 +906,7 @@ require("lazy").setup({
 		"akinsho/git-conflict.nvim",
 		event = "CursorHold",
 		config = function()
-			require("git-conflict").setup()
+			require("git-conflict").setup({})
 		end,
 	},
 
@@ -972,4 +1069,4 @@ require("lazy").setup({
 			vim.fn["mkdp#util#install"]()
 		end,
 	},
-}, {})
+})

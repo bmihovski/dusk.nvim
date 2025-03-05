@@ -84,11 +84,6 @@ vim.opt.fillchars:append({ vert = " " }) -- hide borders of split vertical windo
 vim.cmd("highlight EndOfBuffer ctermfg=NONE ctermbg=NONE guibg=NONE") --requred to hide tildes at the end of buffer
 vim.cmd("highlight VertSplit ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE") -- required to hide borders of split vertical windows
 
--- Disable native diagnostic lines because they are handled by the lsp_lines plugin
--- See https://git.sr.ht/~whynothugo/lsp_lines.nvim
-vim.diagnostic.config({
-	virtual_text = false,
-})
 
 -- go to previous/next line with h,l,left arrow and right arrow
 -- when cursor reaches end/beginning of line

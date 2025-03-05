@@ -28,7 +28,6 @@ end
 
 -- display text completion at end of file
 local function set_priority(entry1, entry2)
-	local entry_kind_2 = entry2:get_kind()
 	local entry1_priority = get_kind_priority(entry1)
 	local entry2_priority = get_kind_priority(entry2)
 	if entry1_priority == entry2_priority then
@@ -264,23 +263,23 @@ local lspkind_format = require("lspkind").cmp_format({
 	},
 })
 local source_icons = {
-    minuet = '󱗻',
-    orgmode = '',
-    otter = '󰼁',
-    nvim_lsp = '',
-    lsp = '',
-    buffer = '',
-    luasnip = '',
-    snippets = '',
-    path = '',
-    git = '',
-    tags = '',
-    cmdline = '󰘳',
-    latex_symbols = '',
-    cmp_nvim_r = '󰟔',
-    codeium = '󰩂',
-    -- FALLBACK
-    fallback = '󰜚',
+	minuet = "󱗻",
+	orgmode = "",
+	otter = "󰼁",
+	nvim_lsp = "",
+	lsp = "",
+	buffer = "",
+	luasnip = "",
+	snippets = "",
+	path = "",
+	git = "",
+	tags = "",
+	cmdline = "󰘳",
+	latex_symbols = "",
+	cmp_nvim_r = "󰟔",
+	codeium = "󰩂",
+	-- FALLBACK
+	fallback = "󰜚",
 }
 cmp.setup({
 	window = {
@@ -291,6 +290,7 @@ cmp.setup({
 		completeopt = "menu,menuone,noselect,noinsert",
 	},
 	sources = {
+		{ name = "minuet", group_index = 1, priority = 100 },
 		{
 			name = "lazydev",
 			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -305,8 +305,7 @@ cmp.setup({
 			name = "buffer-lines",
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
-		{ name = "copilot" },
-		{ name = "minuet" },
+		-- { name = "copilot" },
 		{ name = "path" },
 	},
 	sorting = {
@@ -339,7 +338,7 @@ cmp.setup({
 		["<CR>"] = cmp.mapping(function(fallback)
 			-- use the internal non-blocking call to check if cmp is visible
 			if cmp.core.view:visible() then
-				cmp.confirm({ select = false })
+				cmp.confirm({ select = true })
 			else
 				fallback()
 			end
@@ -364,7 +363,7 @@ cmp.setup({
 			local strings = vim.split(kind.kind, "%s", { trimempty = true })
 			kind.kind = " " .. (strings[1] or "") .. " "
 			--kind.kind = '▍' -- instead of symbol
-			kind.menu = " " .. (strings[2] or "")
+			kind.menu = " " .. (strings[2] or source_icons[entry.source.name] or source_icons.fallback)
 			return kind
 		end,
 	},

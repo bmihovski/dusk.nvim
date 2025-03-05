@@ -1,15 +1,20 @@
 return {
 	"Davidyz/VectorCode",
-	-- dir = "~/git/VectorCode/",
 	version = "*",
 	build = "pipx upgrade vectorcode",
-	opts = {
-		notify = true,
-		n_query = 10,
-		timeout_ms = -1,
-		debounce = 15,
-		async_opts = { events = { "BufWritePost" }, single_job = true },
-	},
+	opts = function()
+		return {
+			async_backend = "lsp",
+			notify = false,
+			n_query = 10,
+			timeout_ms = -1,
+			async_opts = {
+				events = { "BufWritePost" },
+				-- query_cb = require("vectorcode.utils").make_surrounding_lines_cb(40),
+				debounce = 30,
+			},
+		}
+	end,
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 	},

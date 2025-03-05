@@ -277,11 +277,6 @@ return {
 	-- GitHub copilot
 
 	{
-		"AndreM222/copilot-lualine",
-		event = "VeryLazy",
-	},
-
-	{
 		"JosefLitos/cmp-copilot",
 		dependencies = { "zbirenbaum/copilot.lua" },
 		event = "InsertEnter",
@@ -292,8 +287,11 @@ return {
 		"milanglacier/minuet-ai.nvim",
 		event = "VeryLazy",
 		config = function(_, opts)
-			local has_vc, vectorcode_cacher = pcall(require, "vectorcode.cacher")
-			local num_docs = 10
+			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
+			local vectorcode_cacher = nil
+			if has_vc then
+				vectorcode_cacher = vectorcode_config.get_cacher_backend()
+			end
 			local gemini_prompt = [[
 You are the backend of an AI-powered code completion engine. Your task is to
 provide code suggestions based on the user's input. The user's code will be
@@ -321,8 +319,16 @@ fib(5)]],
 			gemini_few_shots[2] = require("minuet.config").default_few_shots[2]
 			opts = {
 				add_single_line_entry = true,
-				n_completions = 1,
-				after_cursor_filter_length = 0,
+				after_cursor_filter_length = 15,
+				cmp = {
+					enable_auto_complete = true,
+				},
+				blink = {
+					enable_auto_complete = false,
+				},
+				-- notify = "debug",
+				throttle = 2000,
+				debounce = 1000,
 				provider = "gemini",
 				provider_options = {
 					gemini = {
@@ -334,7 +340,7 @@ fib(5)]],
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function()
-								if has_vc then
+								if vectorcode_cacher ~= nil then
 									return vectorcode_cacher.make_prompt_component(0, function(file)
 										return "<|file_separator|>" .. file.path .. "\n" .. file.document
 									end).content
@@ -393,12 +399,10 @@ fib(5)]],
 							local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled in code.]]):format(
 								vim.bo.filetype
 							)
-							if has_vc then
-								local cache_result = vectorcode_cacher.make_prompt_component(0)
-								num_docs = cache_result.count
-								prompt_message = prompt_message .. cache_result.content
+							if vectorcode_cacher ~= nil then
+								local cache_result = vectorcode_cacher.query_from_cache(0)
+								prompt_message = prompt_message .. cache_result
 							end
-
 							return prompt_message
 								.. "<|fim_prefix|>"
 								.. pref
@@ -411,32 +415,6 @@ fib(5)]],
 				}
 			end
 			require("minuet").setup(opts)
-			if ok then
-				local openai_fim_compatible = require("minuet.backends.openai_fim_compatible")
-				local orig_get_text_fn = openai_fim_compatible.get_text_fn
-				openai_fim_compatible.get_text_fn = function(json)
-					local bufnr = vim.api.nvim_get_current_buf()
-					-- Schedule UI updates and buffer operations to run on the main thread
-					local result = orig_get_text_fn(json)
-					vim.schedule(function()
-						-- Store raw response in buffer variable
-						vim.b[bufnr].ai_raw_response = json
-						-- Update vectorcode cache if buffer is registered
-						if vectorcode_cacher.buf_is_registered() then
-							local new_num_query = num_docs
-							if json.usage and json.usage.total_tokens then
-								if json.usage.total_tokens > num_ctx then
-									new_num_query = math.max(num_docs - 1, 1)
-								elseif json.usage.total_tokens < num_ctx * 0.9 then
-									new_num_query = num_docs + 1
-								end
-							end
-							vectorcode_cacher.register_buffer(0, { n_query = new_num_query })
-						end
-					end)
-					return result
-				end
-			end
 		end,
 	},
 
@@ -515,11 +493,17 @@ fib(5)]],
 							local target_branch
 							ok, output = pcall(function()
 								local branches = target_branch_job:sync()
+								if type(branches) ~= "table" then
+									return nil
+								end
 								for _, branch in ipairs(branches) do
 									if
-										branch:match("^main$")
-										or branch:match("^master$")
-										or branch:match("^develop$")
+										type(branch) == "string"
+										and (
+											branch:match("^main$")
+											or branch:match("^master$")
+											or branch:match("^develop$")
+										)
 									then
 										return branch
 									end
@@ -631,29 +615,29 @@ fib(5)]],
 							local copilot_utils = require("CopilotChat.utils")
 							local prompt_message =
 								[[The following are relevant files from the repository. Use them as extra context for helping with code completion and understanding:]]
-							-- Try VectorCode
-							local has_vc, vectorcode_cacher = pcall(require, "vectorcode.cacher")
-							if has_vc then
-								-- Get all valid listed buffers
-								local listed_buffers = vim.tbl_filter(function(b)
-									return copilot_utils.buf_valid(b)
-										and vim.fn.buflisted(b) == 1
-										and #vim.fn.win_findbuf(b) > 0
-								end, vim.api.nvim_list_bufs())
+							local vectorcode_cacher = require("vectorcode.config").get_cacher_backend()
+							-- Get all valid listed buffers
+							local listed_buffers = vim.tbl_filter(function(b)
+								return copilot_utils.buf_valid(b)
+									and vim.fn.buflisted(b) == 1
+									and #vim.fn.win_findbuf(b) > 0
+							end, vim.api.nvim_list_bufs())
 
-								local all_content = ""
-								local total_files = 0
+							local all_content = ""
+							local total_files = 0
+							local processed_paths = {}
 
-								-- Process each buffer with registered VectorCode cache
-								for _, bufnr in ipairs(listed_buffers) do
-									log.debug("Current buffer name", vim.api.nvim_buf_get_name(bufnr))
-									if vectorcode_cacher.buf_is_registered(bufnr) then
-										log.debug("Current registered buffer name", vim.api.nvim_buf_get_name(bufnr))
-										local cache_result = vectorcode_cacher.make_prompt_component(
-											bufnr,
-											function(file)
-												return string.format(
-													[[
+							-- Process each buffer with registered VectorCode cache
+							for _, bufnr in ipairs(listed_buffers) do
+								local buf_path = vim.api.nvim_buf_get_name(bufnr)
+								log.debug("Current buffer name", buf_path)
+								-- Skip if already processed paths to avoid duplicates
+								if not processed_paths[buf_path] and vectorcode_cacher.buf_is_registered(bufnr) then
+									processed_paths[buf_path] = true
+									log.debug("Current registered buffer name", buf_path)
+									local cache_result = vectorcode_cacher.make_prompt_component(bufnr, function(file)
+										return string.format(
+											[[
 ### File: %s
 ```%s
 %s
@@ -661,39 +645,40 @@ fib(5)]],
 
 ---
 ]], -- Add separator for better visual distinction
-													file.path,
-													copilot_utils.filetype(file.path),
-													file.document
-												)
-											end
+											file.path,
+											copilot_utils.filetype(file.path),
+											file.document
 										)
+									end)
 
-										log.debug("VectorCode context", cache_result)
-										if cache_result and cache_result.content and cache_result.content ~= "" then
-											all_content = all_content .. "\n" .. cache_result.content
-											total_files = total_files + cache_result.count
-										end
+									log.debug("VectorCode context", cache_result)
+									if cache_result and cache_result.content and cache_result.content ~= "" then
+										all_content = all_content .. "\n" .. cache_result.content
+										total_files = total_files + cache_result.count
 									end
 								end
+							end
 
-								if total_files > 0 then
-									prompt_message = prompt_message .. all_content
-									log.debug("VectorCode context when success", prompt_message)
-									return {
-										{
-											content = prompt_message,
-											filename = "vectorcode_context",
-											filetype = "markdown",
-										},
-									}
-								end
+							local prompt_message_end_defaults = "\n"
+								.. "Explain and provide a strategy with examples about: "
+								.. "\n"
+							if total_files > 0 then
+								prompt_message = prompt_message .. all_content .. prompt_message_end_defaults
+								log.debug("VectorCode context when success", prompt_message)
+								return {
+									{
+										content = prompt_message,
+										filename = "vectorcode_context",
+										filetype = "markdown",
+									},
+								}
 							end
 
 							log.debug("VectorCode context when no success", prompt_message)
 							-- If VectorCode is not available
 							return {
 								{
-									content = "VectorCode is not available",
+									content = prompt_message_end_defaults,
 									filename = "error",
 									filetype = "markdown",
 								},
@@ -1397,7 +1382,7 @@ fib(5)]],
 						return file_size < 1024 * 1024 -- Disable for files > 1MB
 					end,
 					auto_trigger = false,
-					debounce = 75,
+					debounce = 2000,
 				},
 				panel = {
 					enabled = false,
@@ -1412,7 +1397,7 @@ fib(5)]],
 				server_opts_overrides = {},
 				-- Async handling configuration
 				async_completions = true,
-				async_completion_delay = 50,
+				async_completion_delay = 500,
 			})
 
 			-- Improved async suggestion handling with cmp
@@ -1502,7 +1487,6 @@ fib(5)]],
 				},
 			},
 			file_selector = {
-				--- @alias FileSelectorProvider "native" | "fzf" | "telescope" | string
 				provider = "fzf",
 				-- Options override for custom providers
 				provider_opts = {},

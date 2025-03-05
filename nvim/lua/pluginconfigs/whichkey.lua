@@ -511,11 +511,6 @@ local mappings = {
 		desc = "ConcealLevel",
 	},
 	{
-		"<leader>tl",
-		'<cmd>lua require("lsp_lines").toggle()<cr>',
-		desc = "Toggle Lsp_Lines plugin",
-	},
-	{
 		"<leader>tr",
 		'<cmd>lua require("settings.options").toggle_option("relativenumber")<cr>',
 		desc = "Relative Code Line Numbers",
