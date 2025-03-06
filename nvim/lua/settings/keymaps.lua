@@ -40,9 +40,9 @@ keymap("n", "<C-n>", "<cmd> NvimTreeToggle <CR>", opts)
 -- focus
 keymap("n", "<leader>e", "<cmd> NvimTreeFocus <CR>", opts)
 
--- Toggle comment a line
-keymap("n", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise.current()<cr>", opts)
-keymap("v", "<leader>/", "<cmd> lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
+-- Toggle comment
+keymap("n", "<leader>/", "<cmd>lua require('Comment.api').toggle.linewise.current()<CR>", opts)
+keymap("v", "<leader>/", "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>", opts)
 -- Navigate buffers
 keymap("n", "<TAB>", "<cmd>bnext<CR>", opts)
 keymap("n", "<S-TAB>", "<cmd>bprevious<CR>", opts)

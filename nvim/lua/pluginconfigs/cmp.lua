@@ -1,5 +1,4 @@
 local cmp = require("cmp")
-local types = require("cmp.types")
 local cmp_action = require("lsp-zero").cmp_action()
 local cmp_autopairs = require("nvim-autopairs.completion.cmp")
 
@@ -9,32 +8,6 @@ cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 local luasnip_status, luasnip = pcall(require, "luasnip")
 if not luasnip_status then
 	return
-end
--- custom comparators
-local function get_kind_priority(entry)
-	local kind = entry:get_kind()
-	local priority = 100
-	if kind == types.lsp.CompletionItemKind.Text then
-		priority = 0
-	end
-	if kind == types.lsp.CompletionItemKind.Snippet then
-		priority = 50
-	end
-	if entry:get_completion_item().copilot then
-		priority = 101
-	end
-	return priority
-end
-
--- display text completion at end of file
-local function set_priority(entry1, entry2)
-	local entry1_priority = get_kind_priority(entry1)
-	local entry2_priority = get_kind_priority(entry2)
-	if entry1_priority == entry2_priority then
-		return nil
-	else
-		return entry1_priority > entry2_priority
-	end
 end
 
 -- load VSCode-like snippets from plugins (e.g., friendly-snippets)
@@ -290,7 +263,7 @@ cmp.setup({
 		completeopt = "menu,menuone,noselect,noinsert",
 	},
 	sources = {
-		{ name = "minuet", group_index = 1, priority = 100 },
+		{ name = "minuet", priority = 1000 },
 		{
 			name = "lazydev",
 			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -305,24 +278,24 @@ cmp.setup({
 			name = "buffer-lines",
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
-		-- { name = "copilot" },
 		{ name = "path" },
+		per_filetype = {
+			codecompanion = { "codecompanion" },
+		},
 	},
 	sorting = {
 		comparators = {
-			require("cmp_copilot.comparators").prioritize,
-			set_priority,
+			cmp.config.compare.offset,
 			cmp.config.compare.exact,
 			-- cmp.config.compare.scopes,
-			-- cmp.config.compare.score,
-			require("cmp_copilot.comparators").score,
+			cmp.config.compare.score,
 			require("clangd_extensions.cmp_scores"),
+			require("cmp-under-comparator").under,
 			cmp.config.compare.recently_used,
 			cmp.config.compare.locality,
 			cmp.config.compare.kind,
-			-- cmp.config.compare.sort_text,
+			cmp.config.compare.sort_text,
 			cmp.config.compare.order,
-			cmp.config.compare.offset,
 			cmp.config.compare.length,
 		},
 		priority_weight = 2,

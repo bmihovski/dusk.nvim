@@ -17,7 +17,6 @@
   "cpptools": "v1.23.6",
   "css-lsp": "4.10.0",
   "cucumber-language-server": "1.6.0",
-  "debugpy": "1.8.12",
   "emmet-ls": "0.4.2",
   "google-java-format": "v1.25.2",
   "gradle-language-server": "3.15.0",
@@ -44,7 +43,7 @@
   "quick-lint-js": "3.2.0",
   "ruff": "0.9.9",
   "shellcheck": "v0.10.0",
-  "shfmt": "v3.10.0",
+  "shfmt": "v3.11.0",
   "sonarlint-language-server": "4.15.0+77203",
   "stylua": "v2.0.2",
   "taplo": "0.9.3",
@@ -54,5 +53,6 @@
   "yaml-language-server": "1.16.0",
   "yamlfix": "1.17.0",
   "yamlfmt": "v0.16.0",
-  "yq": "v4.45.1"
+  "yq": "v4.45.1",
+
 }

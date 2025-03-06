@@ -114,6 +114,91 @@ return {
 			})
 		end,
 	},
+	{
+		"kevinhwang91/nvim-ufo",
+		dependencies = {
+			"kevinhwang91/promise-async",
+			"nvim-treesitter/nvim-treesitter",
+			"neovim/nvim-lspconfig",
+		},
+		init = function()
+			vim.o.foldenable = true
+			vim.o.foldlevel = 99
+			vim.o.foldlevelstart = 99
+			vim.o.foldcolumn = "0"
+		end,
+		config = function(_, opts)
+			require("ufo").setup(opts)
+			vim.api.nvim_set_hl(0, "UfoCursorFoldedLine", { link = "CursorLine" })
+			vim.api.nvim_set_hl(0, "UfoPreviewBg", { link = "TelescopePreviewBorder" })
+			vim.api.nvim_set_hl(0, "UfoPreviewWinBar", { link = "TelescopePreviewBorder" })
+			vim.api.nvim_set_hl(0, "UfoFoldedBg", { link = "CursorLine" })
+		end,
+		opts = {
+			preview = {
+				win_config = { winhighlight = "Normal:TelescopePreviewBorder", winblend = 0 },
+			},
+			fold_virt_text_handler = function(virt_text, lnum, end_lnum, width, truncate)
+				local result = {}
+				local _end = end_lnum - 1
+				local final_text = vim.trim(vim.api.nvim_buf_get_text(0, _end, 0, _end, -1, {})[1])
+				local suffix = final_text:format(end_lnum - lnum)
+				local suffix_width = vim.fn.strdisplaywidth(suffix)
+				local target_width = width - suffix_width
+				local cur_width = 0
+				for _, chunk in ipairs(virt_text) do
+					local chunk_text = chunk[1]
+					local chunk_width = vim.fn.strdisplaywidth(chunk_text)
+					if target_width > cur_width + chunk_width then
+						table.insert(result, chunk)
+					else
+						chunk_text = truncate(chunk_text, target_width - cur_width)
+						local hl_group = chunk[2]
+						table.insert(result, { chunk_text, hl_group })
+						chunk_width = vim.fn.strdisplaywidth(chunk_text)
+						-- str width returned from truncate() may less than 2nd argument, need padding
+						if cur_width + chunk_width < target_width then
+							suffix = suffix .. (" "):rep(target_width - cur_width - chunk_width)
+						end
+						break
+					end
+					cur_width = cur_width + chunk_width
+				end
+				table.insert(result, { "  ", "NonText" })
+				table.insert(result, { suffix, "TSPunctBracket" })
+				return result
+			end,
+			provider_selector = function(bufnum, _, _)
+				if vim.bo.bt == "nofile" then
+					return ""
+				end
+				local servers = vim.lsp.get_clients({ bufnr = bufnum })
+				local any = function(array, func)
+					if type(func) ~= "function" then
+						func = function(item)
+							return item
+						end
+					end
+					for i, item in ipairs(array) do
+						if func(item) then
+							return true
+						end
+					end
+					return false
+				end
+				if
+					#servers > 0
+					and any(servers, function(server)
+						return server.server_capabilities.foldingRangeProvider == true
+					end)
+				then
+					return { "lsp", "treesitter" }
+				end
+				return { "treesitter", "indent" }
+			end,
+		},
+		event = { "LspAttach" },
+	},
 
 	{
 		"hiphish/rainbow-delimiters.nvim",
@@ -276,12 +361,6 @@ return {
 
 	-- GitHub copilot
 
-	{
-		"JosefLitos/cmp-copilot",
-		dependencies = { "zbirenbaum/copilot.lua" },
-		event = "InsertEnter",
-		opts = {},
-	},
 	{ import = "pluginconfigs.vectorcode.init" },
 	{
 		"milanglacier/minuet-ai.nvim",
@@ -327,8 +406,6 @@ fib(5)]],
 					enable_auto_complete = false,
 				},
 				-- notify = "debug",
-				throttle = 2000,
-				debounce = 1000,
 				provider = "gemini",
 				provider_options = {
 					gemini = {
@@ -379,41 +456,6 @@ fib(5)]],
 				request_timeout = 10,
 			}
 
-			local ollama_host = os.getenv("OLLAMA_HOST")
-			local ok, _ = pcall(require("plenary.curl").get, ollama_host, { timeout = 1000 })
-			local num_ctx = 1024 * 32
-			if ok then
-				opts.provider = "openai_fim_compatible"
-				opts.provider_options.openai_fim_compatible = {
-					api_key = "TERM",
-					name = "Ollama",
-					stream = false,
-					end_point = os.getenv("OLLAMA_HOST") .. "/v1/completions",
-					model = os.getenv("OLLAMA_CODE_MODEL"),
-					optional = {
-						max_tokens = 256,
-						num_ctx = num_ctx,
-					},
-					template = {
-						prompt = function(pref, suff)
-							local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled in code.]]):format(
-								vim.bo.filetype
-							)
-							if vectorcode_cacher ~= nil then
-								local cache_result = vectorcode_cacher.query_from_cache(0)
-								prompt_message = prompt_message .. cache_result
-							end
-							return prompt_message
-								.. "<|fim_prefix|>"
-								.. pref
-								.. "<|fim_suffix|>"
-								.. suff
-								.. "<|fim_middle|>"
-						end,
-						suffix = false,
-					},
-				}
-			end
 			require("minuet").setup(opts)
 		end,
 	},
@@ -1373,62 +1415,16 @@ fib(5)]],
 	{
 		"zbirenbaum/copilot.lua",
 		cmd = "Copilot",
-		event = "InsertEnter",
+		event = "VeryLazy",
 		config = function()
 			require("copilot").setup({
 				suggestion = {
-					enabled = function()
-						local file_size = vim.fn.getfsize(vim.fn.expand("%"))
-						return file_size < 1024 * 1024 -- Disable for files > 1MB
-					end,
-					auto_trigger = false,
-					debounce = 2000,
+					enabled = false,
 				},
 				panel = {
 					enabled = false,
-
-					layout = {
-						position = "bottom", -- | top | left | right
-						ratio = 0.4,
-						event = { "BufEnter" },
-					},
 				},
-				copilot_node_command = "node",
-				server_opts_overrides = {},
-				-- Async handling configuration
-				async_completions = true,
-				async_completion_delay = 500,
 			})
-
-			-- Improved async suggestion handling with cmp
-			local cmp_status_ok, cmp = pcall(require, "cmp")
-			if cmp_status_ok then
-				-- Track pending state updates
-				local pending_suggestion_update = false
-
-				-- Safe state update function with async handling
-				local function update_suggestion_state(state)
-					if pending_suggestion_update then
-						return
-					end
-					pending_suggestion_update = true
-
-					vim.schedule(function()
-						if vim.api.nvim_buf_is_valid(0) then
-							vim.b.copilot_suggestion_hidden = state
-							pending_suggestion_update = false
-						end
-					end)
-				end
-
-				cmp.event:on("menu_opened", function()
-					update_suggestion_state(true)
-				end)
-
-				cmp.event:on("menu_closed", function()
-					update_suggestion_state(false)
-				end)
-			end
 		end,
 	},
 	{
@@ -1504,7 +1500,6 @@ fib(5)]],
 			{ "MunifTanjim/nui.nvim", lazy = true },
 			{ "nvim-tree/nvim-web-devicons", lazy = true },
 			{ "hrsh7th/nvim-cmp", lazy = true },
-			{ "zbirenbaum/copilot.lua", lazy = true },
 			--- The below dependencies are optional,
 			{ "echasnovski/mini.pick", lazy = true }, -- for file_selector provider mini.pick
 			{ "nvim-telescope/telescope.nvim", lazy = true }, -- for file_selector provider telescope

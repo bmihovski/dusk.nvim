@@ -508,7 +508,6 @@ require("lazy").setup({
 	{
 		"hrsh7th/nvim-cmp",
 		lazy = true,
-		version = "v2.*",
 		event = { "InsertEnter", "CmdLineEnter" },
 		dependencies = {
 			-- Snippet Engine & its associated nvim-cmp source
@@ -525,6 +524,7 @@ require("lazy").setup({
 			"olimorris/codecompanion.nvim",
 			"onsails/lspkind.nvim",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
+			"lukas-reineke/cmp-under-comparator",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
@@ -854,41 +854,6 @@ require("lazy").setup({
 		end,
 	},
 
-	-- NOTE: if you want additional linters, try this plugin
-	-- Linters
-	{
-		"mfussenegger/nvim-lint",
-		event = {
-			"BufReadPre",
-			"BufNewFile",
-		},
-		config = function()
-			local lint = require("lint")
-
-			lint.linters_by_ft = {
-				javascript = { "eslint_d" },
-				typescript = { "eslint_d" },
-				javascriptreact = { "eslint_d" },
-				typescriptreact = { "eslint_d" },
-				-- cpp = { "cpplint" },
-				c = { "clangtidy" },
-				cpp = { "clangtidy" },
-				kotlin = { "ktlint" },
-				terraform = { "tflint" },
-				python = { "ruff" },
-				java = { "checkstyle" },
-			}
-			local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
-
-			vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
-				group = lint_augroup,
-				callback = function()
-					lint.try_lint()
-				end,
-			})
-		end,
-	},
-
 	--------------------------------------
 	-- Git --
 	--------------------------------------
@@ -948,6 +913,23 @@ require("lazy").setup({
 		build = ":TSUpdate",
 		config = function()
 			require("pluginconfigs.treesitter")
+		end,
+	},
+	{
+		"andymass/vim-matchup",
+		event = { "BufReadPost", "BufNewFile" },
+		init = function()
+			vim.g.matchup_matchparen_offscreen = { method = "popup", fullwidth = 1, highlight = "Comment" }
+			vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPost" }, {
+				callback = function()
+					vim.api.nvim_set_hl(0, "MatchWord", { bold = true, italic = true })
+					vim.api.nvim_set_hl(0, "MatchupVirtualText", {
+						bold = true,
+						italic = true,
+						fg = vim.api.nvim_get_hl(0, { name = "Comment" }).fg,
+					})
+				end,
+			})
 		end,
 	},
 
