@@ -398,7 +398,8 @@ fib(5)]],
 			gemini_few_shots[2] = require("minuet.config").default_few_shots[2]
 			opts = {
 				add_single_line_entry = true,
-				after_cursor_filter_length = 15,
+				n_completions = 1,
+				after_cursor_filter_length = 0,
 				cmp = {
 					enable_auto_complete = true,
 				},
@@ -406,8 +407,19 @@ fib(5)]],
 					enable_auto_complete = false,
 				},
 				-- notify = "debug",
+				notify = "error",
 				provider = "gemini",
+				-- provider = "openai_fim_compatible",
+				throttle = 2000,
 				provider_options = {
+					openai_fim_compatible = {
+						api_key = "DEEPSEEK_CHAT_API_KEY",
+						name = "deepseek",
+						optional = {
+							max_tokens = 256,
+							stop = { "\n\n" },
+						},
+					},
 					gemini = {
 						model = "gemini-2.0-flash",
 						system = {
@@ -1413,21 +1425,6 @@ fib(5)]],
 	{ import = "pluginconfigs.codecompanion.init" },
 
 	{
-		"zbirenbaum/copilot.lua",
-		cmd = "Copilot",
-		event = "VeryLazy",
-		config = function()
-			require("copilot").setup({
-				suggestion = {
-					enabled = false,
-				},
-				panel = {
-					enabled = false,
-				},
-			})
-		end,
-	},
-	{
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		lazy = true,
@@ -1443,7 +1440,7 @@ fib(5)]],
 				timeout = 30000,
 			},
 			copilot = {
-				model = "claude-3.5-sonnet",
+				model = "claude-3.7-sonnet-thought",
 				temperature = 0.5,
 				timeout = function()
 					local file_size = vim.fn.getfsize(vim.fn.expand("%"))

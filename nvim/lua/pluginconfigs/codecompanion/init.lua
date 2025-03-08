@@ -96,6 +96,7 @@ return {
 								-- callback = "vectorcode",
 								callback = require("vectorcode.integrations").codecompanion.chat.make_tool({
 									default_num = 15,
+									include_stderr = false,
 								}),
 							},
 						},

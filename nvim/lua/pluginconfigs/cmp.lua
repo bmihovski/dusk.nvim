@@ -230,13 +230,14 @@ local lspkind_format = require("lspkind").cmp_format({
 		Openrouter = "󱂇",
 		Ollama = "󰳆",
 		["Llama.cpp"] = "󰳆",
-		Deepseek = "",
+		deepseek = "",
 		-- FALLBACK
 		fallback = "",
 	},
 })
 local source_icons = {
 	minuet = "󱗻",
+	Copilot = "",
 	orgmode = "",
 	otter = "󰼁",
 	nvim_lsp = "",
@@ -263,7 +264,7 @@ cmp.setup({
 		completeopt = "menu,menuone,noselect,noinsert",
 	},
 	sources = {
-		{ name = "minuet", priority = 1000 },
+		{ name = "minuet", priority = 101 },
 		{
 			name = "lazydev",
 			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -321,12 +322,10 @@ cmp.setup({
 	}),
 	---@class cmp.FormattingConfig
 	formatting = {
-		--fields = { "kind", "abbr", "menu" },
-		fields = { "kind", "abbr" },
+		fields = { "kind", "abbr", "menu" },
 		format = function(entry, vim_item)
 			-- Hide function arguments in the completion menu
 			vim_item.menu = source_icons[entry.source.name] or source_icons.fallback
-			vim_item.menu = vim_item.menu or ""
 			if vim_item.kind == "Function" or vim_item.kind == "Method" or vim_item.kind == "Copilot" then
 				vim_item.abbr = vim_item.abbr:gsub("%b()", "")
 			end
@@ -334,9 +333,9 @@ cmp.setup({
 			--vim_item.abbr = vim_item.word
 			local kind = lspkind_format(entry, vim_item)
 			local strings = vim.split(kind.kind, "%s", { trimempty = true })
-			kind.kind = " " .. (strings[1] or "") .. " "
+			kind.kind = " " .. (strings[1] or source_icons.fallback) .. " "
 			--kind.kind = '▍' -- instead of symbol
-			kind.menu = " " .. (strings[2] or source_icons[entry.source.name] or source_icons.fallback)
+			kind.menu = " " .. (source_icons[entry.source.name] or strings[2] or source_icons.fallback)
 			return kind
 		end,
 	},

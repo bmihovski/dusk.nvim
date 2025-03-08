@@ -1,6 +1,5 @@
 return {
 	"Davidyz/VectorCode",
-	version = "*",
 	build = "pipx upgrade vectorcode",
 	opts = function()
 		return {
@@ -10,7 +9,7 @@ return {
 			timeout_ms = -1,
 			async_opts = {
 				events = { "BufWritePost" },
-				-- query_cb = require("vectorcode.utils").make_surrounding_lines_cb(40),
+				query_cb = require("vectorcode.utils").make_surrounding_lines_cb(100),
 				debounce = 30,
 			},
 		}
