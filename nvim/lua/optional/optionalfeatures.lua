@@ -1378,7 +1378,7 @@ fib(5)]],
 				timeout = 30000,
 			},
 			copilot = {
-				model = "claude-3.7-sonnet-thought",
+				model = "claude-3.7-sonnet",
 				temperature = 0.5,
 				timeout = function()
 					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
