@@ -75,7 +75,13 @@ require("lazy").setup({
 		opts = {},
 		lazy = false,
 		config = function()
-			require("overseer").setup()
+			require("overseer").setup({
+				templates = {
+					"builtin",
+					"vscode",
+					"bazel",
+				},
+			})
 		end,
 	},
 	{
@@ -520,7 +526,8 @@ require("lazy").setup({
 			"hrsh7th/cmp-path",
 			"hrsh7th/cmp-cmdline",
 			"amarakon/nvim-cmp-buffer-lines",
-			"p00f/clangd_extensions.nvim",
+			{ "https://git.sr.ht/~p00f/clangd_extensions.nvim", config = true },
+			"zaucy/cmp-bazel.nvim",
 			"olimorris/codecompanion.nvim",
 			"onsails/lspkind.nvim",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
@@ -914,6 +921,14 @@ require("lazy").setup({
 		config = function()
 			require("pluginconfigs.treesitter")
 		end,
+	},
+	{
+		"nvim-treesitter/nvim-treesitter-context",
+		event = "VeryLazy",
+		opts = {},
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+		},
 	},
 	{
 		"andymass/vim-matchup",

@@ -271,6 +271,7 @@ cmp.setup({
 			group_index = 0,
 		},
 		{ name = "nvim_lsp" },
+		{ name = 'bazel' },
 		{
 			name = "nvim_lsp_signature_help",
 		},

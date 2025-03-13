@@ -186,6 +186,250 @@ local opts = {
 	noremap = true, -- use `noremap` when creating keymaps
 	nowait = true, -- use `nowait` when creating keymaps
 }
+-- Bazel
+local function goto_closest_file(filename)
+	return function()
+		local files = vim.fs.find(filename, {
+			upward = true,
+			path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
+		})
+
+		if #files > 0 then
+			vim.cmd("e " .. files[1])
+		end
+	end
+end
+
+local function bazel_override()
+	vim.ui.input({}, function(input)
+		if not input then
+			return
+		end
+		goto_closest_file("MODULE.bazel")()
+		vim.cmd("!bzloverride " .. input)
+		vim.fn.feedkeys("G", "n")
+	end)
+end
+
+local function bzlmod_add()
+	vim.ui.input({}, function(input)
+		if not input then
+			return
+		end
+		goto_closest_file("MODULE.bazel")()
+		vim.cmd("!bzlmod add " .. input)
+	end)
+end
+
+local function bazel_debug_lldb(callback)
+	local bazel = require("bazel")
+	bazel.get_target_list(function(targets)
+		vim.ui.select(targets, {
+			prompt = "Select target to debug",
+			format_item = function(target)
+				return target.label .. " (" .. target.kind .. ")"
+			end,
+		}, function(target)
+			bazel.target_executable_path("@llvm_toolchain_llvm//:bin/lldb-dap", function(lldb_dap_path)
+				--- @type dap.ExecutableAdapter
+				local adapter = {
+					type = "executable",
+					command = lldb_dap_path,
+					name = "lldb",
+					args = {},
+				}
+
+				callback(target, adapter)
+			end)
+		end)
+	end)
+end
+
+local function bazel_debug_launch()
+	bazel_debug_lldb(function(target, adapter)
+		local bazel = require("bazel")
+		local dap = require("dap")
+
+		bazel.info({ "execution_root", "workspace" }, function(info)
+			bazel.target_executable_path(target.label, function(target_executable_path)
+				--- @type dap.Configuration
+				local config = {
+					name = target.label,
+					type = "lldb",
+					request = "launch",
+					program = info.execution_root .. "/" .. target_executable_path,
+					cwd = info.workspace,
+					stopOnEntry = false,
+					args = {},
+					initCommands = {
+						"process handle -s false -n false SIGWINCH",
+					},
+					preRunCommands = {
+						"settings set target.language c++20",
+						"breakpoint set -E c++ -G true",
+						"settings set target.auto-source-map-relative true",
+						"settings set target.source-map . " .. info.workspace .. " /proc/self/cwd " .. info.workspace,
+					},
+				}
+
+				dap.launch(adapter, config, {})
+			end)
+		end)
+	end)
+end
+
+local function bazel_debug_attach()
+	bazel_debug_lldb(function(target, adapter)
+		local bazel = require("bazel")
+		local dap = require("dap")
+
+		bazel.info({ "execution_root", "workspace" }, function(info)
+			bazel.target_executable_path(target.label, function(target_executable_path)
+				--- @type dap.Configuration
+				local config = {
+					name = target.label,
+					type = "lldb",
+					request = "attach",
+					waitFor = true,
+					program = info.execution_root .. "/" .. target_executable_path,
+					cwd = info.workspace,
+					stopOnEntry = false,
+					args = {},
+					initCommands = {
+						"process handle -s false -n false SIGWINCH",
+					},
+					preRunCommands = {
+						"settings set target.language c++23",
+						"breakpoint set -E c++ -G true",
+						"settings set target.auto-source-map-relative true",
+						"settings set target.source-map . " .. info.workspace .. " /proc/self/cwd " .. info.workspace,
+					},
+				}
+
+				dap.launch(adapter, config, {})
+			end)
+		end)
+	end)
+end
+
+vim.api.nvim_create_user_command("BazelDebug", bazel_debug_launch, {})
+vim.api.nvim_create_user_command("BazelDebugAttachWait", bazel_debug_attach, {})
+
+vim.api.nvim_create_user_command("BazelBuildFile", goto_closest_file("BUILD.bazel"), {})
+vim.api.nvim_create_user_command("BazelModuleFile", goto_closest_file("MODULE.bazel"), {})
+vim.api.nvim_create_user_command("BazelWorkspace", goto_closest_file("WORKSPACE.bazel"), {})
+vim.api.nvim_create_user_command("BazelRcFile", goto_closest_file(".bazelrc"), {})
+vim.api.nvim_create_user_command("BazelOverride", bazel_override, {})
+vim.api.nvim_create_user_command("BazelAddToModule", bzlmod_add, {})
+-- Debug
+local function get_procs(cb)
+	local is_windows = vim.fn.has("win32") == 1
+	local separator = is_windows and "," or " \\+"
+	local proc = is_windows and "tasklist" or "ps"
+	local args = is_windows and { "/nh", "/fo", "csv" } or { "ah", "-U", os.getenv("USER") }
+	local stdout = vim.uv.new_pipe()
+	-- local stderr = vim.uv.new_pipe()
+	local stdout_str = ""
+
+	local get_pid = function(parts)
+		if is_windows then
+			return vim.fn.trim(parts[2], '"')
+		else
+			return parts[1]
+		end
+	end
+
+	local get_process_name = function(parts)
+		if is_windows then
+			return vim.fn.trim(parts[1], '"')
+		else
+			local proc_path = table.concat({ unpack(parts, 5) }, " ")
+			if vim.startswith(proc_path, "/") then
+				return vim.fn.fnamemodify(proc_path, ":t")
+			else
+				return nil
+			end
+		end
+	end
+
+	vim.uv.spawn(proc, {
+		stdio = { nil, stdout, nil },
+		args = args,
+		hide = true,
+	}, function(code, _)
+		vim.schedule(function()
+			if code == 0 then
+				local procs = {}
+				for _, line in ipairs(vim.fn.split(stdout_str, "\n")) do
+					local parts = vim.fn.split(vim.fn.trim(line), separator)
+					local pid, name = get_pid(parts), get_process_name(parts)
+					pid = tonumber(pid)
+					if name ~= nil then
+						table.insert(procs, { name = name, pid = pid })
+					end
+				end
+				cb(procs)
+			else
+				vim.notify("process find failed", vim.log.levels.ERROR)
+			end
+		end)
+	end)
+
+	vim.uv.read_start(stdout, function(err, data)
+		if data ~= nil then
+			stdout_str = stdout_str .. data
+		end
+	end)
+end
+
+local function debug_attach()
+	get_procs(function(procs)
+		local largest_name_len = 1
+		for _, proc in ipairs(procs) do
+			if #proc.name > largest_name_len then
+				largest_name_len = #proc.name
+			end
+		end
+		vim.ui.select(procs, {
+			prompt = "Attach to process",
+			format_item = function(item)
+				return item.name
+					.. string.rep(" ", largest_name_len - #item.name)
+					.. " (pid="
+					.. tostring(item.pid)
+					.. ")"
+			end,
+		}, function(choice)
+			if choice ~= nil then
+				local dap = require("dap")
+				---@diagnostic disable-next-line: missing-parameter
+				dap.launch({
+					type = "executable",
+					command = "lldb-dap-19",
+					args = {},
+					options = {},
+				}, {
+					name = "Attach to " .. choice.name,
+					type = "lldb-dap",
+					request = "attach",
+					pid = choice.pid,
+					stopOnEntry = false,
+					-- program = choice.name,
+					initCommands = {
+						"process handle -s false -n false SIGWINCH",
+					},
+					postRunCommands = {
+						"settings set target.language c++23",
+						"breakpoint set -E c++ -G true",
+						"settings set target.source-map /proc/self/cwd " .. vim.uv.cwd(),
+					},
+				})
+			end
+		end)
+	end)
+end
+
+vim.api.nvim_create_user_command("LldbDebugAttach", debug_attach, {})
 
 local mappings = {
 	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
@@ -225,6 +469,16 @@ local mappings = {
 	{ "<leader>am", "<cmd>CopilotChatModels<cr>", desc = "Select Models" },
 	-- VectorCode register buffer
 	{ "<leader>av", "<cmd>VectorCode register<cr>", desc = "VectorCode Register Buffer" },
+	{ "<leader>B", group = "Bazel" },
+	{ "<leader>Bb", "<cmd>BazelBuildFile<cr>", desc = "Bazel Build File" },
+	{ "<leader>Bm", "<cmd>BazelModuleFile<cr>", desc = "Bazel Module File" },
+	{ "<leadear>Bw", "<cmd>BazelWorkspaceFile<cr>", desc = "Bazel Workspace File" },
+	{ "<leader>Brc", "<cmd>BazelRcFile", desc = "Bazelrc File" },
+
+	{ "<leader>Bo", "<cmd>BazelOverride<cr>", desc = "Bazel Override" },
+	{ "<leader>Ba", "<cmd>BazelAddToModule<cr>", desc = "Bazel Add To Module" },
+
+	{ "<leader>Bd", "<cmd>BazelDebug<cr>", desc = "Build and launch bazel target with nvim-dap" },
 	{ "<leader>C", group = "Containers - Docker" },
 	{ "<leader>Cd", "<cmd>Lazydocker<cr>", desc = "Run LazyDocker" },
 	{ "<leader>D", group = "Database" },
@@ -313,6 +567,7 @@ local mappings = {
 	{ "<C-p>", ":lua require('ufo.preview'):peekFoldedLinesUnderCursor()<cr>", desc = "Peek inside fold." },
 	{ "<BS>", "za", desc = "Toggle fold." },
 	{ "<leader>d", group = "Debug" },
+	{ "<leader>da", "<cmd>LldbDebugAttach<cr>", desc = "Debug Attach" },
 	{ "<leader>db", ":lua require'dap'.toggle_breakpoint()<cr>", desc = "Breakpoint" },
 	{ "<leader>dc", ":lua require'dap'.continue()<cr>", desc = "Start/Continue" },
 	{ "<leader>dd", ":lua require'dapui'.toggle()<cr>", desc = "Dap UI" },

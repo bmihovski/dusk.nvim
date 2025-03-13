@@ -3,7 +3,7 @@ return {
 	-- DAP
 	{ "mfussenegger/nvim-dap", event = "VeryLazy" },
 	{
-	"julianolf/nvim-dap-lldb",
+		"julianolf/nvim-dap-lldb",
 		"julianolf/nvim-dap-lldb",
 		ft = "c,cpp,hpp,h,cpp,cc",
 		dependencies = { "mfussenegger/nvim-dap" },
@@ -113,6 +113,11 @@ return {
 		config = function()
 			local dap = require("dap")
 			local dapui = require("dapui")
+			dap.adapters.lldb = {
+				type = "executable",
+				command = "lldb-dap-19",
+				name = "lldb",
+			}
 			dapui.setup()
 			dap.listeners.after.event_initialized["dapui_config"] = function()
 				dapui.open()

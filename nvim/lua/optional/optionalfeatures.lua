@@ -1602,6 +1602,10 @@ fib(5)]],
 		"mrheinen/bazelbub.nvim",
 		version = "v0.2",
 	},
+	{
+		"zaucy/bazel.nvim",
+		opts = {},
+	},
 	{ "bazelbuild/vim-bazel", dependencies = { "google/vim-maktaba" } },
 
 	{

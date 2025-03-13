@@ -1,3 +1,23 @@
+local parsers = require("nvim-treesitter.parsers").get_parser_configs()
+---@diagnostic disable-next-line: inject-field
+parsers.bazelrc = {
+	install_info = {
+		url = "https://github.com/zaucy/tree-sitter-bazelrc.git",
+		files = { "src/parser.c" },
+		branch = "main",
+		requires_generate_from_grammar = false,
+	},
+}
+---@diagnostic disable-next-line: inject-field
+parsers.cpp2 = {
+	install_info = {
+		url = "https://github.com/tsoj/tree-sitter-cpp2.git",
+		files = { "src/parser.c", "src/scanner.c" },
+		branch = "main",
+		generate_requires_npm = false,
+		requires_generate_from_grammar = false,
+	},
+}
 require("nvim-treesitter.configs").setup({
 	-- Add languages to be installed here that you want installed for treesitter
 
@@ -14,7 +34,6 @@ require("nvim-treesitter.configs").setup({
 		-- disable = { "markdown" }, -- list of language that highlighting will be disabled
 		additional_vim_regex_highlighting = true,
 		use_languagetree = true,
-
 	},
 	indent = { enable = true },
 	autopairs = { enable = true },

@@ -59,6 +59,9 @@ vim.api.nvim_create_autocmd({ "BufEnter" }, {
 	end,
 })
 
+vim.filetype.add({ extension = { bazelrc = "bazelrc" } })
+vim.filetype.add({ extension = { cpp2 = "cpp2" } })
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup("YankHighlight", { clear = true })
