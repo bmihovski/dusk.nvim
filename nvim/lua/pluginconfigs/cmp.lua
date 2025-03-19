@@ -219,6 +219,7 @@ local lspkind_format = require("lspkind").cmp_format({
 		Property = "",
 		Boolean = "⊨",
 		Namespace = "",
+		bazel = " ",
 		Package = "",
 		Codeium = "󰩂",
 		claude = "󰋦",
@@ -236,6 +237,7 @@ local lspkind_format = require("lspkind").cmp_format({
 	},
 })
 local source_icons = {
+	bazel = " ",
 	minuet = "󱗻",
 	Copilot = "",
 	orgmode = "",
@@ -271,7 +273,7 @@ cmp.setup({
 			group_index = 0,
 		},
 		{ name = "nvim_lsp" },
-		{ name = 'bazel' },
+		{ name = "bazel" },
 		{
 			name = "nvim_lsp_signature_help",
 		},
