@@ -180,33 +180,21 @@ vim.fn.sign_define(
 )
 vim.fn.sign_define("DapStopped", { text = "", texthl = "DapStopped", linehl = "DapStopped", numhl = "DapStopped" })
 -- error lens
-vim.fn.sign_define({
-	{
-		name = "DiagnosticSignError",
-		text = "",
-		texthl = "DiagnosticSignError",
-		linehl = "ErrorLine",
-	},
-	{
-		name = "DiagnosticSignWarn",
-		text = "",
-		texthl = "DiagnosticSignWarn",
-		linehl = "WarningLine",
-	},
-	{
-		name = "DiagnosticSignInfo",
-		text = "",
-		texthl = "DiagnosticSignInfo",
-		linehl = "InfoLine",
-	},
-	{
-		name = "DiagnosticSignHint",
-		text = "",
-		texthl = "DiagnosticSignHint",
-		linehl = "HintLine",
+local has_virtual_text = false
+local has_underline = false
+
+vim.diagnostic.config({
+	virtual_text = has_virtual_text,
+	underline = has_underline,
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = "",
+			[vim.diagnostic.severity.WARN] = "",
+			[vim.diagnostic.severity.INFO] = "",
+			[vim.diagnostic.severity.HINT] = "",
+		},
 	},
 })
-
 --LSP basic keymaps
 vim.api.nvim_create_autocmd("LspAttach", {
 	desc = "LSP actions",
@@ -249,9 +237,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		bufmap("n", "gl", "<cmd>lua vim.diagnostic.open_float()<cr>")
 
 		-- Move to the previous diagnostic
-		bufmap("n", "gp", "<cmd>lua vim.diagnostic.goto_prev()<cr>")
+		bufmap("n", "gp", "<cmd>lua vim.diagnostic.jump {count = 1, float = true}<cr>")
 
 		-- Move to the next diagnostic
-		bufmap("n", "gn", "<cmd>lua vim.diagnostic.goto_next()<cr>")
+		bufmap("n", "gn", "<cmd>lua vim.diagnostic.jump {count = -1, float = true}<cr>")
 	end,
 })

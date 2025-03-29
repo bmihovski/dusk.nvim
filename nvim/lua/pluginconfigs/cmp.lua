@@ -257,14 +257,16 @@ local source_icons = {
 	-- FALLBACK
 	fallback = "󰜚",
 }
+local border_opts = {
+	border = "rounded",
+	winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+}
 cmp.setup({
 	window = {
-		completion = cmp.config.window.bordered(),
-		documentation = cmp.config.window.bordered(),
+		completion = cmp.config.window.bordered(border_opts),
+		documentation = cmp.config.window.bordered(border_opts),
 	},
-	completion = {
-		completeopt = "menu,menuone,noselect,noinsert",
-	},
+	completion = { keyword_length = 2 },
 	sources = {
 		{ name = "minuet", priority = 101 },
 		{
@@ -283,9 +285,6 @@ cmp.setup({
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
 		{ name = "path" },
-		per_filetype = {
-			codecompanion = { "codecompanion" },
-		},
 	},
 	sorting = {
 		comparators = {
@@ -372,6 +371,15 @@ cmp.setup.cmdline(":", {
 		},
 	}),
 })
+-- Set configuration for specific filetype.
+cmp.setup.filetype("gitcommit", {
+	sources = cmp.config.sources({
+		{ name = "git" },
+	}, {
+		{ name = "buffer" },
+	}),
+})
+require("cmp_git").setup()
 
 vim.cmd([[
         highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080

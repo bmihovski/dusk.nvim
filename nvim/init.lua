@@ -528,10 +528,10 @@ require("lazy").setup({
 			"amarakon/nvim-cmp-buffer-lines",
 			{ "https://git.sr.ht/~p00f/clangd_extensions.nvim", config = true },
 			"zaucy/cmp-bazel.nvim",
-			"olimorris/codecompanion.nvim",
 			"onsails/lspkind.nvim",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
 			"lukas-reineke/cmp-under-comparator",
+			'petertriho/cmp-git',
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",

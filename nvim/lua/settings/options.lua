@@ -1,7 +1,7 @@
 local options = {
 	backup = false, -- creates a backup file
 	clipboard = "unnamedplus", -- allows neovim to access the system clipboard
-	completeopt = { "menuone", "noselect" }, -- mostly just for cmp
+	completeopt = { "menu", "menuone", "noselect", "popup", "fuzzy" }, -- mostly just for cmp
 	fileencoding = "utf-8", -- the encoding written to a file
 	hlsearch = true, -- highlight all matches on previous search pattern
 	ignorecase = true, -- ignore case in search patterns
@@ -69,9 +69,6 @@ local disabled_built_ins = {
 for _, plugin in pairs(disabled_built_ins) do
 	vim.g["loaded_" .. plugin] = 1
 end
-
--- remove this after upgrading neovim to 0.11.0+
-vim.opt.completeopt = "menu,menuone,preview,noinsert,popup"
 
 -- Enable folding in markdown files
 vim.g.markdown_folding = 1

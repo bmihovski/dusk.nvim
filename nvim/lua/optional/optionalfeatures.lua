@@ -36,12 +36,57 @@ return {
 			},
 		},
 	},
+	{
+		"shellRaining/hlchunk.nvim",
+		event = { "BufReadPre", "BufNewFile" },
+		opts = function()
+			local palette = require("catppuccin.palettes.mocha")
+			local excluded_ft = { ["neo-tree"] = true, snacks_dashboard = true, fidget = true, help = true }
+
+			local indent_colors = {
+				palette.surface0,
+				palette.surface1,
+				palette.surface2,
+				palette.overlay0,
+				palette.overlay1,
+				palette.overlay2,
+				palette.subtext0,
+				palette.subtext1,
+				palette.text,
+			}
+			return {
+				chunk = {
+					delay = 100,
+					enable = true,
+					exclude_filetypes = excluded_ft,
+					style = palette.lavender,
+				},
+				indent = {
+					enable = true,
+					exclude_filetypes = excluded_ft,
+					style = indent_colors,
+				},
+			}
+		end,
+		dependencies = { "nvim-treesitter/nvim-treesitter" },
+	},
 
 	-- Lsp server status updates
 	{
 		"j-hui/fidget.nvim",
 		event = "LspAttach",
-		opts = {},
+		version = "*",
+		opts = {
+			notification = {
+				window = {
+					winblend = 0,
+					align = "bottom",
+					x_padding = 0,
+					border = { "" },
+				},
+				view = { stack_upwards = false },
+			},
+		},
 	},
 
 	-- Electric indentation
@@ -100,6 +145,40 @@ return {
 				under_cursor = true,
 			})
 		end,
+	},
+	{
+		"wintermute-cell/gitignore.nvim",
+		cmd = "Gitignore",
+		config = function()
+			local gitignore = require("gitignore")
+			local fzf = require("fzf-lua")
+
+			gitignore.generate = function(opts)
+				local picker_opts = {
+					-- the content of opts.args may also be displayed here for example.
+					prompt = "Select templates for gitignore file> ",
+					winopts = {
+						width = 0.4,
+						height = 0.3,
+					},
+					actions = {
+						default = function(selected, _)
+							-- as stated in point (3) of the contract above, opts.args and
+							-- a list of selected templateNames are passed.
+							gitignore.createGitignoreBuffer(opts.args, selected)
+						end,
+					},
+				}
+				fzf.fzf_exec(function(fzf_cb)
+					for _, prefix in ipairs(gitignore.templateNames) do
+						fzf_cb(prefix)
+					end
+					fzf_cb()
+				end, picker_opts)
+			end
+			vim.api.nvim_create_user_command("Gitignore", gitignore.generate, { nargs = "?", complete = "file" })
+		end,
+		dependencies = { "ibhagwan/fzf-lua" },
 	},
 
 	-- Delete whitespaces automatically on save
@@ -414,8 +493,8 @@ fib(5)]],
 				},
 				-- notify = "debug",
 				notify = "error",
-				provider = "gemini",
-				-- provider = "openai_fim_compatible",
+				-- provider = "gemini",
+				provider = "openai_fim_compatible",
 				throttle = 2000,
 				provider_options = {
 					openai_fim_compatible = {
@@ -426,8 +505,13 @@ fib(5)]],
 							stop = { "\n\n" },
 						},
 					},
+					openai = {
+						optional = {
+							max_tokens = 256,
+							top_p = 0.9,
+						},
+					},
 					gemini = {
-						model = "gemini-2.0-flash",
 						system = {
 							prompt = gemini_prompt,
 						},
@@ -483,9 +567,8 @@ fib(5)]],
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
 		dependencies = {
-			{ "Davidyz/VectorCode" },
-			{ "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
-			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
+			"zbirenbaum/copilot.lua", -- or github/copilot.vim
+			"nvim-lua/plenary.nvim", -- for curl, log wrapper
 		},
 		build = "make tiktoken", -- Only on MacOS or Linux
 		opts = function()
@@ -668,15 +751,12 @@ fib(5)]],
 							}
 						end,
 					},
-					vectorcode = {
-						description = "Inject VectorCode context",
-						resolve = require("vectorcode.integrations.copilotchat").make_context_provider({
-							-- Optional: customize the integration
-							prompt_header = "Here's some relevant code from the repository:",
-							prompt_footer = "\nBased on this context, please: \n",
-							skip_empty = true, -- Skip when there are no results
-						}),
-					},
+					vectorcode = require("vectorcode.integrations.copilotchat").make_context_provider({
+						-- Optional: customize the integration
+						prompt_header = "Here's some relevant code from the repository:",
+						prompt_footer = "\nBased on this context, please: \n",
+						skip_empty = true, -- Skip when there are no results
+					}),
 				},
 				-- Custom prompts incorporating git staged/unstaged functionality
 				prompts = {
@@ -1359,9 +1439,6 @@ fib(5)]],
 		end,
 	},
 
-	-- codecompanion
-	{ import = "pluginconfigs.codecompanion.init" },
-
 	{
 		"yetone/avante.nvim",
 		event = "VeryLazy",
@@ -1464,14 +1541,12 @@ fib(5)]],
 		opts = {
 			file_types = {
 				"Avante",
-				"codecompanion",
 				"markdown",
 				"copilot-chat",
 			},
 		},
 		ft = {
 			"Avante",
-			"codecompanion",
 			"markdown",
 			"copilot-chat",
 		},
@@ -1585,7 +1660,7 @@ fib(5)]],
 		dependencies = { "nvim-treesitter" },
 		config = function()
 			require("nt-cpp-tools").setup({
-				header_extension = "h",
+				header_extension = "hpp",
 				source_extension = "cpp",
 			})
 		end,
