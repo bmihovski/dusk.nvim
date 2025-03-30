@@ -456,31 +456,7 @@ return {
 			if has_vc then
 				vectorcode_cacher = vectorcode_config.get_cacher_backend()
 			end
-			local gemini_prompt = [[
-You are the backend of an AI-powered code completion engine. Your task is to
-provide code suggestions based on the user's input. The user's code will be
-enclosed in markers:
 
-- `<contextAfterCursor>`: Code context after the cursor
-- `<cursorPosition>`: Current cursor location
-- `<contextBeforeCursor>`: Code context before the cursor
-]]
-
-			local gemini_few_shots = {}
-
-			gemini_few_shots[1] = {
-				role = "user",
-				content = [[
-# language: python
-<contextBeforeCursor>
-def fibonacci(n):
-    <cursorPosition>
-<contextAfterCursor>
-
-fib(5)]],
-			}
-
-			gemini_few_shots[2] = require("minuet.config").default_few_shots[2]
 			opts = {
 				add_single_line_entry = true,
 				n_completions = 1,
@@ -493,13 +469,37 @@ fib(5)]],
 				},
 				-- notify = "debug",
 				notify = "error",
-				-- provider = "gemini",
-				provider = "openai_fim_compatible",
+				provider = "gemini",
+				-- provider = "openai_fim_compatible",
 				throttle = 2000,
 				provider_options = {
 					openai_fim_compatible = {
 						api_key = "DEEPSEEK_CHAT_API_KEY",
 						name = "deepseek",
+						template = {
+							prompt = function(pref, suff)
+								local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled-in code.]]):format(
+									vim.bo.filetype
+								)
+								local cache_result = vectorcode_cacher.query_from_cache(0)
+								if vectorcode_cacher ~= nil then
+									for _, file in ipairs(cache_result) do
+										prompt_message = prompt_message
+											.. "<|file_sep|>"
+											.. file.path
+											.. "\n"
+											.. file.document
+									end
+								end
+								return prompt_message
+									.. "<|fim_begin|>"
+									.. pref
+									.. "<|fim_hole|>"
+									.. suff
+									.. "<|fim_end|>"
+							end,
+							suffix = false,
+						},
 						optional = {
 							max_tokens = 256,
 							stop = { "\n\n" },
@@ -513,19 +513,27 @@ fib(5)]],
 					},
 					gemini = {
 						system = {
-							prompt = gemini_prompt,
+							template = "{{{prompt}}}\n{{{guidelines}}}\n{{{n_completion_template}}}\n{{{repo_context}}}",
+							repo_context = [[9. Additional context from other files in the repository will be enclosed in <repo_context> tags. Each file will be separated by <file_separator> tags, containing its relative path and content.]],
 						},
-						few_shots = gemini_few_shots,
 						chat_input = {
-							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
-							repo_context = function()
+							template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
+							repo_context = function(_, _, _)
+								local prompt_message = ""
 								if vectorcode_cacher ~= nil then
-									return vectorcode_cacher.make_prompt_component(0, function(file)
-										return "<|file_separator|>" .. file.path .. "\n" .. file.document
-									end).content
-								else
-									return ""
+									local cache_result = vectorcode_cacher.query_from_cache(0)
+									for _, file in ipairs(cache_result) do
+										prompt_message = prompt_message
+											.. "<file_separator>"
+											.. file.path
+											.. "\n"
+											.. file.document
+									end
 								end
+								if prompt_message ~= "" then
+									prompt_message = "<repo_context>\n" .. prompt_message .. "\n</repo_context>"
+								end
+								return prompt_message
 							end,
 						},
 						optional = {

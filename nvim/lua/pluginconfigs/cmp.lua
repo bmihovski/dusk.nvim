@@ -268,7 +268,7 @@ cmp.setup({
 	},
 	completion = { keyword_length = 2 },
 	sources = {
-		{ name = "minuet", priority = 101 },
+		{ name = "minuet", priority = 100, group_index=1, },
 		{
 			name = "lazydev",
 			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it

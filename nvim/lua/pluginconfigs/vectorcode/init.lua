@@ -9,8 +9,12 @@ return {
 			timeout_ms = -1,
 			async_opts = {
 				events = { "BufWritePost" },
-				query_cb = require("vectorcode.utils").make_surrounding_lines_cb(100),
+				query_cb = require("vectorcode.utils").make_lsp_document_symbol_cb(),
 				debounce = 30,
+			},
+			on_setup = {
+				update = true, -- set to true to enable update when `setup` is called.
+				lsp = true,
 			},
 		}
 	end,
