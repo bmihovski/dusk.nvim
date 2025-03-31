@@ -458,9 +458,6 @@ return {
 			end
 
 			opts = {
-				add_single_line_entry = true,
-				n_completions = 1,
-				after_cursor_filter_length = 0,
 				cmp = {
 					enable_auto_complete = true,
 				},
@@ -472,6 +469,7 @@ return {
 				provider = "gemini",
 				-- provider = "openai_fim_compatible",
 				throttle = 2000,
+				request_timeout = 10,
 				provider_options = {
 					openai_fim_compatible = {
 						api_key = "DEEPSEEK_CHAT_API_KEY",
@@ -481,8 +479,8 @@ return {
 								local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled-in code.]]):format(
 									vim.bo.filetype
 								)
-								local cache_result = vectorcode_cacher.query_from_cache(0)
 								if vectorcode_cacher ~= nil then
+									local cache_result = vectorcode_cacher.query_from_cache(0)
 									for _, file in ipairs(cache_result) do
 										prompt_message = prompt_message
 											.. "<|file_sep|>"
@@ -512,28 +510,18 @@ return {
 						},
 					},
 					gemini = {
-						system = {
-							template = "{{{prompt}}}\n{{{guidelines}}}\n{{{n_completion_template}}}\n{{{repo_context}}}",
-							repo_context = [[9. Additional context from other files in the repository will be enclosed in <repo_context> tags. Each file will be separated by <file_separator> tags, containing its relative path and content.]],
-						},
 						chat_input = {
-							template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
-							repo_context = function(_, _, _)
-								local prompt_message = ""
-								if vectorcode_cacher ~= nil then
-									local cache_result = vectorcode_cacher.query_from_cache(0)
-									for _, file in ipairs(cache_result) do
-										prompt_message = prompt_message
-											.. "<file_separator>"
-											.. file.path
-											.. "\n"
-											.. file.document
-									end
+							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
+							repo_context = function()
+								if has_vc then
+									return vectorcode_config
+										.get_cacher_backend()
+										.make_prompt_component(0, function(file)
+											return "<|file_separator|>" .. file.path .. "\n" .. file.document
+										end).content
+								else
+									return ""
 								end
-								if prompt_message ~= "" then
-									prompt_message = "<repo_context>\n" .. prompt_message .. "\n</repo_context>"
-								end
-								return prompt_message
 							end,
 						},
 						optional = {
@@ -563,7 +551,6 @@ return {
 						},
 					},
 				},
-				request_timeout = 10,
 			}
 
 			require("minuet").setup(opts)
