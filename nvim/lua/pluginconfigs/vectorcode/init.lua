@@ -6,7 +6,7 @@ return {
 			async_backend = "lsp",
 			notify = false,
 			n_query = 10,
-			timeout_ms = -1,
+			timeout_ms = 30000,
 			async_opts = {
 				events = { "BufWritePost" },
 				single_job = true,

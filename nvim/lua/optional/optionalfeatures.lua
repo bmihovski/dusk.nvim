@@ -386,6 +386,12 @@ return {
 			})
 		end,
 	},
+	{
+		"fei6409/log-highlight.nvim",
+		config = function()
+			require("log-highlight").setup({})
+		end,
+	},
 
 	{
 		"pteroctopus/faster.nvim",
@@ -399,7 +405,6 @@ return {
 						"matchparen",
 						"lsp",
 						"treesitter",
-						"syntax",
 						"filetype",
 					},
 					filesize = 5,
@@ -452,11 +457,8 @@ return {
 		event = "VeryLazy",
 		config = function(_, opts)
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
-			local vectorcode_cacher = nil
-			if has_vc then
-				vectorcode_cacher = vectorcode_config.get_cacher_backend()
-			end
-
+			-- roughly equate to 2000 tokens for LLM
+			local RAG_Context_Window_Size = 8000
 			opts = {
 				cmp = {
 					enable_auto_complete = true,
@@ -464,12 +466,13 @@ return {
 				blink = {
 					enable_auto_complete = false,
 				},
-				-- notify = "debug",
-				notify = "error",
+				add_single_line_entry = false,
+				n_completions = 1,
+				notify = "debug",
+				-- notify = "error",
 				provider = "gemini",
 				-- provider = "openai_fim_compatible",
-				throttle = 2000,
-				request_timeout = 10,
+				request_timeout = 15,
 				provider_options = {
 					openai_fim_compatible = {
 						api_key = "DEEPSEEK_CHAT_API_KEY",
@@ -479,8 +482,8 @@ return {
 								local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled-in code.]]):format(
 									vim.bo.filetype
 								)
-								if vectorcode_cacher ~= nil then
-									local cache_result = vectorcode_cacher.query_from_cache(0)
+								if has_vc then
+									local cache_result = vectorcode_config.get_cacher_backend().query_from_cache(0)
 									for _, file in ipairs(cache_result) do
 										prompt_message = prompt_message
 											.. "<|file_sep|>"
@@ -510,18 +513,23 @@ return {
 						},
 					},
 					gemini = {
+						model = "gemini-2.5-pro-exp-03-25",
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
-							repo_context = function()
+							repo_context = function(_, _, _)
+								local prompt_message = ""
 								if has_vc then
-									return vectorcode_config
-										.get_cacher_backend()
-										.make_prompt_component(0, function(file)
+									prompt_message =
+										vectorcode_config.get_cacher_backend().make_prompt_component(0, function(file)
 											return "<|file_separator|>" .. file.path .. "\n" .. file.document
 										end).content
-								else
-									return ""
 								end
+								prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
+
+								if prompt_message ~= "" then
+									prompt_message = "<repo_context>\n" .. prompt_message .. "\n</repo_context>"
+								end
+								return prompt_message
 							end,
 						},
 						optional = {
@@ -1433,15 +1441,69 @@ return {
 			chat.setup(opts)
 		end,
 	},
+	{
+		"ravitemer/mcphub.nvim",
+		version = "*",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		cmd = { "MCPHub" },
+		build = "npm install -g mcp-hub@latest",
+		config = function()
+			require("mcphub").setup({
+				port = 3000,
+				extensions = {
+					avante = {
+						auto_approve_mcp_tool_calls = true, -- Auto approves mcp tool calls.
+					},
+				},
+				log = {
+					level = vim.log.levels.DEBUG,
+					to_file = true,
+					file_path = "~/mcphub.log",
+				},
+			})
+		end,
+	},
 
 	{
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		lazy = true,
-		-- dev = true,
 		version = false,
 		build = "make",
 		opts = {
+			debug = true,
+			hints = { enabled = true },
+			behaviour = {
+				support_paste_from_clipboard = true,
+				enable_cursor_planning_mode = true,
+				enable_claude_text_editor_tool_mode = true,
+			},
+			disabled_tools = {
+				"list_files",
+				"search_files",
+				"read_file",
+				"create_file",
+				"rename_file",
+				"delete_file",
+				"create_dir",
+				"rename_dir",
+				"delete_dir",
+				"bash",
+			},
+			-- Using function prevents requiring mcphub before it's loaded
+			custom_tools = function()
+				return {
+					require("mcphub.extensions.avante").mcp_tool(),
+				}
+			end,
+			-- system_prompt as function ensures LLM always has latest MCP server state
+			-- This is evaluated for every message, even in existing chats
+			system_prompt = function()
+				local hub = require("mcphub").get_hub_instance()
+				return hub:get_active_servers_prompt()
+			end,
 			provider = "copilot",
 			auto_suggestions_provider = "openai",
 			openai = {
@@ -1461,10 +1523,10 @@ return {
 				model = "gemini-2.0-flash",
 			},
 			web_search_engine = {
-				provider = "google",
+				provider = "tavily",
 			},
 			dual_boost = {
-				enabled = true,
+				enabled = false,
 				first_provider = "gemini",
 				second_provider = "copilot",
 				prompt = "Based on the two reference outputs below, generate a response that incorporates elements from both but reflects your own judgment and unique perspective. Provide brief explanation with highlighting the important points. Reference Output 1: [{{provider1_output}}], Reference Output 2: [{{provider2_output}}]",
@@ -1502,6 +1564,7 @@ return {
 			end,
 		},
 		dependencies = {
+			"ravitemer/mcphub.nvim",
 			{ "stevearc/dressing.nvim", lazy = true },
 			{ "nvim-lua/plenary.nvim", lazy = true },
 			{ "MunifTanjim/nui.nvim", lazy = true },

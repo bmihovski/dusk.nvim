@@ -25,7 +25,7 @@
   "isort": "6.0.1",
   "java-debug-adapter": "0.58.1",
   "java-test": "0.43.0",
-  "jdtls": "v1.46.0",
+  "jdtls": "v1.46.1",
   "jq": "jq-1.7",
   "js-debug-adapter": "v1.97.1",
   "json-lsp": "4.10.0",
