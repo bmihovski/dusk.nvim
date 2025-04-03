@@ -470,8 +470,8 @@ return {
 				n_completions = 1,
 				-- notify = "debug",
 				notify = "error",
-				provider = "gemini",
-				-- provider = "openai_fim_compatible",
+				-- provider = "gemini",
+				provider = "openai_fim_compatible",
 				request_timeout = 15,
 				provider_options = {
 					openai_fim_compatible = {
@@ -491,6 +491,7 @@ return {
 											.. "\n"
 											.. file.document
 									end
+									prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
 								end
 								return prompt_message
 									.. "<|fim_begin|>"
@@ -1457,11 +1458,11 @@ return {
 						auto_approve_mcp_tool_calls = true, -- Auto approves mcp tool calls.
 					},
 				},
-				log = {
-					level = vim.log.levels.DEBUG,
-					to_file = true,
-					file_path = "~/mcphub.log",
-				},
+				-- log = {
+				-- 	level = vim.log.levels.DEBUG,
+				-- 	to_file = true,
+				-- 	file_path = "~/mcphub.log",
+				-- },
 			})
 		end,
 	},
@@ -1469,11 +1470,10 @@ return {
 	{
 		"yetone/avante.nvim",
 		event = "VeryLazy",
-		lazy = true,
 		version = false,
 		build = "make",
 		opts = {
-			debug = true,
+			debug = false,
 			hints = { enabled = true },
 			behaviour = {
 				support_paste_from_clipboard = true,
@@ -1493,6 +1493,10 @@ return {
 				"delete_dir",
 				"bash",
 				"fetch",
+				"git_diff",
+				"git_commit",
+				"execute_command",
+				"write_file",
 			},
 			-- Using function prevents requiring mcphub before it's loaded
 			custom_tools = function()
@@ -1504,7 +1508,11 @@ return {
 			-- This is evaluated for every message, even in existing chats
 			system_prompt = function()
 				local hub = require("mcphub").get_hub_instance()
-				return hub:get_active_servers_prompt()
+				if not hub then
+					os.execute("sleep 60")
+				else
+					return hub:get_active_servers_prompt()
+				end
 			end,
 			provider = "copilot",
 			auto_suggestions_provider = "copilot",
@@ -1541,7 +1549,7 @@ return {
 			dual_boost = {
 				enabled = true,
 				first_provider = "openai",
-				second_provider = "gemini",
+				second_provider = "deepseek",
 				timeout = 1200000, -- Timeout in milliseconds
 			},
 			windows = {

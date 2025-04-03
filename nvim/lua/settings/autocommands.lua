@@ -25,6 +25,8 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 		"prompt",
 		"toggleterm",
 		"copilot",
+		"Avante",
+		"AvanteInput",
 		"startuptime",
 		"tsplayground",
 		"PlenaryTestPopup",

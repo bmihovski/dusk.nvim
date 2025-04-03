@@ -34,6 +34,7 @@ local options = {
 	guicursor = "",
 	winminheight = 0,
 	winminwidth = 0,
+	laststatus = 3,
 	-- scrolloff = 999,
 }
 
