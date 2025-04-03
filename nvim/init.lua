@@ -112,6 +112,7 @@ require("lazy").setup({
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
+		enabled = true,
 		opts = {},
 		dependencies = {
 			"MunifTanjim/nui.nvim",
@@ -531,7 +532,7 @@ require("lazy").setup({
 			"onsails/lspkind.nvim",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
 			"lukas-reineke/cmp-under-comparator",
-			'petertriho/cmp-git',
+			"petertriho/cmp-git",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",

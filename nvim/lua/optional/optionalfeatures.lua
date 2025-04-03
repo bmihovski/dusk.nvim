@@ -468,8 +468,8 @@ return {
 				},
 				add_single_line_entry = false,
 				n_completions = 1,
-				notify = "debug",
-				-- notify = "error",
+				-- notify = "debug",
+				notify = "error",
 				provider = "gemini",
 				-- provider = "openai_fim_compatible",
 				request_timeout = 15,
@@ -513,7 +513,7 @@ return {
 						},
 					},
 					gemini = {
-						model = "gemini-2.5-pro-exp-03-25",
+						model = "gemini-2.0-flash-lite",
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
@@ -1479,6 +1479,7 @@ return {
 				support_paste_from_clipboard = true,
 				enable_cursor_planning_mode = true,
 				enable_claude_text_editor_tool_mode = true,
+				jump_result_buffer_on_finish = true,
 			},
 			disabled_tools = {
 				"list_files",
@@ -1491,6 +1492,7 @@ return {
 				"rename_dir",
 				"delete_dir",
 				"bash",
+				"fetch",
 			},
 			-- Using function prevents requiring mcphub before it's loaded
 			custom_tools = function()
@@ -1505,36 +1507,57 @@ return {
 				return hub:get_active_servers_prompt()
 			end,
 			provider = "copilot",
-			auto_suggestions_provider = "openai",
+			auto_suggestions_provider = "copilot",
+			vendors = {
+				deepseek = {
+					__inherited_from = "openai",
+					api_key_name = "DEEPSEEK_CHAT_API_KEY",
+					endpoint = "https://api.deepseek.com",
+					model = "deepseek-chat",
+					max_tokens = 8100,
+				},
+			},
 			openai = {
-				endpoint = "https://api.deepseek.com/v1",
-				model = "deepseek-chat",
-				timeout = 30000,
+				model = "gpt-4o-mini",
+				timeout = function()
+					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
+					return math.min(60000 + (file_size / 1024) * 100, 600000)
+				end,
 			},
 			copilot = {
 				model = "claude-3.7-sonnet",
-				temperature = 0.5,
 				timeout = function()
 					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
-					return math.min(30000 + (file_size / 1024) * 100, 60000)
+					return math.min(60000 + (file_size / 1024) * 100, 600000)
 				end,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
-			},
-			web_search_engine = {
-				provider = "tavily",
+				timeout = function()
+					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
+					return math.min(60000 + (file_size / 1024) * 100, 600000)
+				end,
 			},
 			dual_boost = {
-				enabled = false,
-				first_provider = "gemini",
-				second_provider = "copilot",
-				prompt = "Based on the two reference outputs below, generate a response that incorporates elements from both but reflects your own judgment and unique perspective. Provide brief explanation with highlighting the important points. Reference Output 1: [{{provider1_output}}], Reference Output 2: [{{provider2_output}}]",
-				timeout = 60000, -- Timeout in milliseconds
+				enabled = true,
+				first_provider = "openai",
+				second_provider = "gemini",
+				timeout = 1200000, -- Timeout in milliseconds
 			},
 			windows = {
 				sidebar_header = {
 					enabled = false,
+				},
+				sidebar = {
+					width = 50, -- Width of the sidebar
+					position = "right", -- Position of the sidebar: 'left' or 'right'
+					show_line_numbers = false, -- Show line numbers in the sidebar
+				},
+				chat = {
+					auto_focus_input = true, -- Automatically focus input when opening chat
+				},
+				diff = {
+					height = 20, -- Height of the diff window
 				},
 			},
 			behaviour = {
@@ -1550,6 +1573,11 @@ return {
 					switch_windows = "<C-Tab>",
 					reverse_switch_windows = "<C-S-Tab>",
 				},
+				chat = {
+					submit = "<C-CR>", -- Key to submit in the chat window
+					abort = "<C-c>", -- Key to abort generation
+					newline = "<CR>", -- Key to insert a newline in the chat input
+				},
 			},
 			file_selector = {
 				provider = "fzf",
@@ -1558,6 +1586,8 @@ return {
 			},
 			suggestion = {
 				dismiss = "<C-e>",
+				accept = "<Tab>", -- Key to accept suggestion
+				accept_word = "<C-f>", -- Key to accept word
 			},
 			on_error = function(err)
 				vim.notify("Avante error: " .. err, vim.log.levels.ERROR)
