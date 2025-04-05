@@ -192,6 +192,16 @@ require("lazy").setup({
 		opts = { max_width = 0.3 },
 	},
 	{
+		"cormacrelf/dark-notify",
+		dependencies = {
+			"catppuccin/nvim",
+		},
+
+		config = function()
+			require("dark_notify").run()
+		end,
+	},
+	{
 		"catppuccin/nvim",
 		name = "catppuccin",
 		priority = 1000,
@@ -199,6 +209,82 @@ require("lazy").setup({
 			require("catppuccin").setup(opts)
 			vim.cmd.colorscheme("catppuccin")
 			vim.api.nvim_set_hl(0, "CursorColumn", { link = "CursorLine" })
+			local status_ok, dark_notify = pcall(require, "dark_notify")
+			if status_ok then
+				dark_notify.run()
+			end
+			-- Options are automatically loaded before lazy.nvim startup
+			-- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
+			-- Add any additional options here
+			-- Execute the shell command and capture its output
+			function GetTheme()
+				local theme = vim.fn.system("getTheme")
+				theme = string.gsub(theme, "\n", "")
+				if theme ~= "dark" and theme ~= "light" then
+					theme = "dark"
+				end
+				return theme
+			end
+
+			function SetTheme()
+				vim.go.background = GetTheme()
+			end
+			-- Strip trailing newline characters from the output
+			-- Set theme from the shell command output if not on mac
+			SetTheme()
+			vim.api.nvim_create_user_command("SetTheme", SetTheme, {})
+
+			vim.api.nvim_set_hl(0, "DiffText", { fg = "#ffffff", bg = "#7d3b40" })
+			vim.api.nvim_set_hl(0, "DiffAdd", { fg = "#ffffff", bg = "#1d3450" })
+
+			function GetColorScheme()
+				local theme = GetTheme()
+				if theme == "dark" then
+					return require("catppuccin.palettes").get_palette("mocha")
+				else
+					return require("catppuccin.palettes").get_palette("latte")
+				end
+			end
+			local function blend_colors(fg, bg, alpha)
+				local function hex_to_rgb(hex)
+					return tonumber(hex:sub(2, 3), 16), tonumber(hex:sub(4, 5), 16), tonumber(hex:sub(6, 7), 16)
+				end
+
+				local function rgb_to_hex(r, g, b)
+					return string.format("#%02x%02x%02x", r, g, b)
+				end
+
+				local fg_r, fg_g, fg_b = hex_to_rgb(fg)
+				local bg_r, bg_g, bg_b = hex_to_rgb(bg)
+
+				local blended_r = math.floor(bg_r + (fg_r - bg_r) * alpha)
+				local blended_g = math.floor(bg_g + (fg_g - bg_g) * alpha)
+				local blended_b = math.floor(bg_b + (fg_b - bg_b) * alpha)
+
+				return rgb_to_hex(blended_r, blended_g, blended_b)
+			end
+			local scheme = GetColorScheme()
+			local base = scheme.base
+			-- https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md#diff--merge
+			vim.api.nvim_set_hl(0, "AvanteConflictIncoming", {
+				bg = blend_colors(scheme.green, scheme.base, 0.15),
+				bold = true,
+			})
+
+			vim.api.nvim_set_hl(0, "AvanteConflictCurrent", {
+				bg = blend_colors(scheme.red, scheme.base, 0.15),
+				bold = true,
+			})
+
+			vim.api.nvim_set_hl(0, "AvanteConflictCurrentLabel", {
+				fg = scheme.blue, -- Blue
+				bold = true,
+			})
+
+			vim.api.nvim_set_hl(0, "AvanteConflictIncomingLabel", {
+				fg = scheme.peach, -- Peach
+				bold = true,
+			})
 		end,
 		lazy = false,
 		opts = function()
@@ -240,10 +326,17 @@ require("lazy").setup({
 						FloatTitle = { fg = colors.lavender, bg = colors.mantle },
 						LspInfoBorder = { fg = colors.mantle, bg = colors.mantle },
 						WinSeparator = { bg = colors.base, fg = colors.lavender },
+						CmpBorder = { fg = colors.surface2 },
+						Pmenu = { bg = colors.none },
+						NeoTreeIndentMarker = { fg = colors.flamingo },
+						NeoTreeExpander = { fg = colors.flamingo },
+						NeoTreeNormal = { fg = colors.text, bg = colors.base },
+						NeoTreeNormalNC = { fg = colors.text, bg = colors.base },
 					}
 				end,
 				dim_inactive = { enabled = false },
-				default_integrations = {
+				integrations = {
+					avante = { enabled = true },
 					cmp = true,
 					dadbod_ui = true,
 					dap = true,
@@ -526,6 +619,9 @@ require("lazy").setup({
 			"hrsh7th/cmp-buffer",
 			"hrsh7th/cmp-path",
 			"hrsh7th/cmp-cmdline",
+			"hrsh7th/cmp-calc",
+			"hrsh7th/cmp-emoji",
+			"chrisgrieser/cmp_yanky",
 			"amarakon/nvim-cmp-buffer-lines",
 			{ "https://git.sr.ht/~p00f/clangd_extensions.nvim", config = true },
 			"zaucy/cmp-bazel.nvim",
@@ -879,7 +975,33 @@ require("lazy").setup({
 		"akinsho/git-conflict.nvim",
 		event = "CursorHold",
 		config = function()
-			require("git-conflict").setup({})
+			require("git-conflict").setup({
+				default_mappings = true, -- disable buffer local mapping created by this plugin
+				default_commands = true, -- disable commands created by this plugin
+				disable_diagnostics = true, -- This will disable the diagnostics in a buffer whilst it is conflicted
+				list_opener = "copen", -- command or function to open the conflicts list
+				highlights = { -- They must have background color, otherwise the default color will be used
+					incoming = "AvanteConflictIncoming",
+					current = "AvanteConflictCurrent",
+				},
+			})
+			-- vim.keymap.set('n', '<leader>gc', ':GitConflictRefresh<CR>', {noremap = true, silent = true})
+			-- vim.keymap.set('n', '<leader>gq', ':GitConflictQf<CR>', {noremap = true, silent = true})
+
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "GitConflictDetected",
+				callback = function()
+					vim.notify("Conflict detected in file " .. vim.api.nvim_buf_get_name(0))
+					vim.cmd("LspStop")
+				end,
+			})
+
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "GitConflictResolved",
+				callback = function()
+					vim.cmd("LspRestart")
+				end,
+			})
 		end,
 	},
 

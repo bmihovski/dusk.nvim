@@ -268,7 +268,7 @@ cmp.setup({
 	},
 	completion = { keyword_length = 2 },
 	sources = {
-		{ name = "minuet", priority = 100, group_index=1, },
+		{ name = "minuet", priority = 100, group_index = 1 },
 		{
 			name = "lazydev",
 			-- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -280,11 +280,17 @@ cmp.setup({
 			name = "nvim_lsp_signature_help",
 		},
 		{ name = "luasnip" },
+		{ name = "buffer" },
 		{
 			name = "buffer-lines",
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
+		{ name = "avante_commands" },
+		{ name = "avante_mentions" },
+		{ name = "avante_files" },
 		{ name = "path" },
+		{ name = "calc" },
+		{ name = "emoji" },
 	},
 	sorting = {
 		comparators = {
@@ -372,14 +378,92 @@ cmp.setup.cmdline(":", {
 	}),
 })
 -- Set configuration for specific filetype.
+require("cmp_git").setup()
+
 cmp.setup.filetype("gitcommit", {
 	sources = cmp.config.sources({
-		{ name = "git" },
+		{ name = "cmp_git" }, -- You can specify the `cmp_git` source if you were installed it.
 	}, {
 		{ name = "buffer" },
 	}),
 })
-require("cmp_git").setup()
+
+cmp.setup.filetype("markdown", {
+	sources = cmp.config.sources({
+		{ name = "cmp_git" }, -- You can specify the `cmp_git` source if you were installed it.
+	}, {
+		{
+			name = "buffer",
+			option = {
+				get_bufnrs = function()
+					return vim.api.nvim_list_bufs()
+				end,
+			},
+		},
+		{ name = "buffer-lines", keyword_length = 3 },
+		{ name = "luasnip" },
+		{ name = "context_nvim" },
+	}),
+})
+
+cmp.setup.filetype("changelog", {
+	snippet = {
+		expand = function(_) end,
+	},
+	sources = cmp.config.sources({
+		{ name = "calc" },
+		{ name = "emoji" },
+		{ name = "luasnip", keyword_length = 3 },
+		{
+			name = "buffer",
+			keyword_length = 3,
+			option = {
+				get_bufnrs = function()
+					return vim.api.nvim_list_bufs()
+				end,
+			},
+		},
+	}),
+})
+
+cmp.setup.filetype("copilot-chat", {
+	sources = cmp.config.sources({ { name = "minuet" }, { name = "cmp_git" } }, {
+		{
+			name = "buffer",
+			option = {
+				get_bufnrs = function()
+					return vim.api.nvim_list_bufs()
+				end,
+			},
+		},
+		{ name = "luasnip" },
+		{ name = "context_nvim" },
+	}),
+})
+
+cmp.setup.filetype("text", {
+	sources = cmp.config.sources({
+		{ name = "calc" },
+		{ name = "emoji" },
+		{
+			name = "cmp_yanky",
+			keyword_length = 4,
+			option = {
+				onlyCurrentFiletype = false,
+				minLength = 3,
+			},
+		},
+		{
+			name = "buffer",
+			keyword_length = 4,
+			option = {
+				get_bufnrs = function()
+					return vim.api.nvim_list_bufs()
+				end,
+			},
+		},
+	}),
+})
 
 vim.cmd([[
         highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080

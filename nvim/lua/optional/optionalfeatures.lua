@@ -452,6 +452,52 @@ return {
 	-- GitHub copilot
 
 	{ import = "pluginconfigs.vectorcode.init" },
+	{ import = "pluginconfigs.context-nvim" },
+	{
+		"YounesElhjouji/nvim-copy",
+		lazy = false, -- disables lazy-loading so the plugin is loaded on startup
+		config = function()
+			-- Optional: additional configuration or key mappings
+			vim.api.nvim_set_keymap("n", "<f16>cb", ":CopyBuffersToClipboard<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap(
+				"n",
+				"<f16>cc",
+				":CopyCurrentBufferToClipboard<CR>",
+				{ noremap = true, silent = true }
+			)
+			vim.api.nvim_set_keymap("n", "<f16>cg", ":CopyGitFilesToClipboard<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap(
+				"n",
+				"<f16>cq",
+				":CopyQuickfixFilesToClipboard<CR>",
+				{ noremap = true, silent = true }
+			)
+			vim.api.nvim_set_keymap(
+				"n",
+				"<f16>ch",
+				":CopyHarpoonFilesToClipboard<CR>",
+				{ noremap = true, silent = true }
+			)
+			vim.api.nvim_set_keymap(
+				"n",
+				"<f16>cd",
+				":CopyDirectoryFilesToClipboard<CR>",
+				{ noremap = true, silent = true }
+			)
+
+			vim.keymap.set("n", "<f16>cd", function()
+				vim.ui.input({
+					prompt = "Enter directory path: ",
+					default = vim.fn.getcwd(), -- Default to current working directory
+				}, function(input)
+					if input then -- Only proceed if input wasn't cancelled
+						vim.cmd(string.format("CopyDirectoryFilesToClipboard %s norecurse", input))
+					end
+				end)
+			end, { noremap = true, silent = true })
+		end,
+	},
+
 	{
 		"milanglacier/minuet-ai.nvim",
 		event = "VeryLazy",
@@ -470,8 +516,8 @@ return {
 				n_completions = 1,
 				-- notify = "debug",
 				notify = "error",
-				-- provider = "gemini",
-				provider = "openai_fim_compatible",
+				provider = "gemini",
+				-- provider = "openai_fim_compatible",
 				request_timeout = 15,
 				provider_options = {
 					openai_fim_compatible = {
@@ -1453,6 +1499,7 @@ return {
 		config = function()
 			require("mcphub").setup({
 				port = 3000,
+				auto_approve = true,
 				extensions = {
 					avante = {
 						auto_approve_mcp_tool_calls = true, -- Auto approves mcp tool calls.
@@ -1474,12 +1521,10 @@ return {
 		build = "make",
 		opts = {
 			debug = false,
-			hints = { enabled = true },
 			behaviour = {
 				support_paste_from_clipboard = true,
 				enable_cursor_planning_mode = true,
-				enable_claude_text_editor_tool_mode = true,
-				jump_result_buffer_on_finish = true,
+				enable_token_counting = false,
 			},
 			disabled_tools = {
 				"list_files",
@@ -1515,7 +1560,7 @@ return {
 				end
 			end,
 			provider = "copilot",
-			auto_suggestions_provider = "copilot",
+			auto_suggestions_provider = "gemini",
 			vendors = {
 				deepseek = {
 					__inherited_from = "openai",
@@ -1568,14 +1613,6 @@ return {
 					height = 20, -- Height of the diff window
 				},
 			},
-			behaviour = {
-				auto_suggestions = false, -- Experimental stage
-				auto_set_highlight_group = true,
-				auto_set_keymaps = true,
-				auto_apply_diff_after_generation = false,
-				support_paste_from_clipboard = true,
-				minimize_diff = true,
-			},
 			mappings = {
 				sidebar = {
 					switch_windows = "<C-Tab>",
@@ -1603,11 +1640,12 @@ return {
 		},
 		dependencies = {
 			"ravitemer/mcphub.nvim",
+			"catppuccin/nvim",
 			{ "stevearc/dressing.nvim", lazy = true },
 			{ "nvim-lua/plenary.nvim", lazy = true },
 			{ "MunifTanjim/nui.nvim", lazy = true },
 			{ "nvim-tree/nvim-web-devicons", lazy = true },
-			{ "hrsh7th/nvim-cmp", lazy = true },
+			"hrsh7th/nvim-cmp",
 			--- The below dependencies are optional,
 			{ "echasnovski/mini.pick", lazy = true }, -- for file_selector provider mini.pick
 			{ "nvim-telescope/telescope.nvim", lazy = true }, -- for file_selector provider telescope

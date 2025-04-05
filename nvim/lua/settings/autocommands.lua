@@ -25,6 +25,7 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 		"prompt",
 		"toggleterm",
 		"copilot",
+		"copilot-chat",
 		"Avante",
 		"AvanteInput",
 		"startuptime",
@@ -50,6 +51,15 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
       set conceallevel=2
       set wrap
       set foldlevel=99
+    ]])
+	end,
+})
+
+vim.api.nvim_create_autocmd({ "FileType" }, {
+	pattern = { "AvanteInput" },
+	callback = function()
+		vim.cmd([[
+		  setlocal wrap
     ]])
 	end,
 })
