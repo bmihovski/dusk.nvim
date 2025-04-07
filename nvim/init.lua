@@ -607,7 +607,7 @@ require("lazy").setup({
 	-- Autocompletion
 	{
 		"hrsh7th/nvim-cmp",
-		lazy = true,
+		lazy = false,
 		event = { "InsertEnter", "CmdLineEnter" },
 		dependencies = {
 			-- Snippet Engine & its associated nvim-cmp source

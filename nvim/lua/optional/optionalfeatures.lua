@@ -1567,7 +1567,8 @@ return {
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-chat",
-					max_tokens = 8100,
+					max_tokens = 4096,
+					temperature = 0.4,
 				},
 			},
 			openai = {
@@ -1576,13 +1577,17 @@ return {
 					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
 					return math.min(60000 + (file_size / 1024) * 100, 600000)
 				end,
+				max_tokens = 12288,
+				temperature = 0.4,
 			},
 			copilot = {
-				model = "claude-3.7-sonnet",
+				model = "claude-3.7-sonnet-thought",
 				timeout = function()
 					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
 					return math.min(60000 + (file_size / 1024) * 100, 600000)
 				end,
+				max_tokens = 8192,
+				temperature = 1,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
