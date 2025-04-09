@@ -1567,77 +1567,47 @@ return {
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-chat",
-					max_tokens = 4096,
-					temperature = 0.4,
+					max_tokens = 8192,
+					temperature = 1,
+					timeout = 600000,
 				},
 			},
 			openai = {
 				model = "gpt-4o-mini",
-				timeout = function()
-					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
-					return math.min(60000 + (file_size / 1024) * 100, 600000)
-				end,
-				max_tokens = 12288,
-				temperature = 0.4,
+				timeout = 600000,
+				temperature = 0.7,
 			},
 			copilot = {
-				model = "claude-3.7-sonnet-thought",
-				timeout = function()
-					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
-					return math.min(60000 + (file_size / 1024) * 100, 600000)
-				end,
-				max_tokens = 8192,
+				model = "claude-3.7-sonnet",
+				-- model = "claude-3.7-sonnet-thought",
+				timeout = 600000,
 				temperature = 1,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
-				timeout = function()
-					local file_size = vim.fn.getfsize(vim.fn.expand("%"))
-					return math.min(60000 + (file_size / 1024) * 100, 600000)
-				end,
+				timeout = 600000,
+				temperature = 0.7,
 			},
 			dual_boost = {
 				enabled = true,
-				first_provider = "openai",
-				second_provider = "deepseek",
+				first_provider = "deepseek",
+				second_provider = "openai",
 				timeout = 1200000, -- Timeout in milliseconds
 			},
 			windows = {
+				width = 40, -- Width of the sidebar
+				height = 40, -- Height of the sidebar
 				sidebar_header = {
 					enabled = false,
 				},
-				sidebar = {
-					width = 50, -- Width of the sidebar
-					position = "right", -- Position of the sidebar: 'left' or 'right'
-					show_line_numbers = false, -- Show line numbers in the sidebar
-				},
-				chat = {
-					auto_focus_input = true, -- Automatically focus input when opening chat
-				},
-				diff = {
-					height = 20, -- Height of the diff window
-				},
-			},
-			mappings = {
-				sidebar = {
-					switch_windows = "<C-Tab>",
-					reverse_switch_windows = "<C-S-Tab>",
-				},
-				chat = {
-					submit = "<C-CR>", -- Key to submit in the chat window
-					abort = "<C-c>", -- Key to abort generation
-					newline = "<CR>", -- Key to insert a newline in the chat input
+				ask = {
+					start_insert = false,
 				},
 			},
 			file_selector = {
 				provider = "fzf",
 				-- Options override for custom providers
 				provider_opts = {},
-			},
-			suggestion = {
-				dismiss = "<C-e>",
-				accept = "<Tab>", -- Key to accept suggestion
-				accept_word = "<C-f>", -- Key to accept word
 			},
 			on_error = function(err)
 				vim.notify("Avante error: " .. err, vim.log.levels.ERROR)
