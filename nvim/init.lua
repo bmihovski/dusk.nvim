@@ -202,6 +202,42 @@ require("lazy").setup({
 		end,
 	},
 	{
+		"ibhagwan/fzf-lua",
+		dependencies = { "echasnovski/mini.icons" },
+		cmd = { "FzfLua" },
+		opts = function(_, opts)
+			return vim.tbl_deep_extend("force", opts or {}, {
+				winopts = {
+					border = "solid",
+					width = 0.90,
+					preview = {
+						border = "solid",
+						default = "bat",
+						horizontal = "right:55%",
+						vertical = "down:45%",
+					},
+				},
+				files = { formatter = "path.dirname_first" },
+				lsp = { code_actions = { previewer = "codeaction_native" } },
+			})
+		end,
+		config = function(_, opts)
+			require("fzf-lua").setup(opts)
+			vim.api.nvim_set_hl(0, "FzfLuaBorder", { link = "FzfLuaNormal" })
+			vim.api.nvim_set_hl(0, "FzfLuaTitle", { link = "FzfLuaBufName" })
+			require("fzf-lua").register_ui_select(function(_, items)
+				local min_h, max_h = 0.15, 0.70
+				local h = (#items + 4) / vim.o.lines
+				if h < min_h then
+					h = min_h
+				elseif h > max_h then
+					h = max_h
+				end
+				return { winopts = { height = h, width = 0.60, row = 0.40 } }
+			end)
+		end,
+	},
+	{
 		"catppuccin/nvim",
 		name = "catppuccin",
 		priority = 1000,

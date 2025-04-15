@@ -1569,30 +1569,39 @@ return {
 					model = "deepseek-chat",
 					max_tokens = 8192,
 					temperature = 1,
-					timeout = 600000,
+					timeout = 1200000,
 				},
 			},
 			openai = {
-				model = "gpt-4o-mini",
-				timeout = 600000,
+				model = "gpt-4.1-nano",
+				timeout = 1200000,
 				temperature = 0.7,
+				max_tokens = 32768,
 			},
 			copilot = {
-				model = "claude-3.7-sonnet",
+				model = "gpt-4.1",
 				-- model = "claude-3.7-sonnet-thought",
-				timeout = 600000,
+				timeout = 1200000,
 				temperature = 1,
+				max_tokens = 32768,
 			},
 			gemini = {
 				model = "gemini-2.0-flash",
-				timeout = 600000,
+				timeout = 1200000,
 				temperature = 0.7,
+			},
+			rag_service = {
+				enabled = true, -- Enables the RAG service
+				host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
+				provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
+				llm_model = "gpt-4.1-nano", -- The LLM model to use for RAG service
+				embed_model = "text-embedding-3-small", -- The embedding model to use for RAG service
 			},
 			dual_boost = {
 				enabled = true,
-				first_provider = "deepseek",
-				second_provider = "openai",
-				timeout = 1200000, -- Timeout in milliseconds
+				first_provider = "openai",
+				second_provider = "deepseek",
+				timeout = 3600000, -- Timeout in milliseconds
 			},
 			windows = {
 				width = 40, -- Width of the sidebar
@@ -1604,10 +1613,8 @@ return {
 					start_insert = false,
 				},
 			},
-			file_selector = {
-				provider = "fzf",
-				-- Options override for custom providers
-				provider_opts = {},
+			selector = {
+				provider = "fzf_lua",
 			},
 			on_error = function(err)
 				vim.notify("Avante error: " .. err, vim.log.levels.ERROR)

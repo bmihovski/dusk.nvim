@@ -6,7 +6,7 @@ return {
 			async_backend = "lsp",
 			notify = false,
 			n_query = 10,
-			timeout_ms = 30000,
+			timeout_ms = -1,
 			async_opts = {
 				events = { "BufWritePost" },
 				single_job = true,
@@ -15,8 +15,8 @@ return {
 				n_query = 30,
 			},
 			on_setup = {
-				update = true, -- set to true to enable update when `setup` is called.
-				lsp = true,
+				update = false, -- set to true to enable update when `setup` is called.
+				lsp = false,
 			},
 		}
 	end,
