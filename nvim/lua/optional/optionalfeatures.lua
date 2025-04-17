@@ -1594,7 +1594,7 @@ return {
 				enabled = true, -- Enables the RAG service
 				host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
 				provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
-				llm_model = "gpt-4.1-nano", -- The LLM model to use for RAG service
+				llm_model = "gpt-4o-mini", -- The LLM model to use for RAG service
 				embed_model = "text-embedding-3-small", -- The embedding model to use for RAG service
 			},
 			dual_boost = {
@@ -1604,7 +1604,7 @@ return {
 				timeout = 3600000, -- Timeout in milliseconds
 			},
 			windows = {
-				width = 40, -- Width of the sidebar
+				width = 45, -- Width of the sidebar
 				height = 40, -- Height of the sidebar
 				sidebar_header = {
 					enabled = false,
