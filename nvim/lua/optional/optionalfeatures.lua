@@ -560,7 +560,7 @@ return {
 						},
 					},
 					gemini = {
-						model = "gemini-2.0-flash-lite",
+						model = "gemini-2.5-flash-preview-04-17",
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
@@ -584,6 +584,9 @@ return {
 								stop_sequences = { "<|file_separator|>" },
 								maxOutputTokens = 256,
 								topP = 0.9,
+								thinkingConfig = {
+									thinkingBudget = 0,
+								},
 							},
 							safetySettings = {
 								{
@@ -632,7 +635,7 @@ return {
 			return {
 				separator = "---",
 				debug = false, -- Enable debugging
-				model = "gemini-2.0-flash-001",
+				model = "gpt-4.1",
 				mappings = {
 					reset = {
 						normal = "<C-r>",
@@ -651,7 +654,7 @@ return {
 					width = 0.4,
 				},
 				sticky = {
-					"Using the model $claude-3.7-sonnet-thought",
+					"Using the model $gpt-4.1",
 					"#vectorcode",
 				},
 				-- Register custom contexts
@@ -1586,13 +1589,13 @@ return {
 				max_tokens = 32768,
 			},
 			gemini = {
-				model = "gemini-2.0-flash",
+				model = "gemini-2.5-flash-preview-04-17",
 				timeout = 1200000,
 				temperature = 0.7,
 			},
 			rag_service = {
 				enabled = true, -- Enables the RAG service
-				host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
+				-- host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
 				provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
 				llm_model = "gpt-4o-mini", -- The LLM model to use for RAG service
 				embed_model = "text-embedding-3-small", -- The embedding model to use for RAG service
