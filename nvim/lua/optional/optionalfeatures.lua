@@ -560,7 +560,8 @@ return {
 						},
 					},
 					gemini = {
-						model = "gemini-2.5-flash-preview-04-17",
+						-- model = "gemini-2.5-flash-preview-04-17",
+						model = "gemini-2.0-flash",
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
@@ -1602,8 +1603,8 @@ return {
 			},
 			dual_boost = {
 				enabled = true,
-				first_provider = "openai",
-				second_provider = "deepseek",
+				first_provider = "deepseek",
+				second_provider = "openai",
 				timeout = 3600000, -- Timeout in milliseconds
 			},
 			windows = {
