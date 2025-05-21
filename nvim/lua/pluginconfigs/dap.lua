@@ -17,7 +17,7 @@ return {
 		"jay-babu/mason-nvim-dap.nvim",
 		event = "VeryLazy",
 		dependencies = {
-			"williamboman/mason.nvim",
+			"mason-org/mason.nvim",
 			"mfussenegger/nvim-dap",
 			"julianolf/nvim-dap-lldb",
 		},
@@ -129,11 +129,11 @@ return {
 				dapui.close()
 			end
 			dap.listeners.before.attach["dapui_config"] = function()
-		    dapui.open()
-		  end
-      dap.listeners.before.launch["dapui_config"] = function()
-	      dapui.open()
-		  end
+				dapui.open()
+			end
+			dap.listeners.before.launch["dapui_config"] = function()
+				dapui.open()
+			end
 		end,
 	},
 

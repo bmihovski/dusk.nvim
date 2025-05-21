@@ -1,5 +1,4 @@
 local cmp = require("cmp")
-local cmp_action = require("lsp-zero").cmp_action()
 local cmp_autopairs = require("nvim-autopairs.completion.cmp")
 
 cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
@@ -182,7 +181,7 @@ local c_cpp_snippets = {
 	}),
 }
 
-luasnip.add_snippets(c_cpp_snippets)
+luasnip.add_snippets("cpp", c_cpp_snippets)
 
 local lspkind_format = require("lspkind").cmp_format({
 	mode = "symbol_text",
@@ -325,8 +324,11 @@ cmp.setup({
 				fallback()
 			end
 		end),
-		["<Tab>"] = cmp_action.luasnip_supertab({ behavior = cmp.SelectBehavior.Select }),
-		["<S-Tab>"] = cmp_action.luasnip_shift_supertab({ behavior = cmp.SelectBehavior.Select }),
+		["<Tab>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+		["<S-Tab>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
+		["<C-b>"] = cmp.mapping.scroll_docs(-4),
+		["<C-f>"] = cmp.mapping.scroll_docs(4),
+		["<C-e>"] = cmp.mapping.abort(),
 	}),
 	---@class cmp.FormattingConfig
 	formatting = {
@@ -502,8 +504,11 @@ local function setup_avante_completion()
 					fallback()
 				end
 			end),
-			["<Tab>"] = cmp_action.luasnip_supertab({ behavior = cmp.SelectBehavior.Select }),
-			["<S-Tab>"] = cmp_action.luasnip_shift_supertab({ behavior = cmp.SelectBehavior.Select }),
+			["<Tab>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+			["<S-Tab>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
+			["<C-b>"] = cmp.mapping.scroll_docs(-4),
+			["<C-f>"] = cmp.mapping.scroll_docs(4),
+			["<C-e>"] = cmp.mapping.abort(),
 		}),
 	})
 

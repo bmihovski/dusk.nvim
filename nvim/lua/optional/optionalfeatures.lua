@@ -561,7 +561,7 @@ return {
 					},
 					gemini = {
 						-- model = "gemini-2.5-flash-preview-04-17",
-						model = "gemini-2.0-flash",
+						model = "gemini-2.0-flash-lite",
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
@@ -1527,7 +1527,6 @@ return {
 			debug = false,
 			behaviour = {
 				support_paste_from_clipboard = true,
-				enable_cursor_planning_mode = true,
 				enable_token_counting = false,
 			},
 			disabled_tools = {
@@ -1564,6 +1563,8 @@ return {
 				end
 			end,
 			provider = "copilot",
+			mode = "legacy",
+			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "gemini",
 			vendors = {
 				deepseek = {
@@ -1575,12 +1576,19 @@ return {
 					temperature = 1,
 					timeout = 1200000,
 				},
+				groq = { -- define groq provider
+					__inherited_from = "openai",
+					api_key_name = "GROQ_API_KEY",
+					endpoint = "https://api.groq.com/openai/v1/",
+					model = "llama-3.3-70b-versatile",
+					max_completion_tokens = 32768, -- remember to increase this value, otherwise it will stop generating halfway
+				},
 			},
 			openai = {
 				model = "gpt-4.1-nano",
 				timeout = 1200000,
 				temperature = 0.7,
-				max_tokens = 32768,
+				max_completion_tokens = 32768,
 			},
 			copilot = {
 				model = "gpt-4.1",
@@ -1590,7 +1598,7 @@ return {
 				max_tokens = 32768,
 			},
 			gemini = {
-				model = "gemini-2.5-flash-preview-04-17",
+				model = "gemini-2.0-flash-lite",
 				timeout = 1200000,
 				temperature = 0.7,
 			},

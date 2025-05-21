@@ -64,6 +64,15 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 	end,
 })
 
+-- Autofold imports
+vim.api.nvim_create_autocmd("LspNotify", {
+	callback = function(args)
+		if args.data.method == "textDocument/didOpen" then
+			vim.lsp.foldclose("imports", vim.fn.bufwinid(args.buf))
+		end
+	end,
+})
+
 --Don't autostart new comment line after a comment
 vim.api.nvim_create_autocmd({ "BufEnter" }, {
 	callback = function()

@@ -49,6 +49,7 @@ vim.opt.rtp:prepend(lazypath)
 require("settings.options")
 require("settings.keymaps")
 require("settings.autocommands")
+require("utils.globals")
 
 -- Load and Configure plugins
 require("lazy").setup({
@@ -576,68 +577,24 @@ require("lazy").setup({
 		end,
 	},
 	{
-		-- LSP Configuration & Plugins
-		"neovim/nvim-lspconfig",
-		lazy = true,
-		dependencies = {
-			-- Automatically install LSPs to stdpath for neovim
-			{ "williamboman/mason.nvim", config = true },
-			"williamboman/mason-lspconfig.nvim",
-
-			-- Additional lua configuration, makes nvim stuff amazing!
-			{ "folke/neodev.nvim", opts = {} },
-		},
-	},
-
-	{
-		"VonHeikemen/lsp-zero.nvim",
-		lazy = true,
-		branch = "v3.x",
+		"mason-org/mason.nvim",
+		lazy = false,
 		config = function()
-			local lsp_zero = require("lsp-zero")
-			lsp_zero.extend_lspconfig()
-
-			lsp_zero.on_attach(function(client, bufnr)
-				-- disable semanticTokens because they interfere with treesitter
-				if client.supports_method("textDocument/semanticTokens") then
-					client.server_capabilities.semanticTokensProvider = nil
-				end
-				if client.server_capabilities.inlayHintProvider and vim.bo.filetype ~= "tex" then
-					vim.g.inlay_hints_visible = true
-					---@diagnostic disable-next-line: unused-local
-					local status, err = pcall(vim.lsp.inlay_hint.enable, true, { bufnr = bufnr })
-					if not status then
-						---@diagnostic disable-next-line: param-type-mismatch
-						vim.lsp.inlay_hint.enable(bufnr, true)
-					end
-				end
-				if client.server_capabilities.documentSymbolProvider then
-					require("nvim-navic").attach(client, bufnr)
-				end
-			end)
-
 			require("mason").setup({
 				registries = {
 					"github:bmihovski/mason-registry",
 					"github:mason-org/mason-registry",
 				},
 			})
-			require("mason-lspconfig").setup({
-				handlers = {
-
-					-- Don't setup jdtls here, it's configured in pluginconfigs/jdtls.lua
-					jdtls = lsp_zero.noop,
-
-					-- This is the default configuration for all servers except jdtls
-					function(server_name)
-						require("lspconfig")[server_name].setup({
-							defaults = require("pluginconfigs.lsp").defaults(),
-							capabilities = require("pluginconfigs.lsp").capabilities,
-						})
-					end,
-				},
-			})
 		end,
+	},
+	{
+		-- Automatically install LSPs to stdpath for neovim
+		"mason-org/mason-lspconfig.nvim",
+		-- LSP Configuration & Plugins
+		"neovim/nvim-lspconfig",
+		-- Additional lua configuration, makes nvim stuff amazing!
+		"folke/neodev.nvim",
 	},
 
 	-- Autocompletion
@@ -785,8 +742,17 @@ require("lazy").setup({
 					"yamlfmt",
 					"omnisharp",
 					"vscode-spring-boot-tools",
+					"json-lsp",
 					-- "spring-boot-tools", -- still not available with mason
-					-- "lombok-nightly", -- still not available with mason
+					"lombok-nightly", -- still not available with mason
+					"kotlin-language-server",
+					"lua-language-server",
+					"emmet-language-server",
+					"gopls",
+					"prisma-language-server",
+					"rust-analyzer",
+					"tailwindcss-language-server",
+					"biome",
 				},
 				-- if set to true this will check each tool for updates. If updates
 				-- are available the tool will be updated. This setting does not
@@ -825,10 +791,8 @@ require("lazy").setup({
 	-- The Java LSP server
 	{
 		"mfussenegger/nvim-jdtls",
+		dependencies = { "mason-org/mason.nvim", "JavaHello/spring-boot.nvim", "mfussenegger/nvim-dap" },
 		ft = "java",
-		config = function()
-			require("pluginconfigs.jdtls")
-		end,
 	},
 
 	-- Java Spring addons
@@ -1226,3 +1190,4 @@ require("lazy").setup({
 		end,
 	},
 })
+require("lsp")
