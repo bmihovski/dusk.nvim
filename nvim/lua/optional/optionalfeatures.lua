@@ -602,11 +602,20 @@ return {
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
-								return coroutine.wrap(function()
+								local avante_context = coroutine.wrap(function()
 									local co = coroutine.running()
 									if not co then
 										print("repo_context must be called from a coroutine", vim.log.levels.ERROR)
 										coroutine.yield("")
+									end
+									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
+									print("RAG service status:", rag_status)
+									if rag_status ~= "running" then
+										vim.notify(
+											"RAG service is not running (status: " .. rag_status .. ")",
+											vim.log.levels.ERROR
+										)
+										return ""
 									end
 
 									local function safe_resume(coro, ...)
@@ -625,91 +634,105 @@ return {
 										safe_resume(co, "")
 										coroutine.yield("")
 									end
-
-									avante_tools.rag_search({ query = "relevant code context" }, nil, function(msg)
-										print("RAG search: " .. tostring(msg))
-									end, function(response, err)
-										print("RAG raw response:", vim.inspect(response), "Error:", vim.inspect(err))
-										local result = ""
-										if err then
-											if type(vim.notify) == "function" then
-												print("RAG search error: " .. tostring(err))
+									-- Returns a callback that retrieves `num_of_lines` surrounding the cursor for query context
+									local function make_surrounding_lines_cb(num_of_lines)
+										return function(bufnr)
+											if bufnr == 0 or bufnr == nil then
+												bufnr = vim.api.nvim_get_current_buf()
 											end
-										else
-											local ok, data = pcall(vim.json.decode, response)
-											print("RAG decoded data:", vim.inspect(data))
-											if ok and data and data.sources then
-												for _, src in ipairs(data.sources) do
+											if num_of_lines <= 0 then
+												return table.concat(
+													vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
+													"\n"
+												)
+											end
+											local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+											local total_lines = vim.api.nvim_buf_line_count(bufnr)
+											local half = math.floor(num_of_lines / 2)
+											local start_line = cursor_line - half
+											if start_line < 1 then
+												start_line = 1
+											end
+											local end_line = start_line + num_of_lines - 1
+											if end_line > total_lines then
+												end_line = total_lines
+												start_line = math.max(1, end_line - num_of_lines + 1)
+											end
+											return table.concat(
+												vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false),
+												"\n"
+											)
+										end
+									end
+
+									local query_context = make_surrounding_lines_cb(20)()
+									print("Query context going to RAG:\n" .. query_context) -- Show what's queried
+									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
+
+									avante_tools.rag_search({ query = query_context }, nil, function(msg)
+										print("Search progress callback triggered.")
+										print("Progress message: ", vim.inspect(msg))
+									end, function(response, err)
+										if err then
+											print("RAG search error:", err)
+											return ""
+										end
+										if not response or response == "" then
+											print("Empty or nil response received from RAG backend")
+											safe_resume(co, "")
+											return ""
+										end
+										print("\n=== RAG SEARCH CALLBACK ===")
+										print("Callback executed.")
+										print("Response: ", vim.inspect(response))
+										print("Error: ", vim.inspect(err))
+
+										if err then
+											vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
+											safe_resume(co, "")
+											return ""
+										end
+
+										local result = ""
+										local ok, data = pcall(vim.json.decode, response)
+
+										if ok and data then
+											print("Decoded response table:\n", vim.inspect(data))
+											if data.sources then
+												print(string.format("Found %s source(s).", #data.sources))
+												for i, src in ipairs(data.sources) do
+													print(
+														("[%d] %s (%d chars)"):format(i, src.uri, #(src.content or ""))
+													)
 													result = result
 														.. "<|file_separator|>"
 														.. src.uri
 														.. "\n"
 														.. (src.content or "")
 												end
+											else
+												print("No sources field found in decoded data.")
 											end
+										else
+											print("Failed to decode JSON response.")
 										end
+
 										result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
 										if result ~= "" then
 											result = "<repo_context>\n" .. result .. "\n</repo_context>"
+											print("Final repo context produced for LLM:")
+											print(result)
+										else
+											print("Empty context result after RAG processing.")
 										end
-										print("here is result " .. result)
+
 										safe_resume(co, result)
 									end)
 									coroutine.yield()
 								end)()
+								print("here is the context")
+								return avante_context
 							end,
-							-- repo_context = function(_, _, _)
-							-- 	local co = coroutine.running()
-							-- 	if not co then
-							-- 		print("no coroutine")
-							-- 		return ""
-							-- 	end
-							--
-							-- 	local function safe_resume(coro, ...)
-							-- 		if type(coro) == "thread" and coroutine.status(coro) ~= "dead" then
-							-- 			coroutine.resume(coro, ...)
-							-- 		end
-							-- 	end
-							--
-							-- 	local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
-							-- 	print("rag status", tostring(rag_status))
-							-- 	if rag_status ~= "running" then
-							-- 		vim.notify(
-							-- 			"RAG service is not running (status: " .. tostring(rag_status) .. ")",
-							-- 			vim.log.levels.WARN
-							-- 		)
-							-- 		safe_resume(co, "")
-							-- 		return coroutine.yield()
-							-- 	end
-							--
-							-- 	avante_tools.rag_search({ query = "relevant code context" }, true, function(msg)
-							-- 		vim.notify("RAG search: " .. msg, vim.log.levels.INFO)
-							-- 	end, function(response, err)
-							-- 		print("RAG raw response:", vim.inspect(response), "Error:", vim.inspect(err))
-							-- 		local result = ""
-							-- 		if err then
-							-- 			vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
-							-- 		else
-							-- 			local ok, data = pcall(vim.json.decode, response)
-							-- 			print("RAG decoded data:", vim.inspect(data))
-							-- 			if ok and data and data.sources then
-							-- 				for _, src in ipairs(data.sources) do
-							-- 					result = result
-							-- 						.. "<|file_separator|>"
-							-- 						.. src.uri
-							-- 						.. "\n"
-							-- 						.. (src.content or "")
-							-- 				end
-							-- 			end
-							-- 		end
-							-- 		result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
-							-- 		if result ~= "" then
-							-- 			result = "<repo_context>\n" .. result .. "\n</repo_context>"
-							-- 		end
-							-- 		safe_resume(co, result)
-							-- 	end)
-							-- 	return coroutine.yield()
-							-- end,
 						},
 						-- chat_input = {
 						-- 	template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
