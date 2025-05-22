@@ -500,11 +500,48 @@ return {
 
 	{
 		"milanglacier/minuet-ai.nvim",
+		dependencies = { "yetone/avante.nvim" },
 		event = "VeryLazy",
 		config = function(_, opts)
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
+			local avante_tools = require("avante.llm_tools")
+			local RagService = require("avante.rag_service")
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
+			-- local rag_cache = { value = nil, updating = false, waiting = {} }
+
+			-- Async background fetch, triggers callbacks once available
+			-- local function fetch_repo_context(query)
+			-- 	if rag_cache.updating then
+			-- 		return
+			-- 	end
+			-- 	rag_cache.updating = true
+			-- 	avante_tools.rag_search({ query = query }, true, function(response, err)
+			-- 		rag_cache.updating = false
+			-- 		local result = ""
+			-- 		if not err then
+			-- 			local ok, data = pcall(vim.json.decode, response)
+			-- 			if ok and data and data.sources then
+			-- 				for _, src in ipairs(data.sources) do
+			-- 					result = result .. "<|file_separator|>" .. src.path .. "\n" .. src.document
+			-- 				end
+			-- 			end
+			-- 		end
+			-- 		result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
+			-- 		if result ~= "" then
+			-- 			result = "<repo_context>\n" .. result .. "\n</repo_context>"
+			-- 		end
+			-- 		rag_cache.value = result
+			-- 		for _, cb in ipairs(rag_cache.waiting) do
+			-- 			cb(result)
+			-- 		end
+			-- 		rag_cache.waiting = {}
+			-- 	end)
+			-- end
+			--
+			-- -- Initiate background fetch on startup, or on explicit reload
+			-- fetch_repo_context("relevant code context")
+
 			opts = {
 				cmp = {
 					enable_auto_complete = true,
@@ -514,8 +551,8 @@ return {
 				},
 				add_single_line_entry = false,
 				n_completions = 1,
-				-- notify = "debug",
-				notify = "error",
+				notify = "debug",
+				-- notify = "error",
 				provider = "gemini",
 				-- provider = "openai_fim_compatible",
 				request_timeout = 15,
@@ -565,21 +602,133 @@ return {
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
-								local prompt_message = ""
-								if has_vc then
-									prompt_message =
-										vectorcode_config.get_cacher_backend().make_prompt_component(0, function(file)
-											return "<|file_separator|>" .. file.path .. "\n" .. file.document
-										end).content
-								end
-								prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
+								return coroutine.wrap(function()
+									local co = coroutine.running()
+									if not co then
+										print("repo_context must be called from a coroutine", vim.log.levels.ERROR)
+										coroutine.yield("")
+									end
 
-								if prompt_message ~= "" then
-									prompt_message = "<repo_context>\n" .. prompt_message .. "\n</repo_context>"
-								end
-								return prompt_message
+									local function safe_resume(coro, ...)
+										if type(coro) == "thread" and coroutine.status(coro) ~= "dead" then
+											coroutine.resume(coro, ...)
+										end
+									end
+
+									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
+									print("rag status", tostring(rag_status))
+									if rag_status ~= "running" then
+										vim.notify(
+											"RAG service is not running (status: " .. tostring(rag_status) .. ")",
+											vim.log.levels.WARN
+										)
+										safe_resume(co, "")
+										coroutine.yield("")
+									end
+
+									avante_tools.rag_search({ query = "relevant code context" }, nil, function(msg)
+										print("RAG search: " .. tostring(msg))
+									end, function(response, err)
+										print("RAG raw response:", vim.inspect(response), "Error:", vim.inspect(err))
+										local result = ""
+										if err then
+											if type(vim.notify) == "function" then
+												print("RAG search error: " .. tostring(err))
+											end
+										else
+											local ok, data = pcall(vim.json.decode, response)
+											print("RAG decoded data:", vim.inspect(data))
+											if ok and data and data.sources then
+												for _, src in ipairs(data.sources) do
+													result = result
+														.. "<|file_separator|>"
+														.. src.uri
+														.. "\n"
+														.. (src.content or "")
+												end
+											end
+										end
+										result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
+										if result ~= "" then
+											result = "<repo_context>\n" .. result .. "\n</repo_context>"
+										end
+										print("here is result " .. result)
+										safe_resume(co, result)
+									end)
+									coroutine.yield()
+								end)()
 							end,
+							-- repo_context = function(_, _, _)
+							-- 	local co = coroutine.running()
+							-- 	if not co then
+							-- 		print("no coroutine")
+							-- 		return ""
+							-- 	end
+							--
+							-- 	local function safe_resume(coro, ...)
+							-- 		if type(coro) == "thread" and coroutine.status(coro) ~= "dead" then
+							-- 			coroutine.resume(coro, ...)
+							-- 		end
+							-- 	end
+							--
+							-- 	local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
+							-- 	print("rag status", tostring(rag_status))
+							-- 	if rag_status ~= "running" then
+							-- 		vim.notify(
+							-- 			"RAG service is not running (status: " .. tostring(rag_status) .. ")",
+							-- 			vim.log.levels.WARN
+							-- 		)
+							-- 		safe_resume(co, "")
+							-- 		return coroutine.yield()
+							-- 	end
+							--
+							-- 	avante_tools.rag_search({ query = "relevant code context" }, true, function(msg)
+							-- 		vim.notify("RAG search: " .. msg, vim.log.levels.INFO)
+							-- 	end, function(response, err)
+							-- 		print("RAG raw response:", vim.inspect(response), "Error:", vim.inspect(err))
+							-- 		local result = ""
+							-- 		if err then
+							-- 			vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
+							-- 		else
+							-- 			local ok, data = pcall(vim.json.decode, response)
+							-- 			print("RAG decoded data:", vim.inspect(data))
+							-- 			if ok and data and data.sources then
+							-- 				for _, src in ipairs(data.sources) do
+							-- 					result = result
+							-- 						.. "<|file_separator|>"
+							-- 						.. src.uri
+							-- 						.. "\n"
+							-- 						.. (src.content or "")
+							-- 				end
+							-- 			end
+							-- 		end
+							-- 		result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
+							-- 		if result ~= "" then
+							-- 			result = "<repo_context>\n" .. result .. "\n</repo_context>"
+							-- 		end
+							-- 		safe_resume(co, result)
+							-- 	end)
+							-- 	return coroutine.yield()
+							-- end,
 						},
+						-- chat_input = {
+						-- 	template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
+						-- 	repo_context = function(_, _, _)
+						-- 		local prompt_message = ""
+						-- 		if has_vc then
+						-- 			prompt_message =
+						-- 				vectorcode_config.get_cacher_backend().make_prompt_component(0, function(file)
+						-- 					return "<|file_separator|>" .. file.path .. "\n" .. file.document
+						-- 				end).content
+						-- 		end
+						-- 		prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
+						--
+						-- 		if prompt_message ~= "" then
+						-- 			prompt_message = "<repo_context>\n" .. prompt_message .. "\n</repo_context>"
+						-- 		end
+						-- 		return prompt_message
+						-- 	end,
+						-- },
 						optional = {
 							generationConfig = {
 								stop_sequences = { "<|file_separator|>" },
@@ -1524,7 +1673,7 @@ return {
 		version = false,
 		build = "make",
 		opts = {
-			debug = false,
+			debug = true,
 			behaviour = {
 				support_paste_from_clipboard = true,
 				enable_token_counting = false,

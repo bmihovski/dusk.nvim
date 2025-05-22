@@ -589,12 +589,29 @@ require("lazy").setup({
 		end,
 	},
 	{
-		-- Automatically install LSPs to stdpath for neovim
-		"mason-org/mason-lspconfig.nvim",
 		-- LSP Configuration & Plugins
 		"neovim/nvim-lspconfig",
-		-- Additional lua configuration, makes nvim stuff amazing!
-		"folke/neodev.nvim",
+		lazy = true,
+		dependencies = {
+			-- Automatically install LSPs to stdpath for neovim
+			"mason-org/mason-lspconfig.nvim",
+
+			-- Additional lua configuration, makes nvim stuff amazing!
+			{ "folke/neodev.nvim", opts = {} },
+			setup = function()
+				require("mason-lspconfig").setup({
+					automatic_installation = true,
+					handlers = {
+						function(server_name)
+							require("lspconfig")[server_name].setup({})
+						end,
+
+						-- Disable jdtls setup, is handled by nvim-jdtls
+						["jdtls"] = function() end,
+					},
+				})
+			end,
+		},
 	},
 
 	-- Autocompletion
@@ -847,6 +864,7 @@ require("lazy").setup({
 		ft = { "java", "yaml", "jproperties" },
 		dependencies = {
 			"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
+			"neovim/nvim-lspconfig",
 			"ibhagwan/fzf-lua", -- optional
 		},
 	},
