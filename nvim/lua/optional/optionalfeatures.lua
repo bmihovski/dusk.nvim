@@ -602,7 +602,7 @@ return {
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
-								local avante_context = coroutine.wrap(function()
+								return coroutine.wrap(function()
 									local co = coroutine.running()
 									if not co then
 										print("repo_context must be called from a coroutine", vim.log.levels.ERROR)
@@ -634,45 +634,11 @@ return {
 										safe_resume(co, "")
 										coroutine.yield("")
 									end
-									-- Returns a callback that retrieves `num_of_lines` surrounding the cursor for query context
-									local function make_surrounding_lines_cb(num_of_lines)
-										return function(bufnr)
-											if bufnr == 0 or bufnr == nil then
-												bufnr = vim.api.nvim_get_current_buf()
-											end
-											if num_of_lines <= 0 then
-												return table.concat(
-													vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
-													"\n"
-												)
-											end
-											local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
-											local total_lines = vim.api.nvim_buf_line_count(bufnr)
-											local half = math.floor(num_of_lines / 2)
-											local start_line = cursor_line - half
-											if start_line < 1 then
-												start_line = 1
-											end
-											local end_line = start_line + num_of_lines - 1
-											if end_line > total_lines then
-												end_line = total_lines
-												start_line = math.max(1, end_line - num_of_lines + 1)
-											end
-											return table.concat(
-												vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false),
-												"\n"
-											)
-										end
-									end
-
-									local query_context = make_surrounding_lines_cb(20)()
+									local query_context = require("vectorcode.utils").make_surrounding_lines_cb(20)(0)
 									print("Query context going to RAG:\n" .. query_context) -- Show what's queried
 									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
 
-									avante_tools.rag_search({ query = query_context }, nil, function(msg)
-										print("Search progress callback triggered.")
-										print("Progress message: ", vim.inspect(msg))
-									end, function(response, err)
+									avante_tools.rag_search({ query = query_context }, nil, function(response, err)
 										if err then
 											print("RAG search error:", err)
 											return ""
@@ -730,8 +696,6 @@ return {
 									end)
 									coroutine.yield()
 								end)()
-								print("here is the context")
-								return avante_context
 							end,
 						},
 						-- chat_input = {
@@ -1763,8 +1727,8 @@ return {
 				max_completion_tokens = 32768,
 			},
 			copilot = {
-				model = "gpt-4.1",
-				-- model = "claude-3.7-sonnet-thought",
+				-- model = "gpt-4.1",
+				model = "claude-sonnet-4",
 				timeout = 1200000,
 				temperature = 1,
 				max_tokens = 32768,
