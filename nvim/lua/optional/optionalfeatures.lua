@@ -506,41 +506,9 @@ return {
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
 			local avante_tools = require("avante.llm_tools")
 			local RagService = require("avante.rag_service")
+			local vector_code_utils = require("vectorcode.utils")
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
-			-- local rag_cache = { value = nil, updating = false, waiting = {} }
-
-			-- Async background fetch, triggers callbacks once available
-			-- local function fetch_repo_context(query)
-			-- 	if rag_cache.updating then
-			-- 		return
-			-- 	end
-			-- 	rag_cache.updating = true
-			-- 	avante_tools.rag_search({ query = query }, true, function(response, err)
-			-- 		rag_cache.updating = false
-			-- 		local result = ""
-			-- 		if not err then
-			-- 			local ok, data = pcall(vim.json.decode, response)
-			-- 			if ok and data and data.sources then
-			-- 				for _, src in ipairs(data.sources) do
-			-- 					result = result .. "<|file_separator|>" .. src.path .. "\n" .. src.document
-			-- 				end
-			-- 			end
-			-- 		end
-			-- 		result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
-			-- 		if result ~= "" then
-			-- 			result = "<repo_context>\n" .. result .. "\n</repo_context>"
-			-- 		end
-			-- 		rag_cache.value = result
-			-- 		for _, cb in ipairs(rag_cache.waiting) do
-			-- 			cb(result)
-			-- 		end
-			-- 		rag_cache.waiting = {}
-			-- 	end)
-			-- end
-			--
-			-- -- Initiate background fetch on startup, or on explicit reload
-			-- fetch_repo_context("relevant code context")
 
 			opts = {
 				cmp = {
@@ -604,72 +572,50 @@ return {
 							repo_context = function(_, _, _)
 								return coroutine.wrap(function()
 									local co = coroutine.running()
-									if not co then
-										print("repo_context must be called from a coroutine", vim.log.levels.ERROR)
-										coroutine.yield("")
-									end
+
 									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
-									print("RAG service status:", rag_status)
 									if rag_status ~= "running" then
 										vim.notify(
-											"RAG service is not running (status: " .. rag_status .. ")",
+											"RAG service is not running (status: " .. tostring(rag_status) .. ")",
 											vim.log.levels.ERROR
 										)
 										return ""
 									end
-
 									local function safe_resume(coro, ...)
 										if type(coro) == "thread" and coroutine.status(coro) ~= "dead" then
 											coroutine.resume(coro, ...)
 										end
 									end
-
-									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
-									print("rag status", tostring(rag_status))
-									if rag_status ~= "running" then
-										vim.notify(
-											"RAG service is not running (status: " .. tostring(rag_status) .. ")",
-											vim.log.levels.WARN
-										)
+									local query_context = vector_code_utils.make_surrounding_lines_cb(20)(0)
+									if type(query_context) == "string" then
+										-- Already a string, use as is
+									elseif type(query_context) == "table" then
+										query_context = table.concat(query_context, "\n")
+									else
 										safe_resume(co, "")
-										coroutine.yield("")
 									end
-									local query_context = require("vectorcode.utils").make_surrounding_lines_cb(20)(0)
-									print("Query context going to RAG:\n" .. query_context) -- Show what's queried
+									vim.notify("Query string length:" .. tostring(#query_context), vim.log.levels.DEBUG)
 									local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
 
 									avante_tools.rag_search({ query = query_context }, nil, function(response, err)
 										if err then
-											print("RAG search error:", err)
-											return ""
+											safe_resume(co, nil, "RAG error: " .. tostring(err))
+											return
 										end
 										if not response or response == "" then
-											print("Empty or nil response received from RAG backend")
+											vim.notify(
+												"Empty or nil response received from RAG backend",
+												vim.log.levels.DEBUG
+											)
 											safe_resume(co, "")
-											return ""
-										end
-										print("\n=== RAG SEARCH CALLBACK ===")
-										print("Callback executed.")
-										print("Response: ", vim.inspect(response))
-										print("Error: ", vim.inspect(err))
-
-										if err then
-											vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
-											safe_resume(co, "")
-											return ""
 										end
 
 										local result = ""
 										local ok, data = pcall(vim.json.decode, response)
 
 										if ok and data then
-											print("Decoded response table:\n", vim.inspect(data))
 											if data.sources then
-												print(string.format("Found %s source(s).", #data.sources))
-												for i, src in ipairs(data.sources) do
-													print(
-														("[%d] %s (%d chars)"):format(i, src.uri, #(src.content or ""))
-													)
+												for _, src in ipairs(data.sources) do
 													result = result
 														.. "<|file_separator|>"
 														.. src.uri
@@ -677,19 +623,27 @@ return {
 														.. (src.content or "")
 												end
 											else
-												print("No sources field found in decoded data.")
+												vim.notify(
+													"No sources field found in decoded data.",
+													vim.log.levels.ERROR
+												)
 											end
 										else
-											print("Failed to decode JSON response.")
+											vim.notify("Failed to decode JSON response.", vim.log.levels.ERROR)
 										end
 
 										result = vim.fn.strcharpart(result, 0, RAG_Context_Window_Size)
 										if result ~= "" then
 											result = "<repo_context>\n" .. result .. "\n</repo_context>"
-											print("Final repo context produced for LLM:")
-											print(result)
+											vim.notify(
+												"Final repo context produced for LLM:" .. tostring(result),
+												vim.log.levels.DEBUG
+											)
 										else
-											print("Empty context result after RAG processing.")
+											vim.notify(
+												"Empty context result after RAG processing.",
+												vim.log.levels.DEBUG
+											)
 										end
 
 										safe_resume(co, result)
@@ -1660,7 +1614,7 @@ return {
 		version = false,
 		build = "make",
 		opts = {
-			debug = true,
+			debug = false,
 			behaviour = {
 				support_paste_from_clipboard = true,
 				enable_token_counting = false,

@@ -3,3 +3,4 @@
 nvim/plugin/packer_compiled.lua
 nvim/lazy-lock.json
 token.pickle
+nvim/.luarc.json
