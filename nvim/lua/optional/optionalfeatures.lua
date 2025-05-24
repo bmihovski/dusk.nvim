@@ -506,6 +506,7 @@ return {
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
 			local avante_tools = require("avante.llm_tools")
 			local RagService = require("avante.rag_service")
+			local Utils = require("avante.utils")
 			local vector_code_utils = require("vectorcode.utils")
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
@@ -532,64 +533,42 @@ return {
 				end
 
 				vim.notify("Query context length: " .. #query_context, vim.log.levels.DEBUG)
-
-				-- Perform RAG search with improved async handling
-				local result = ""
-				local completed = false
-				local co = coroutine.running()
-
-				vim.schedule(function()
-					avante_tools.rag_search({ query = query_context }, nil, function(response, err)
-						vim.schedule(function()
-							if err then
-								vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
-								result = ""
-							elseif not response or response == "" then
-								vim.notify("Empty RAG response", vim.log.levels.DEBUG)
-								result = ""
-							else
-								local ok, decoded = pcall(vim.json.decode, response)
-								if not ok then
-									vim.notify("Failed to decode RAG response", vim.log.levels.ERROR)
-									result = ""
-								elseif decoded and decoded.sources and #decoded.sources > 0 then
-									local sources = {}
-									for _, src in ipairs(decoded.sources) do
-										table.insert(
-											sources,
-											"<|file_separator|>" .. src.uri .. "\n" .. (src.content or "")
-										)
-									end
-									local context = table.concat(sources, "")
-									result = "<repo_context>\n"
-										.. vim.fn.strcharpart(context, 0, RAG_Context_Window_Size)
-										.. "\n</repo_context>"
-									vim.notify("Generated RAG context: " .. #result .. " chars", vim.log.levels.DEBUG)
-									print("Generated RAG context: " .. result)
-								else
-									vim.notify("No sources in RAG response", vim.log.levels.DEBUG)
-									result = ""
-								end
-							end
-							completed = true
-							if co then
-								coroutine.resume(co, result)
-							end
-						end)
-					end)
-				end)
-
-				if co then
-					return coroutine.yield()
-				else
-					-- Fallback for non-coroutine context
-					local timeout = 0
-					while not completed and timeout < 100 do
-						vim.wait(50)
-						timeout = timeout + 1
-					end
-					return result
+				result = ""
+				local root = Utils.get_project_root()
+				local uri = "file://" .. root
+				if uri:sub(-1) ~= "/" then
+					uri = uri .. "/"
 				end
+				RagService.retrieve(
+					uri,
+					query_context,
+					vim.schedule_wrap(function(resp, err)
+						if err then
+							vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
+							return
+						end
+						if not resp then
+							vim.notify("Empty RAG response", vim.log.levels.DEBUG)
+							return
+						end
+						if resp and resp.sources and #resp.sources > 0 then
+							local sources = {}
+							for _, src in ipairs(resp.sources) do
+								table.insert(sources, "<|file_separator|>" .. src.uri .. "\n" .. (src.content or ""))
+							end
+							local context = table.concat(sources, "")
+							result = "<repo_context>\n"
+								.. vim.fn.strcharpart(context, 0, RAG_Context_Window_Size)
+								.. "\n</repo_context>"
+							vim.notify("Generated RAG context: " .. #result .. " chars", vim.log.levels.DEBUG)
+							print("Generated RAG context: " .. result)
+						else
+							vim.notify("No sources in RAG response", vim.log.levels.DEBUG)
+							return
+						end
+					end)
+				)
+				return result
 			end
 
 			opts = {
