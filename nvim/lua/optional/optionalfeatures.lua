@@ -510,30 +510,8 @@ return {
 			local vector_code_utils = require("vectorcode.utils")
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
-			local function run_rag_search()
-				-- Check RAG service status first
-				local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
-				if rag_status ~= "running" then
-					vim.notify("RAG service not available", vim.log.levels.DEBUG)
-					return ""
-				end
 
-				-- Get query context
-				local query_context = vector_code_utils.make_surrounding_lines_cb(20)(0)
-				if type(query_context) == "table" then
-					query_context = table.concat(query_context, "\n")
-				elseif type(query_context) ~= "string" then
-					vim.notify("Unable to get query context", vim.log.levels.DEBUG)
-					return ""
-				end
-
-				if query_context == "" then
-					vim.notify("Empty query context", vim.log.levels.DEBUG)
-					return ""
-				end
-
-				vim.notify("Query context length: " .. #query_context, vim.log.levels.DEBUG)
-				result = ""
+			local function do_rag_search(query_context, on_complete)
 				local root = Utils.get_project_root()
 				local uri = "file://" .. root
 				if uri:sub(-1) ~= "/" then
@@ -545,10 +523,12 @@ return {
 					vim.schedule_wrap(function(resp, err)
 						if err then
 							vim.notify("RAG search error: " .. tostring(err), vim.log.levels.ERROR)
+							on_complete("")
 							return
 						end
 						if not resp then
 							vim.notify("Empty RAG response", vim.log.levels.DEBUG)
+							on_complete("")
 							return
 						end
 						if resp and resp.sources and #resp.sources > 0 then
@@ -557,18 +537,62 @@ return {
 								table.insert(sources, "<|file_separator|>" .. src.uri .. "\n" .. (src.content or ""))
 							end
 							local context = table.concat(sources, "")
-							result = "<repo_context>\n"
+							local result = "<repo_context>\n"
 								.. vim.fn.strcharpart(context, 0, RAG_Context_Window_Size)
 								.. "\n</repo_context>"
 							vim.notify("Generated RAG context: " .. #result .. " chars", vim.log.levels.DEBUG)
 							print("Generated RAG context: " .. result)
+							on_complete(result)
+							return
 						else
 							vim.notify("No sources in RAG response", vim.log.levels.DEBUG)
+							on_complete("")
 							return
 						end
 					end)
 				)
-				return result
+			end
+
+			local function run_rag_search(callback)
+				-- Check RAG service status first
+				local rag_status = RagService and RagService.get_rag_service_status() or "unknown"
+				if rag_status ~= "running" then
+					vim.notify("RAG service not available", vim.log.levels.DEBUG)
+					if callback then
+						callback("")
+					end
+					return
+				end
+
+				-- Get query context
+				local query_context = vector_code_utils.make_surrounding_lines_cb(20)(0)
+				if type(query_context) == "table" then
+					print("context ", query_context)
+					query_context = table.concat(query_context, "\n")
+				elseif type(query_context) ~= "string" then
+					vim.notify("Unable to get query context", vim.log.levels.DEBUG)
+					if callback then
+						callback("")
+					end
+					return
+				end
+
+				if query_context == "" then
+					vim.notify("Empty query context", vim.log.levels.DEBUG)
+					if callback then
+						callback("")
+					end
+					return
+				end
+
+				vim.notify("Query context length: " .. #query_context, vim.log.levels.DEBUG)
+
+				-- Perform async RAG search
+				do_rag_search(query_context, function(rag_result)
+					if callback then
+						callback(rag_result)
+					end
+				end)
 			end
 
 			opts = {
@@ -631,10 +655,48 @@ return {
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
-								local local_res = run_rag_search()
-								print("Final rag search result: " .. local_res)
-								vim.notify("Final rag search result: " .. local_res, vim.log.levels.DEBUG)
-								return local_res
+								-- Check if we're already in a coroutine
+								local co = coroutine.running()
+								if co then
+									-- We're in a coroutine, use the existing logic
+									local result = nil
+									run_rag_search(function(rag_result)
+										result = rag_result
+										coroutine.resume(co)
+									end)
+									coroutine.yield()
+									vim.notify("Final RAG search result: " .. result, vim.log.levels.DEBUG)
+									return result
+								else
+									-- We're not in a coroutine, create one
+									local result = nil
+									local finished = false
+
+									-- Create a coroutine to handle the async operation
+									local co_func = coroutine.create(function()
+										run_rag_search(function(rag_result)
+											result = rag_result
+											finished = true
+										end)
+										-- Wait until the callback is called
+										while not finished do
+											coroutine.yield()
+										end
+									end)
+
+									-- Start the coroutine
+									coroutine.resume(co_func)
+
+									-- Keep resuming until we get a result
+									while not finished do
+										coroutine.resume(co_func)
+										-- Add a small delay to prevent busy waiting
+										vim.wait(10)
+									end
+									vim.notify("Final RAG search result: " .. result, vim.log.levels.DEBUG)
+
+									return result or ""
+								end
 							end,
 						},
 						-- chat_input = {
