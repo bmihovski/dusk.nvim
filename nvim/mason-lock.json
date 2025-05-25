@@ -54,7 +54,7 @@
   "sonarlint-language-server": "4.15.0+77203",
   "stylua": "v2.1.0",
   "tailwindcss-language-server": "0.14.19",
-  "taplo": "0.9.3",
+  "taplo": "0.10.0",
   "typescript-language-server": "4.3.4",
   "vscode-java-decompiler": "57691a5fdacbc67a8b606e34fb636fa89687430b",
   "vscode-spring-boot-tools": "1.62.0",
