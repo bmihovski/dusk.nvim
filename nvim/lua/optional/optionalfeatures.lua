@@ -785,7 +785,7 @@ return {
 							{ title = "RAG Auto-refresh" }
 						)
 
-						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
+						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(50), 0)
 						if ok and query_context and type(query_context) == "table" then
 							query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
 							vim.notify(
@@ -830,8 +830,8 @@ return {
 				},
 				add_single_line_entry = false,
 				n_completions = 1,
-				notify = "debug",
-				-- notify = "error",
+				-- notify = "debug",
+				notify = "error",
 				provider = "gemini",
 				-- provider = "openai_fim_compatible",
 				request_timeout = 15,
@@ -885,7 +885,7 @@ return {
 						chat_input = {
 							template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
 							repo_context = function(_, _, _)
-								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
+								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(50), 0)
 								if not ok or not query_context then
 									return rag_cache.result -- Return whatever cache we have
 								end
@@ -906,15 +906,20 @@ return {
 							end,
 						},
 						-- chat_input = {
-						-- 	template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
+						-- 	template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
 						-- 	repo_context = function(_, _, _)
 						-- 		local prompt_message = ""
 						-- 		if has_vc then
-						-- 			prompt_message =
-						-- 				vectorcode_config.get_cacher_backend().make_prompt_component(0, function(file)
-						-- 					return "<|file_separator|>" .. file.path .. "\n" .. file.document
-						-- 				end).content
+						-- 			local cache_result = vectorcode_config.get_cacher_backend().query_from_cache(0)
+						-- 			for _, file in ipairs(cache_result) do
+						-- 				prompt_message = prompt_message
+						-- 					.. "<file_separator>"
+						-- 					.. file.path
+						-- 					.. "\n"
+						-- 					.. file.document
+						-- 			end
 						-- 		end
+						--
 						-- 		prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
 						--
 						-- 		if prompt_message ~= "" then
