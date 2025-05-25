@@ -500,76 +500,156 @@ return {
 
 	{
 		"milanglacier/minuet-ai.nvim",
-		dependencies = { "yetone/avante.nvim", "nvim-neotest/nvim-nio" },
+		dependencies = { "yetone/avante.nvim" },
 		event = "VeryLazy",
 		config = function(_, opts)
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
-			local avante_tools = require("avante.llm_tools")
 			local RagService = require("avante.rag_service")
 			local Utils = require("avante.utils")
-			local sleep = (vim.uv or vim.loop).sleep
 			local vector_code_utils = require("vectorcode.utils")
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
 
-			local cache = {
+			-- RAG Cache Management System
+			local rag_cache = {
 				result = "",
 				last_context = "",
 				last_update = 0,
 				ttl = 60000, -- 1 minute TTL in milliseconds
 			}
 
+			-- Cache validation logic
 			local function should_update_cache(query_context)
 				local current_time = vim.loop.now()
 
 				-- Always update if cache is empty
-				if cache.result == "" then
+				if rag_cache.result == "" then
+					vim.notify(
+						"Cache is empty, will perform new RAG search",
+						vim.log.levels.DEBUG,
+						{ title = "RAG Cache" }
+					)
 					return true
 				end
 
 				-- Update if context has changed significantly
-				if cache.last_context ~= query_context then
+				if rag_cache.last_context ~= query_context then
+					vim.notify("Context changed, will refresh cache", vim.log.levels.DEBUG, { title = "RAG Cache" })
 					return true
 				end
 
 				-- Update if TTL has expired
-				if current_time - cache.last_update > cache.ttl then
+				if current_time - rag_cache.last_update > rag_cache.ttl then
+					local age_seconds = math.floor((current_time - rag_cache.last_update) / 1000)
+					vim.notify(
+						string.format("Cache expired (%ds old), will refresh", age_seconds),
+						vim.log.levels.DEBUG,
+						{ title = "RAG Cache" }
+					)
 					return true
 				end
 
+				local age_seconds = math.floor((current_time - rag_cache.last_update) / 1000)
+				vim.notify(
+					string.format("Using valid cache (%ds old)", age_seconds),
+					vim.log.levels.DEBUG,
+					{ title = "RAG Cache" }
+				)
 				return false
 			end
 
+			-- Cache update utility
 			local function update_cache(query_context, result)
-				cache.result = result or ""
-				cache.last_context = query_context
-				cache.last_update = vim.loop.now()
+				rag_cache.result = result or ""
+				rag_cache.last_context = query_context
+				rag_cache.last_update = vim.loop.now()
+
+				local result_length = result and #result or 0
+				vim.notify(
+					string.format("Cache updated: %d chars", result_length),
+					vim.log.levels.DEBUG,
+					{ title = "RAG Cache" }
+				)
 			end
 
-			local function do_rag_search(query_context, on_complete)
+			-- Source formatting utility
+			local function format_rag_sources(sources)
+				if not sources or #sources == 0 then
+					vim.notify("No sources to format", vim.log.levels.DEBUG, { title = "RAG Formatter" })
+					return ""
+				end
+
+				local formatted_sources = {}
+				local valid_sources_count = 0
+
+				for i, src in ipairs(sources) do
+					if src.uri and src.content then
+						table.insert(formatted_sources, "<file_separator>" .. src.uri .. "\n" .. src.content)
+						valid_sources_count = valid_sources_count + 1
+					else
+						vim.notify(
+							string.format("Skipping invalid source %d: missing uri or content", i),
+							vim.log.levels.WARN,
+							{ title = "RAG Formatter" }
+						)
+					end
+				end
+
+				if #formatted_sources == 0 then
+					vim.notify(
+						"No valid sources found after filtering",
+						vim.log.levels.WARN,
+						{ title = "RAG Formatter" }
+					)
+					return ""
+				end
+
+				local context = table.concat(formatted_sources, "")
+				local original_length = #context
+				local truncated_context = vim.fn.strcharpart(context, 0, RAG_Context_Window_Size)
+				local final_length = #truncated_context
+
+				vim.notify(
+					string.format(
+						"Formatted %d sources: %d -> %d chars",
+						valid_sources_count,
+						original_length,
+						final_length
+					),
+					vim.log.levels.DEBUG,
+					{ title = "RAG Formatter" }
+				)
+
+				return "<repo_context>\n" .. truncated_context .. "\n</repo_context>"
+			end
+
+			-- Main RAG search function
+			local function perform_rag_search(query_context, on_complete)
+				vim.notify("Starting RAG search", vim.log.levels.DEBUG, { title = "RAG Search" })
+
 				-- Input validation
 				if not query_context or query_context == "" then
-					vim.notify("Invalid query context provided", vim.log.levels.WARN)
+					vim.notify("Invalid query context provided", vim.log.levels.WARN, { title = "RAG Search" })
 					on_complete("")
 					return
 				end
 
 				if type(on_complete) ~= "function" then
-					vim.notify("Invalid callback function provided", vim.log.levels.ERROR)
+					vim.notify("Invalid callback function provided", vim.log.levels.ERROR, { title = "RAG Search" })
 					return
 				end
 
 				-- Check if we should use cached result
 				if not should_update_cache(query_context) then
-					vim.notify("Using cached RAG result", vim.log.levels.DEBUG)
-					on_complete(cache.result)
+					vim.notify("Using cached RAG result", vim.log.levels.DEBUG, { title = "RAG Search" })
+					on_complete(rag_cache.result)
 					return
 				end
 
 				-- Get project root and construct URI
 				local root = Utils.get_project_root()
 				if not root or root == "" then
-					vim.notify("Could not determine project root", vim.log.levels.ERROR)
+					vim.notify("Could not determine project root", vim.log.levels.ERROR, { title = "RAG Search" })
 					on_complete("")
 					return
 				end
@@ -579,13 +659,22 @@ return {
 					uri = uri .. "/"
 				end
 
-				-- Helper function to handle completion with error logging
-				local function complete_with_result(result, message)
+				vim.notify(string.format("RAG search URI: %s", uri), vim.log.levels.DEBUG, { title = "RAG Search" })
+
+				-- Completion handler with comprehensive logging
+				local function complete_with_result(result, message, log_level)
+					local level = log_level or vim.log.levels.DEBUG
 					if message then
-						vim.notify(message, vim.log.levels.DEBUG)
+						vim.notify(message, level, { title = "RAG Search" })
 					end
+
 					if result and result ~= "" then
-						print("Generated RAG context: " .. result)
+						local char_count = #result
+						vim.notify(
+							string.format("Generated RAG context: %d chars", char_count),
+							vim.log.levels.INFO,
+							{ title = "RAG Search" }
+						)
 					end
 
 					-- Update cache with new result
@@ -593,100 +682,141 @@ return {
 					on_complete(result or "")
 				end
 
-				-- Helper function to format sources into context
-				local function format_sources(sources)
-					if not sources or #sources == 0 then
-						return ""
-					end
-
-					local formatted_sources = {}
-					for _, src in ipairs(sources) do
-						if src.uri and src.content then
-							table.insert(formatted_sources, "<|file_separator|>" .. src.uri .. "\n" .. src.content)
-						end
-					end
-
-					if #formatted_sources == 0 then
-						return ""
-					end
-
-					local context = table.concat(formatted_sources, "")
-					local truncated_context = vim.fn.strcharpart(context, 0, RAG_Context_Window_Size)
-
-					return "<repo_context>\n" .. truncated_context .. "\n</repo_context>"
-				end
-
-				-- Perform RAG retrieval with proper error handling
+				-- Perform RAG retrieval with comprehensive error handling
+				vim.notify("Calling RagService.retrieve", vim.log.levels.DEBUG, { title = "RAG Search" })
 				RagService.retrieve(uri, query_context, function(resp, err)
 					-- Handle errors
 					if err then
 						local error_msg = "RAG search error: " .. tostring(err)
-						vim.notify(error_msg, vim.log.levels.ERROR)
-						complete_with_result("", nil)
+						vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
+						complete_with_result("", "RAG search failed due to error", vim.log.levels.ERROR)
 						return
 					end
 
 					-- Handle empty response
 					if not resp then
-						complete_with_result("", "Empty RAG response")
+						complete_with_result("", "Empty RAG response received", vim.log.levels.WARN)
 						return
 					end
 
+					vim.notify(
+						string.format("RAG response received with %d sources", resp.sources and #resp.sources or 0),
+						vim.log.levels.DEBUG,
+						{ title = "RAG Search" }
+					)
+
 					-- Handle response with sources
 					if resp.sources and #resp.sources > 0 then
-						local result = format_sources(resp.sources)
-						if result ~= "" then
-							local char_count = #result
-							complete_with_result(result, "Generated RAG context: " .. char_count .. " chars")
+						local formatted_result = format_rag_sources(resp.sources)
+						if formatted_result ~= "" then
+							complete_with_result(formatted_result, "RAG context generated successfully")
 						else
-							complete_with_result("", "No valid sources found in RAG response")
+							complete_with_result("", "No valid sources found in RAG response", vim.log.levels.WARN)
 						end
 					else
-						complete_with_result("", "No sources in RAG response")
+						complete_with_result("", "No sources in RAG response", vim.log.levels.WARN)
 					end
 				end)
 			end
 
+			-- Smart cache retrieval with background refresh
 			local function get_cached_repo_context(query_context)
 				local current_time = vim.loop.now()
 
 				-- Return cached result if valid
 				if
-					cache.result ~= ""
-					and cache.last_context == query_context
-					and current_time - cache.last_update < cache.ttl
+					rag_cache.result ~= ""
+					and rag_cache.last_context == query_context
+					and current_time - rag_cache.last_update < rag_cache.ttl
 				then
-					return cache.result
+					local age_seconds = math.floor((current_time - rag_cache.last_update) / 1000)
+					vim.notify(
+						string.format("Returning valid cache (%ds old, %d chars)", age_seconds, #rag_cache.result),
+						vim.log.levels.DEBUG,
+						{ title = "RAG Cache" }
+					)
+					return rag_cache.result
 				end
-				print("DEBUG: run_rag_search callback called with result length:", cache.result and #cache.result or 0)
+
+				vim.notify(
+					string.format(
+						"Cache validation result: has_result=%s, context_match=%s, ttl_valid=%s",
+						tostring(rag_cache.result ~= ""),
+						tostring(rag_cache.last_context == query_context),
+						tostring(current_time - rag_cache.last_update < rag_cache.ttl)
+					),
+					vim.log.levels.DEBUG,
+					{ title = "RAG Cache" }
+				)
 
 				-- Cache invalid - trigger async refresh but return stale data immediately
-				if cache.result ~= "" then
+				if rag_cache.result ~= "" then
+					vim.notify(
+						"Triggering background cache refresh while returning stale data",
+						vim.log.levels.DEBUG,
+						{ title = "RAG Cache" }
+					)
 					-- Background refresh with stale cache
 					vim.defer_fn(function()
-						do_rag_search(query_context, function(new_result)
+						perform_rag_search(query_context, function(new_result)
 							update_cache(query_context, new_result)
+							vim.notify(
+								"Background cache refresh completed",
+								vim.log.levels.DEBUG,
+								{ title = "RAG Cache" }
+							)
 						end)
 					end, 0)
-					return cache.result -- Return stale but usable data
+					return rag_cache.result -- Return stale but usable data
 				end
 
+				vim.notify("No cache available, returning empty context", vim.log.levels.DEBUG, { title = "RAG Cache" })
 				return "" -- No cache available
 			end
+
 			-- Auto-refresh triggers for RAG cache
 			vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
 				pattern = { "*.lua", "*.py", "*.js", "*.ts", "*.java", "*.cpp", "*.hpp" },
 				callback = function()
 					if has_vc then
+						vim.notify(
+							"Auto-refresh trigger activated",
+							vim.log.levels.DEBUG,
+							{ title = "RAG Auto-refresh" }
+						)
+
 						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
 						if ok and query_context and type(query_context) == "table" then
 							query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
+							vim.notify(
+								string.format("Generated query context: %d chars", #query_context),
+								vim.log.levels.DEBUG,
+								{ title = "RAG Auto-refresh" }
+							)
+
 							vim.defer_fn(function()
-								do_rag_search(query_context, function(result)
+								perform_rag_search(query_context, function(result)
 									update_cache(query_context, result)
+									vim.notify(
+										"Auto-refresh completed",
+										vim.log.levels.DEBUG,
+										{ title = "RAG Auto-refresh" }
+									)
 								end)
 							end, 500) -- 500ms debounce
+						else
+							vim.notify(
+								"Failed to generate query context",
+								vim.log.levels.WARN,
+								{ title = "RAG Auto-refresh" }
+							)
 						end
+					else
+						vim.notify(
+							"VectorCode not available, skipping auto-refresh",
+							vim.log.levels.DEBUG,
+							{ title = "RAG Auto-refresh" }
+						)
 					end
 				end,
 			})
@@ -748,12 +878,16 @@ return {
 					gemini = {
 						-- model = "gemini-2.5-flash-preview-04-17",
 						model = "gemini-2.0-flash-lite",
+						system = {
+							template = "{{{prompt}}}\n{{{guidelines}}}\n{{{n_completion_template}}}\n{{{repo_context}}}",
+							repo_context = [[9. Additional context from other files in the repository will be enclosed in <repo_context> tags. Each file will be separated by <file_separator> tags, containing its relative path and content.]],
+						},
 						chat_input = {
-							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
+							template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
 							repo_context = function(_, _, _)
 								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
 								if not ok or not query_context then
-									return cache.result -- Return whatever cache we have
+									return rag_cache.result -- Return whatever cache we have
 								end
 
 								if type(query_context) == "table" then
@@ -762,7 +896,7 @@ return {
 								-- Trigger async refresh if cache is stale
 								if should_update_cache(query_context) then
 									vim.defer_fn(function()
-										do_rag_search(query_context, function(result)
+										perform_rag_search(query_context, function(result)
 											update_cache(query_context, result)
 										end)
 									end, 0)
