@@ -688,14 +688,14 @@ return {
 					-- Handle errors
 					if err then
 						local error_msg = "RAG search error: " .. tostring(err)
-						vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
-						complete_with_result("", "RAG search failed due to error", vim.log.levels.ERROR)
+						vim.notify(error_msg, vim.log.levels.DEBUG, { title = "RAG Search" })
+						complete_with_result("", "RAG search failed due to error", vim.log.levels.DEBUG)
 						return
 					end
 
 					-- Handle empty response
 					if not resp then
-						complete_with_result("", "Empty RAG response received", vim.log.levels.WARN)
+						complete_with_result("", "Empty RAG response received", vim.log.levels.DEBUG)
 						return
 					end
 
@@ -709,12 +709,16 @@ return {
 					if resp.sources and #resp.sources > 0 then
 						local formatted_result = format_rag_sources(resp.sources)
 						if formatted_result ~= "" then
-							complete_with_result(formatted_result, "RAG context generated successfully")
+							complete_with_result(
+								formatted_result,
+								"RAG context generated successfully",
+								vim.log.levels.DEBUG
+							)
 						else
-							complete_with_result("", "No valid sources found in RAG response", vim.log.levels.WARN)
+							complete_with_result("", "No valid sources found in RAG response", vim.log.levels.DEBUG)
 						end
 					else
-						complete_with_result("", "No sources in RAG response", vim.log.levels.WARN)
+						complete_with_result("", "No sources in RAG response", vim.log.levels.DEBUG)
 					end
 				end)
 			end
@@ -785,7 +789,7 @@ return {
 							{ title = "RAG Auto-refresh" }
 						)
 
-						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(50), 0)
+						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
 						if ok and query_context and type(query_context) == "table" then
 							query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
 							vim.notify(
@@ -807,7 +811,7 @@ return {
 						else
 							vim.notify(
 								"Failed to generate query context",
-								vim.log.levels.WARN,
+								vim.log.levels.DEBUG,
 								{ title = "RAG Auto-refresh" }
 							)
 						end
@@ -885,7 +889,7 @@ return {
 						chat_input = {
 							template = "{{{repo_context}}}\n{{{language}}}\n{{{tab}}}\n<contextBeforeCursor>\n{{{context_before_cursor}}}<cursorPosition>\n<contextAfterCursor>\n{{{context_after_cursor}}}",
 							repo_context = function(_, _, _)
-								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(50), 0)
+								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
 								if not ok or not query_context then
 									return rag_cache.result -- Return whatever cache we have
 								end

@@ -60,6 +60,6 @@
   "vscode-spring-boot-tools": "1.62.0",
   "yaml-language-server": "1.18.0",
   "yamlfix": "1.17.0",
-  "yamlfmt": "v0.16.0",
+  "yamlfmt": "v0.17.0",
   "yq": "v4.45.4"
 }
