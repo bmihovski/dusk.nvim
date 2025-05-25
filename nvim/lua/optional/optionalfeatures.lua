@@ -512,6 +512,40 @@ return {
 			-- roughly equate to 2000 tokens for LLM
 			local RAG_Context_Window_Size = 8000
 
+			local cache = {
+				result = "",
+				last_context = "",
+				last_update = 0,
+				ttl = 60000, -- 1 minute TTL in milliseconds
+			}
+
+			local function should_update_cache(query_context)
+				local current_time = vim.loop.now()
+
+				-- Always update if cache is empty
+				if cache.result == "" then
+					return true
+				end
+
+				-- Update if context has changed significantly
+				if cache.last_context ~= query_context then
+					return true
+				end
+
+				-- Update if TTL has expired
+				if current_time - cache.last_update > cache.ttl then
+					return true
+				end
+
+				return false
+			end
+
+			local function update_cache(query_context, result)
+				cache.result = result or ""
+				cache.last_context = query_context
+				cache.last_update = vim.loop.now()
+			end
+
 			local function do_rag_search(query_context, on_complete)
 				-- Input validation
 				if not query_context or query_context == "" then
@@ -522,6 +556,13 @@ return {
 
 				if type(on_complete) ~= "function" then
 					vim.notify("Invalid callback function provided", vim.log.levels.ERROR)
+					return
+				end
+
+				-- Check if we should use cached result
+				if not should_update_cache(query_context) then
+					vim.notify("Using cached RAG result", vim.log.levels.DEBUG)
+					on_complete(cache.result)
 					return
 				end
 
@@ -546,6 +587,9 @@ return {
 					if result and result ~= "" then
 						print("Generated RAG context: " .. result)
 					end
+
+					-- Update cache with new result
+					update_cache(query_context, result or "")
 					on_complete(result or "")
 				end
 
@@ -603,44 +647,49 @@ return {
 				end)
 			end
 
-			local function run_rag_search(callback)
-				if type(callback) ~= "function" then
-					vim.notify("Invalid callback", vim.log.levels.ERROR)
-					return
+			local function get_cached_repo_context(query_context)
+				local current_time = vim.loop.now()
+
+				-- Return cached result if valid
+				if
+					cache.result ~= ""
+					and cache.last_context == query_context
+					and current_time - cache.last_update < cache.ttl
+				then
+					return cache.result
+				end
+				print("DEBUG: run_rag_search callback called with result length:", cache.result and #cache.result or 0)
+
+				-- Cache invalid - trigger async refresh but return stale data immediately
+				if cache.result ~= "" then
+					-- Background refresh with stale cache
+					vim.defer_fn(function()
+						do_rag_search(query_context, function(new_result)
+							update_cache(query_context, new_result)
+						end)
+					end, 0)
+					return cache.result -- Return stale but usable data
 				end
 
-				local function safe_callback(result)
-					vim.schedule(function()
-						callback(result or "")
-					end)
-				end
-
-				-- Check RAG service
-				if not RagService or RagService.get_rag_service_status() ~= "running" then
-					safe_callback("")
-					return
-				end
-
-				-- Get context safely
-				local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
-				if not ok or not query_context then
-					safe_callback("")
-					return
-				end
-
-				-- Process context
-				if type(query_context) == "table" then
-					query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
-				end
-
-				if query_context == "" then
-					safe_callback("")
-					return
-				end
-
-				-- Async search with scheduled callback
-				do_rag_search(query_context, safe_callback)
+				return "" -- No cache available
 			end
+			-- Auto-refresh triggers for RAG cache
+			vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
+				pattern = { "*.lua", "*.py", "*.js", "*.ts", "*.java", "*.cpp", "*.hpp" },
+				callback = function()
+					if has_vc then
+						local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
+						if ok and query_context and type(query_context) == "table" then
+							query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
+							vim.defer_fn(function()
+								do_rag_search(query_context, function(result)
+									update_cache(query_context, result)
+								end)
+							end, 500) -- 500ms debounce
+						end
+					end
+				end,
+			})
 
 			opts = {
 				cmp = {
@@ -702,51 +751,25 @@ return {
 						chat_input = {
 							template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
 							repo_context = function(_, _, _)
-								print("DEBUG: repo_context function called")
+								local ok, query_context = pcall(vector_code_utils.make_surrounding_lines_cb(20), 0)
+								if not ok or not query_context then
+									return cache.result -- Return whatever cache we have
+								end
 
-								local result = ""
-								local completed = false
+								if type(query_context) == "table" then
+									query_context = table.concat(vim.tbl_map(tostring, query_context), "\n")
+								end
+								-- Trigger async refresh if cache is stale
+								if should_update_cache(query_context) then
+									vim.defer_fn(function()
+										do_rag_search(query_context, function(result)
+											update_cache(query_context, result)
+										end)
+									end, 0)
+								end
 
-								print("DEBUG: Calling run_rag_search")
-								run_rag_search(function(search_result)
-									print(
-										"DEBUG: run_rag_search callback called with result length:",
-										search_result and #search_result or 0
-									)
-									result = search_result or ""
-									completed = true
-								end)
-
-								-- Wait for the result using vim.wait
-								vim.wait(5000, function()
-									return completed
-								end, 50)
-
-								print("DEBUG: Returning result with length:", #result)
-								return result
+								return get_cached_repo_context(query_context)
 							end,
-
-							-- return nio.run(function()
-							-- 	event.wait()
-							-- 	event.clear()
-							-- 	return result
-							-- end) or ""
-							-- -- Wait for the async operation to complete using nio.run
-							-- local function create_rag_callback()
-							-- 	return function(result)
-							-- 		if result ~= "" then
-							-- 			vim.notify("RAG search completed successfully", vim.log.levels.DEBUG)
-							-- 			print("RAG compl search result:", result)
-							-- 		else
-							-- 			vim.notify("RAG search completed with no results", vim.log.levels.DEBUG)
-							-- 			print("No result or error occurred.")
-							-- 		end
-							--
-							-- 		-- Return the result for further processing
-							-- 		return result
-							-- 	end
-							-- end
-							-- vim.defer_fn(create_rag_callback()(result), 10000)
 						},
 						-- chat_input = {
 						-- 	template = "{{{language}}}\n{{{tab}}}\n{{{repo_context}}}<|fim_prefix|>{{{context_before_cursor}}}<|fim_suffix|>{{{context_after_cursor}}}<|fim_middle|>",
