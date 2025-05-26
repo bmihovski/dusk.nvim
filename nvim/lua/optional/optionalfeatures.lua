@@ -629,7 +629,6 @@ return {
 			-- Main RAG search function
 			local function perform_rag_search(query_context, on_complete)
 				vim.notify("Starting RAG search", vim.log.levels.DEBUG, { title = "RAG Search" })
-				print("Query: ", query_context)
 
 				-- Input validation
 				if not query_context or query_context == "" then
@@ -736,7 +735,6 @@ return {
 						vim.log.levels.DEBUG,
 						{ title = "RAG Cache" }
 					)
-					print("cache got: " .. rag_cache.result)
 					return rag_cache.result
 				end
 
@@ -769,7 +767,6 @@ return {
 							)
 						end)
 					end, 0)
-					print("cache got: " .. rag_cache.result)
 					return rag_cache.result -- Return stale but usable data
 				end
 
@@ -781,22 +778,72 @@ return {
 				if type(query_context) ~= "table" then
 					query_context = vim.split(query_context, "\n")
 				end
-				query_context = minuet_utils.remove_spaces(query_context)
 
 				local formatted_context = {}
 				for _, line in ipairs(query_context) do
-					line = Utils.trim(line, { prefix = "\n", suffix = "\n" })
-					line = Utils.trim(line, { prefix = '"', suffix = '"' })
-					line = Utils.trim(line, { prefix = "'", suffix = "'" })
-					line = Utils.trim(line, { prefix = ",", suffix = "," })
-					line = Utils.trim(line, { prefix = ";", suffix = ";" })
-					print("line: ", line)
-					table.insert(formatted_context, line)
-				end
-				formatted_context = minuet_utils.remove_spaces(formatted_context)
+					-- Handle EOF, empty line, or empty string - continue processing
+					if not line or line == " " or line == "" or line == "  " or line == "\n" or line == "\r\n" then
+						goto continue
+					end
 
-				query_context = table.concat(vim.tbl_map(tostring, formatted_context), " ")
-				return Utils.trim(query_context, { prefix = "\n", suffix = "\n" })
+					-- Remove or escape JSON problematic characters
+					line = line:gsub("  ", " ") -- Replace double spaces
+					line = line:gsub('"', " ") -- Replace double quotes
+					line = line:gsub("'", " ") -- Replace single quotes
+					line = line:gsub(",", " ") -- Replace commas
+					line = line:gsub(";", " ") -- Replace semicolons
+					line = line:gsub(":", " ") -- Replace colons
+					line = line:gsub("%[", " ") -- Replace left brackets
+					line = line:gsub("%]", " ") -- Replace right brackets
+					line = line:gsub("{", " ") -- Replace left braces
+					line = line:gsub("}", " ") -- Replace right braces
+					line = line:gsub("%(", " ") -- Replace left parentheses
+					line = line:gsub("%)", " ") -- Replace right parentheses
+					line = line:gsub("&", " ") -- Replace ampersands
+					line = line:gsub("<", " ") -- Replace less than
+					line = line:gsub(">", " ") -- Replace greater than
+					line = line:gsub("|", " ") -- Replace pipes
+					line = line:gsub("%%", " ") -- Replace percent signs
+					line = line:gsub("%$", " ") -- Replace dollar signs
+					line = line:gsub("#", " ") -- Replace hash symbols
+					line = line:gsub("@", " ") -- Replace at symbols
+					line = line:gsub("!", " ") -- Replace exclamation marks
+					line = line:gsub("%?", " ") -- Replace question marks
+					line = line:gsub("%*", " ") -- Replace asterisks
+					line = line:gsub("%+", " ") -- Replace plus signs
+					line = line:gsub("%-", " ") -- Replace hyphens/minus signs
+					line = line:gsub("=", " ") -- Replace equals signs
+					line = line:gsub("\\", "\\\\") -- Escape backslashes
+					line = line:gsub("\n", " ") -- Replace newlines with spaces
+					line = line:gsub("\r", " ") -- Replace carriage returns with spaces
+					line = line:gsub("\t", " ") -- Replace tabs with spaces
+					line = line:gsub("\b", " ") -- Replace backspace with space
+					line = line:gsub("\f", " ") -- Replace form feed with space
+					line = line:gsub("\v", " ") -- Replace vertical tab with space
+					line = line:gsub("%z", " ") -- Replace null characters
+					line = line:gsub("%s+", " ") -- Collapse multiple spaces into single space
+
+					-- Only add non-empty lines after processing
+					if line and line ~= "" and line ~= " " then
+						table.insert(formatted_context, line)
+					end
+
+					::continue::
+				end
+
+				local final_context = ""
+				-- Join with single space and ensure single line
+				final_context = table.concat(vim.tbl_map(tostring, formatted_context), " ")
+
+				-- Final cleanup to ensure single line and JSON compatibility
+				final_context = final_context
+					:gsub("\n", " ")
+					:gsub("\r", " ")
+					:gsub("%s+", " ")
+					:gsub("\t", " ")
+					:gsub("^%s+", "") -- Remove leading spaces
+					:gsub("%s+$", "") -- Remove trailing spaces
+				return final_context
 			end
 
 			-- Auto-refresh triggers for RAG cache
