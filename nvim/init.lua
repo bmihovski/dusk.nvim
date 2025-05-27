@@ -1053,7 +1053,7 @@ require("lazy").setup({
 	{
 		"nvim-treesitter/nvim-treesitter",
 		event = "CursorHold",
-		branch = "main",
+		branch = "master",
 		lazy = false,
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter-textobjects",

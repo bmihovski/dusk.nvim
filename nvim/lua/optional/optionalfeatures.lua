@@ -856,7 +856,8 @@ return {
 					line = line:gsub("%+", " ") -- Replace plus signs
 					line = line:gsub("%-", " ") -- Replace hyphens/minus signs
 					line = line:gsub("=", " ") -- Replace equals signs
-					line = line:gsub("\\", "\\\\") -- Escape backslashes
+					line = line:gsub("/", "") -- Escape forward slashes
+					line = line:gsub("\\", "") -- Escape backslashes
 					line = line:gsub("\n", " ") -- Replace newlines with spaces
 					line = line:gsub("\r", " ") -- Replace carriage returns with spaces
 					line = line:gsub("\t", " ") -- Replace tabs with spaces
