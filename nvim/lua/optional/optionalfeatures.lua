@@ -676,7 +676,7 @@ return {
 				-- Completion handler with comprehensive logging
 				local function complete_with_result(result, message, log_level)
 					local level = log_level or vim.log.levels.DEBUG
-					if message and (DEBUG_RAG_CACHE or level >= vim.log.levels.WARN) then
+					if message and (DEBUG_RAG_CACHE or level > vim.log.levels.WARN) then
 						vim.notify(message, level, { title = "RAG Search" })
 					end
 
@@ -701,10 +701,12 @@ return {
 				avante_llm_tools.rag_search({ query = query_context }, nil, function(resp, err)
 					-- Handle errors
 					if err then
-						local error_msg = "RAG search error: " .. tostring(err)
-						-- Keep error notifications as they're critical
-						vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
-						complete_with_result("", "RAG search failed due to error", vim.log.levels.ERROR)
+						if DEBUG_RAG_CACHE then
+							local error_msg = "RAG search error: " .. tostring(err)
+							-- Keep error notifications as they're critical
+							vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
+						end
+						complete_with_result("", "RAG search failed due to error", vim.log.levels.WARN)
 						return
 					end
 
@@ -2034,7 +2036,7 @@ return {
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-chat",
 					max_tokens = 8192,
-					temperature = 1,
+					temperature = 0.5,
 					timeout = 1200000,
 				},
 				groq = { -- define groq provider
@@ -2055,7 +2057,7 @@ return {
 				-- model = "gpt-4.1",
 				model = "claude-sonnet-4",
 				timeout = 1200000,
-				temperature = 1,
+				temperature = 0.2,
 				max_tokens = 32768,
 			},
 			gemini = {
@@ -2068,7 +2070,7 @@ return {
 				-- host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
 				provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
 				llm_model = "gpt-4o-mini", -- The LLM model to use for RAG service
-				embed_model = "text-embedding-3-small", -- The embedding model to use for RAG service
+				embed_model = "text-embedding-3-large", -- The embedding model to use for RAG service
 			},
 			dual_boost = {
 				enabled = true,

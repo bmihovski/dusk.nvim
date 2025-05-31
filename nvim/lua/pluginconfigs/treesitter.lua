@@ -18,6 +18,7 @@ parsers.cpp2 = {
 		requires_generate_from_grammar = false,
 	},
 }
+require("nvim-treesitter.install").prefer_git = true
 require("nvim-treesitter.configs").setup({
 	-- Add languages to be installed here that you want installed for treesitter
 
