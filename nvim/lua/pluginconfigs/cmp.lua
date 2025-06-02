@@ -276,6 +276,15 @@ cmp.setup({
 		{ name = "nvim_lsp" },
 		{ name = "bazel" },
 		{
+			name = "cmp_yanky",
+			max_item_count = 10,
+			group_index = 1,
+			option = {
+				minLength = 3,
+				onlyCurrentFiletype = false,
+			},
+		},
+		{
 			name = "nvim_lsp_signature_help",
 		},
 		{ name = "luasnip" },
@@ -333,8 +342,7 @@ cmp.setup({
 	---@class cmp.FormattingConfig
 	formatting = {
 		fields = { "kind", "abbr", "menu" },
-		format = function(entry, vim_item)
-			-- Hide function arguments in the completion menu
+		format = function(entry, vim_item) -- Hide function arguments in the completion menu
 			vim_item.menu = source_icons[entry.source.name] or source_icons.fallback
 			if vim_item.kind == "Function" or vim_item.kind == "Method" or vim_item.kind == "Copilot" then
 				vim_item.abbr = vim_item.abbr:gsub("%b()", "")
