@@ -2029,41 +2029,51 @@ return {
 			mode = "legacy",
 			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "gemini",
-			vendors = {
+			providers = {
 				deepseek = {
 					__inherited_from = "openai",
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-chat",
-					max_tokens = 8192,
-					temperature = 0.5,
 					timeout = 1200000,
+					extra_request_body = {
+						max_tokens = 8192,
+						temperature = 0.5,
+					},
 				},
 				groq = { -- define groq provider
 					__inherited_from = "openai",
 					api_key_name = "GROQ_API_KEY",
 					endpoint = "https://api.groq.com/openai/v1/",
 					model = "llama-3.3-70b-versatile",
-					max_completion_tokens = 32768, -- remember to increase this value, otherwise it will stop generating halfway
+					extra_request_body = {
+						max_completion_tokens = 32768, -- remember to increase this value, otherwise it will stop generating halfway
+					},
 				},
-			},
-			openai = {
-				model = "gpt-4.1-nano",
-				timeout = 1200000,
-				temperature = 0.7,
-				max_completion_tokens = 32768,
-			},
-			copilot = {
-				-- model = "gpt-4.1",
-				model = "claude-sonnet-4",
-				timeout = 1200000,
-				temperature = 0.2,
-				max_tokens = 32768,
-			},
-			gemini = {
-				model = "gemini-2.0-flash-lite",
-				timeout = 1200000,
-				temperature = 0.7,
+				openai = {
+					model = "gpt-4.1-nano",
+					timeout = 1200000,
+					extra_request_body = {
+						temperature = 0.7,
+						max_completion_tokens = 32768,
+					},
+				},
+				copilot = {
+					-- model = "gpt-4.1",
+					model = "claude-sonnet-4",
+					timeout = 1200000,
+					extra_request_body = {
+						temperature = 0.2,
+						max_tokens = 32768,
+					},
+				},
+				gemini = {
+					model = "gemini-2.0-flash-lite",
+					timeout = 1200000,
+					extra_request_body = {
+						temperature = 0.7,
+					},
+				},
 			},
 			rag_service = {
 				enabled = true, -- Enables the RAG service
