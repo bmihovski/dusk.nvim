@@ -24,7 +24,7 @@ return {
 		dependencies = { "neovim/nvim-lspconfig" },
 		init = function()
 			vim.diagnostic.config({
-				virtual_text = false,
+				virtual_text = true,
 			})
 		end,
 		main = "tiny-inline-diagnostic",
@@ -615,11 +615,13 @@ return {
 
 				if #formatted_sources == 0 then
 					-- Keep warning for no valid sources as it's critical
-					vim.notify(
-						"No valid sources found after filtering",
-						vim.log.levels.WARN,
-						{ title = "RAG Formatter" }
-					)
+					if DEBUG_RAG_CACHE then
+						vim.notify(
+							"No valid sources found after filtering",
+							vim.log.levels.WARN,
+							{ title = "RAG Formatter" }
+						)
+					end
 					return ""
 				end
 
@@ -706,18 +708,18 @@ return {
 							-- Keep error notifications as they're critical
 							vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
 						end
-						complete_with_result("", "RAG search failed due to error", vim.log.levels.WARN)
+						complete_with_result("", "RAG search failed due to error", vim.log.levels.INFO)
 						return
 					end
 
 					-- Handle empty response
 					if not resp then
-						complete_with_result("", "Empty RAG response received", vim.log.levels.WARN)
+						complete_with_result("", "Empty RAG response received", vim.log.levels.INFO)
 						return
 					end
 					local ok, decoded = pcall(vim.json.decode, resp)
 					if not ok then
-						complete_with_result("", "Response JSON decoding failed", vim.log.levels.WARN)
+						complete_with_result("", "Response JSON decoding failed", vim.log.levels.INFO)
 						return
 					end
 
@@ -993,8 +995,8 @@ return {
 						},
 					},
 					gemini = {
-						-- model = "gemini-2.5-flash-preview-04-17",
-						model = "gemini-2.0-flash-lite",
+						model = "gemini-2.5-flash-lite-preview-06-17",
+						-- model = "gemini-2.0-flash-lite",
 						system = {
 							template = "{{{prompt}}}\n{{{guidelines}}}\n{{{n_completion_template}}}\n{{{repo_context}}}",
 							repo_context = [[9. Additional context from other files in the repository will be enclosed in <repo_context> tags. Each file will be separated by <file_separator> tags, containing its relative path and content.]],
@@ -2039,6 +2041,10 @@ return {
 					extra_request_body = {
 						max_tokens = 8192,
 						temperature = 0.5,
+						stream = true,
+						stream_options = {
+							include_usage = false,
+						},
 					},
 				},
 				groq = { -- define groq provider
@@ -2050,12 +2056,31 @@ return {
 						max_completion_tokens = 32768, -- remember to increase this value, otherwise it will stop generating halfway
 					},
 				},
+				mercury = {
+					__inherited_from = "openai",
+					api_key_name = "MERCURY_API_KEY",
+					endpoint = "https://api.inceptionlabs.ai/v1",
+					model = "mercury-coder",
+					extra_request_body = {
+						-- max_tokens = 32000, -- remember to increase this value, otherwise it will stop generating halfway
+						temperature = 0,
+						stream = true,
+						diffusing = false,
+						stream_options = {
+							include_usage = false,
+						},
+					},
+				},
 				openai = {
-					model = "gpt-4.1-nano",
+					-- model = "gpt-4.1-nano",
+					model = "gpt-4.1-mini",
+					-- model = "gpt-4.1",
+					-- model = "o3",
 					timeout = 1200000,
 					extra_request_body = {
 						temperature = 0.7,
 						max_completion_tokens = 32768,
+						-- reasoning_effort = "high",
 					},
 				},
 				copilot = {
@@ -2077,15 +2102,24 @@ return {
 			},
 			rag_service = {
 				enabled = true, -- Enables the RAG service
-				-- host_mount = os.getenv("HOME") .. "/Workspace", -- Host mount path for the rag service
-				provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
-				llm_model = "gpt-4o-mini", -- The LLM model to use for RAG service
-				embed_model = "text-embedding-3-large", -- The embedding model to use for RAG service
+				llm = {
+					host_mount = os.getenv("HOME") .. "/Workspace/py-adp/", -- Host mount path for the rag service
+					provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
+					extra = { -- Extra configuration options for the LLM (optional)
+						max_completion_tokens = 32768,
+						temperature = 0.3, -- Controls the randomness of the output. Lower values make it more deterministic.
+						timeout = 120, -- Request timeout in seconds.
+					},
+				},
+				embed = {
+					model = "text-embedding-3-large", -- The embedding model to use for RAG service
+					dimensions = 1024,
+				},
 			},
 			dual_boost = {
 				enabled = true,
 				first_provider = "deepseek",
-				second_provider = "openai",
+				second_provider = "mercury",
 				timeout = 3600000, -- Timeout in milliseconds
 			},
 			windows = {
@@ -2102,11 +2136,12 @@ return {
 				provider = "fzf_lua",
 			},
 			on_error = function(err)
-				vim.notify("Avante error: " .. err, vim.log.levels.ERROR)
+				vim.notify("Avante error: " .. err, vim.log.levels.INFO)
 			end,
 		},
 		dependencies = {
 			"ravitemer/mcphub.nvim",
+			"augmentcode/augment.vim",
 			"catppuccin/nvim",
 			{ "stevearc/dressing.nvim", lazy = true },
 			{ "nvim-lua/plenary.nvim", lazy = true },
@@ -2136,6 +2171,34 @@ return {
 				},
 			},
 		},
+	},
+	{
+		"augmentcode/augment.vim",
+		event = { "InsertEnter" },
+		config = function()
+			local cwd = vim.loop.cwd()
+			vim.g.augment_workspace_folders = { cwd }
+
+			-- Disable auto-complete to use copilot for auto-complete
+			-- 1) disable the entire suggestion engine:
+			vim.g.augment_disable_completions = true
+			-- 2) turn off Augment’s Tab-to-accept mapping:
+			-- vim.g.augment_disable_tab_mapping = true
+
+			-- Chat commands
+			vim.keymap.set("n", "<leader>ac", ":Augment chat<CR>", { desc = "Augment chat" })
+			vim.keymap.set(
+				"v",
+				"<leader>ac",
+				":Augment chat<CR>",
+				{ desc = "Argument chat buffer", noremap = true, silent = true }
+			)
+			vim.keymap.set("n", "<leader>an", ":Augment chat-new<CR>", { desc = "Augment new chat" })
+			vim.keymap.set("n", "<leader>at", ":Augment chat-toggle<CR>", { desc = "Augment toggle chat" })
+
+			-- Accept completion with Ctrl-y
+			vim.keymap.set("i", "<C-y>", "<cmd>call augment#Accept()<cr>", { desc = "Accept Augment suggestion" })
+		end,
 	},
 	{
 		"MeanderingProgrammer/render-markdown.nvim",

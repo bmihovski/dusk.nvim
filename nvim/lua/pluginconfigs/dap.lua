@@ -1,9 +1,100 @@
 return {
 
 	-- DAP
-	{ "mfussenegger/nvim-dap", event = "VeryLazy" },
 	{
-		"julianolf/nvim-dap-lldb",
+		"miroshQa/debugmaster.nvim",
+		dependencies = {
+			"mfussenegger/nvim-dap",
+			"jbyuki/one-small-step-for-vimkind",
+		},
+		enabled = false,
+		config = function()
+			local dm = require("debugmaster")
+			vim.keymap.set({ "n", "v" }, "<leader>.", dm.mode.toggle, {
+				nowait = true,
+				desc = "Debug mode toggle",
+			})
+			vim.keymap.set("t", "<C-/>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+			vim.defer_fn(function()
+				local Sidepanel = getmetatable(require("debugmaster.state").sidepanel).__index
+				Sidepanel.set_active_with_open = function(self, comp)
+					if self.active == comp and self:is_open() then
+						self:close()
+					else
+						self:set_active(comp)
+						self:open()
+					end
+				end
+			end, 50)
+			dm.keys.get("u").key = "<leader>du" -- conflict with undo
+			dm.keys.get("U").key = "<leader>dU"
+			dm.plugins.osv_integration.enabled = true
+			dm.plugins.cursor_hl.enabled = false
+			dm.plugins.ui_auto_toggle.enabled = true
+		end,
+	},
+	{
+		"igorlfs/nvim-dap-view",
+		dependencies = {
+			"stevearc/overseer.nvim",
+			{ "theHamsta/nvim-dap-virtual-text", opts = { virt_text_pos = "eol" } },
+		},
+		lazy = true,
+		init = function()
+			local dap, dv = require("dap"), require("dap-view")
+			dap.listeners.before.attach["dap-view-config"] = function()
+				dv.open()
+			end
+			dap.listeners.before.launch["dap-view-config"] = function()
+				dv.open()
+			end
+			dap.listeners.before.event_terminated["dap-view-config"] = function()
+				dv.close()
+			end
+			dap.listeners.before.event_exited["dap-view-config"] = function()
+				dv.close()
+			end
+
+			vim.api.nvim_create_autocmd({ "FileType" }, {
+				pattern = { "dap-view", "dap-view-term" },
+				callback = function(evt)
+					vim.keymap.set("n", "q", "<C-w>q", { buffer = evt.buf })
+					vim.keymap.set("n", "h", "g?", { buffer = evt.buf })
+				end,
+			})
+			require("overseer").patch_dap(true)
+		end,
+		opts = {
+			winbar = {
+				-- sections = { "watches", "scopes", "exceptions", "breakpoints", "threads", "repl", "console" },
+				sections = { "console", "scopes", "breakpoints", "watches" },
+				controls = {
+					enabled = true,
+					position = "right",
+					buttons = {
+						"play",
+						"step_into",
+						"step_over",
+						"step_out",
+						"step_back",
+						"run_last",
+						"terminate",
+					},
+				},
+				default_section = "scopes",
+			},
+			windows = {
+				position = "right",
+				height = 18,
+				terminal = {
+					hide = { "go" },
+				},
+			},
+			help = { border = "single" },
+			switchbuf = "uselast",
+		},
+	},
+	{
 		"julianolf/nvim-dap-lldb",
 		ft = "c,cpp,hpp,h,cpp,cc",
 		dependencies = { "mfussenegger/nvim-dap" },
@@ -104,6 +195,7 @@ return {
 	{
 		"rcarriga/nvim-dap-ui",
 		event = "LspAttach",
+		enabled = false,
 		dependencies = {
 			{ "mfussenegger/nvim-dap" },
 			{ "nvim-neotest/nvim-nio" },
@@ -143,7 +235,6 @@ return {
 		ft = "python",
 		dependencies = {
 			"mfussenegger/nvim-dap",
-			"rcarriga/nvim-dap-ui",
 			"nvim-neotest/nvim-nio",
 		},
 		config = function()

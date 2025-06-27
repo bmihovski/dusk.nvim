@@ -682,6 +682,7 @@ require("lazy").setup({
 			"hrsh7th/cmp-nvim-lsp-signature-help",
 			"lukas-reineke/cmp-under-comparator",
 			"petertriho/cmp-git",
+			"rcarriga/cmp-dap",
 
 			-- Adds a number of user-friendly snippets
 			"rafamadriz/friendly-snippets",
@@ -926,7 +927,7 @@ require("lazy").setup({
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
 		ft = ft.sonar,
-		enabled = false,
+		enabled = true,
 		config = function()
 			require("sonarlint").setup({
 				server = {

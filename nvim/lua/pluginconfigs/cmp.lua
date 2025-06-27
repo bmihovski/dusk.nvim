@@ -261,6 +261,9 @@ local border_opts = {
 	winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
 }
 cmp.setup({
+	enabled = function()
+		return vim.api.nvim_get_option_value("buftype", { buf = 0 }) ~= "prompt" or require("cmp_dap").is_dap_buffer()
+	end,
 	window = {
 		completion = cmp.config.window.bordered(border_opts),
 		documentation = cmp.config.window.bordered(border_opts),
@@ -284,6 +287,7 @@ cmp.setup({
 				onlyCurrentFiletype = false,
 			},
 		},
+		{ name = "dap", max_item_count = 10 },
 		{
 			name = "nvim_lsp_signature_help",
 		},
