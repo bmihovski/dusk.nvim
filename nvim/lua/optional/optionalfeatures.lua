@@ -700,56 +700,59 @@ return {
 				if DEBUG_RAG_CACHE then
 					vim.notify("Calling avante_llm_tools.rag_search", vim.log.levels.DEBUG, { title = "RAG Search" })
 				end
-				avante_llm_tools.rag_search({ query = query_context }, nil, function(resp, err)
-					-- Handle errors
-					if err then
+				avante_llm_tools.rag_search({ query = query_context }, {
+					on_log = nil,
+					on_complete = function(resp, err)
+						-- Handle errors
+						if err then
+							if DEBUG_RAG_CACHE then
+								local error_msg = "RAG search error: " .. tostring(err)
+								-- Keep error notifications as they're critical
+								vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
+							end
+							complete_with_result("", "RAG search failed due to error", vim.log.levels.INFO)
+							return
+						end
+
+						-- Handle empty response
+						if not resp then
+							complete_with_result("", "Empty RAG response received", vim.log.levels.INFO)
+							return
+						end
+						local ok, decoded = pcall(vim.json.decode, resp)
+						if not ok then
+							complete_with_result("", "Response JSON decoding failed", vim.log.levels.INFO)
+							return
+						end
+
 						if DEBUG_RAG_CACHE then
-							local error_msg = "RAG search error: " .. tostring(err)
-							-- Keep error notifications as they're critical
-							vim.notify(error_msg, vim.log.levels.ERROR, { title = "RAG Search" })
-						end
-						complete_with_result("", "RAG search failed due to error", vim.log.levels.INFO)
-						return
-					end
-
-					-- Handle empty response
-					if not resp then
-						complete_with_result("", "Empty RAG response received", vim.log.levels.INFO)
-						return
-					end
-					local ok, decoded = pcall(vim.json.decode, resp)
-					if not ok then
-						complete_with_result("", "Response JSON decoding failed", vim.log.levels.INFO)
-						return
-					end
-
-					if DEBUG_RAG_CACHE then
-						vim.notify(
-							string.format(
-								"RAG response received with %d sources",
-								decoded.sources and #decoded.sources or 0
-							),
-							vim.log.levels.DEBUG,
-							{ title = "RAG Search" }
-						)
-					end
-
-					-- Handle response with sources
-					if decoded.sources and #decoded.sources > 0 then
-						local formatted_result = format_rag_sources(decoded.sources)
-						if formatted_result ~= "" then
-							complete_with_result(
-								formatted_result,
-								"RAG context generated successfully",
-								vim.log.levels.DEBUG
+							vim.notify(
+								string.format(
+									"RAG response received with %d sources",
+									decoded.sources and #decoded.sources or 0
+								),
+								vim.log.levels.DEBUG,
+								{ title = "RAG Search" }
 							)
-						else
-							complete_with_result("", "No valid sources found in RAG response", vim.log.levels.WARN)
 						end
-					else
-						complete_with_result("", "No sources in RAG response", vim.log.levels.WARN)
-					end
-				end)
+
+						-- Handle response with sources
+						if decoded.sources and #decoded.sources > 0 then
+							local formatted_result = format_rag_sources(decoded.sources)
+							if formatted_result ~= "" then
+								complete_with_result(
+									formatted_result,
+									"RAG context generated successfully",
+									vim.log.levels.DEBUG
+								)
+							else
+								complete_with_result("", "No valid sources found in RAG response", vim.log.levels.WARN)
+							end
+						else
+							complete_with_result("", "No sources in RAG response", vim.log.levels.WARN)
+						end
+					end,
+				})
 			end
 
 			-- Smart cache retrieval with background refresh
@@ -2063,6 +2066,7 @@ return {
 					model = "mercury-coder",
 					extra_request_body = {
 						-- max_tokens = 32000, -- remember to increase this value, otherwise it will stop generating halfway
+						max_tokens = 2600,
 						temperature = 0,
 						stream = true,
 						diffusing = false,
@@ -2101,7 +2105,7 @@ return {
 				},
 			},
 			rag_service = {
-				enabled = true, -- Enables the RAG service
+				enabled = false, -- Enables the RAG service
 				llm = {
 					host_mount = os.getenv("HOME") .. "/Workspace/py-adp/", -- Host mount path for the rag service
 					provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
