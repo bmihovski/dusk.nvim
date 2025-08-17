@@ -450,8 +450,37 @@ return {
 	},
 
 	-- GitHub copilot
-
-	{ import = "pluginconfigs.vectorcode.init" },
+	{
+		"Davidyz/VectorCode",
+		build = "uv tool upgrade vectorcode",
+		-- build = "pipx upgrade vectorcode",
+		opts = function()
+			return {
+				-- async_backend = "lsp",
+				notify = false,
+				n_query = 10,
+				timeout_ms = -1,
+				async_opts = {
+					events = { "BufWritePost" },
+					single_job = true,
+					query_cb = require("vectorcode.utils").make_lsp_document_symbol_cb(),
+					debounce = -1,
+					n_query = 30,
+				},
+				on_setup = {
+					update = false, -- set to true to enable update when `setup` is called.
+					lsp = false,
+				},
+			}
+		end,
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		cmd = "VectorCode",
+		cond = function()
+			return vim.fn.executable("vectorcode") == 1
+		end,
+	},
 	{ import = "pluginconfigs.context-nvim" },
 	{
 		"YounesElhjouji/nvim-copy",
@@ -497,10 +526,31 @@ return {
 			end, { noremap = true, silent = true })
 		end,
 	},
+	{
+		"zbirenbaum/copilot.lua",
+		cmd = "Copilot",
+		event = "InsertEnter",
+		config = function()
+			require("copilot").setup({
+				suggestion = { enabled = false, auto_trigger = false, debounce = 75 },
+				panel = {
+					enabled = false,
+
+					layout = {
+						position = "bottom", -- | top | left | right
+						ratio = 0.4,
+						event = { "BufEnter" },
+					},
+				},
+				copilot_node_command = "node",
+				server_opts_overrides = {},
+			})
+		end,
+	},
 
 	{
 		"milanglacier/minuet-ai.nvim",
-		dependencies = { "yetone/avante.nvim" },
+		dependencies = { "yetone/avante.nvim", "Davidyz/VectorCode" },
 		event = "VeryLazy",
 		config = function(_, opts)
 			local has_vc, vectorcode_config = pcall(require, "vectorcode.config")
@@ -998,8 +1048,7 @@ return {
 						},
 					},
 					gemini = {
-						model = "gemini-2.5-flash-lite-preview-06-17",
-						-- model = "gemini-2.0-flash-lite",
+						model = "gemini-2.5-flash-lite",
 						system = {
 							template = "{{{prompt}}}\n{{{guidelines}}}\n{{{n_completion_template}}}\n{{{repo_context}}}",
 							repo_context = [[9. Additional context from other files in the repository will be enclosed in <repo_context> tags. Each file will be separated by <file_separator> tags, containing its relative path and content.]],
@@ -1967,9 +2016,10 @@ return {
 			"nvim-lua/plenary.nvim",
 		},
 		cmd = { "MCPHub" },
-		build = "npm install -g mcp-hub@latest",
+		build = "bundled_build.lua", -- Bundles `mcp-hub` binary along with the neovim plugin
 		config = function()
 			require("mcphub").setup({
+				use_bundled_binary = true,
 				port = 3000,
 				auto_approve = true,
 				extensions = {
@@ -2065,9 +2115,9 @@ return {
 					endpoint = "https://api.inceptionlabs.ai/v1",
 					model = "mercury-coder",
 					extra_request_body = {
-						-- max_tokens = 32000, -- remember to increase this value, otherwise it will stop generating halfway
-						max_tokens = 2600,
-						temperature = 0,
+						max_tokens = 16384, -- remember to increase this value, otherwise it will stop generating halfway
+						-- max_tokens = 2600,
+						temperature = 0.7,
 						stream = true,
 						diffusing = false,
 						stream_options = {
@@ -2088,8 +2138,9 @@ return {
 					},
 				},
 				copilot = {
-					-- model = "gpt-4.1",
-					model = "claude-sonnet-4",
+					-- model = "gpt-5",
+					-- model = "claude-sonnet-4",
+					model = "gemini-2.5-pro",
 					timeout = 1200000,
 					extra_request_body = {
 						temperature = 0.2,
@@ -2097,7 +2148,7 @@ return {
 					},
 				},
 				gemini = {
-					model = "gemini-2.0-flash-lite",
+					model = "gemini-2.5-flash-lite",
 					timeout = 1200000,
 					extra_request_body = {
 						temperature = 0.7,
@@ -2178,6 +2229,7 @@ return {
 	},
 	{
 		"augmentcode/augment.vim",
+		enabled = false,
 		event = { "InsertEnter" },
 		config = function()
 			local cwd = vim.loop.cwd()

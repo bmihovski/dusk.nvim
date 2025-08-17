@@ -66,7 +66,8 @@ keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", opts)
 -- cmake run
 keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", opts)
 --keymap("n", "<leader>m", "<cmd> CMakeRun <CR>", opts)
-keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.sh"<CR>', opts)
+keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.zsh"<CR>', opts)
+-- keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.bash"<CR>', opts)
 
 keymap("n", "<leader>q", ":lua ZipFiles()<CR>", opts)
 
@@ -89,7 +90,6 @@ keymap("n", "<leader>t", "<cmd> CopilotChatToggle <CR>", opts)
 -- telescope
 keymap("n", "<leader>;", "<cmd> Telescope git_files <CR>", opts)
 keymap("n", "<leader>.", "<cmd>Telescope buffers theme=dropdown<cr>", opts)
-keymap("n", "<leader>lw", "<cmd> Telescope lazygit <CR>", opts)
 keymap("n", "<leader>8", "<cmd> Telescope live_grep <CR>", opts)
 keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)
 
