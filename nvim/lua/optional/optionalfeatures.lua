@@ -2080,7 +2080,19 @@ return {
 					return hub:get_active_servers_prompt()
 				end
 			end,
+			acp_providers = {
+				["gemini-cli"] = {
+					command = "gemini",
+					args = { "--experimental-acp" },
+					env = {
+						NODE_NO_WARNINGS = "1",
+						GEMINI_API_KEY = os.getenv("GEMINI_API_KEY"),
+					},
+					auth_method = "gemini-api-key",
+				},
+			},
 			provider = "copilot",
+			-- provider = "gemini-cli",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "gemini",
@@ -2139,8 +2151,8 @@ return {
 				},
 				copilot = {
 					-- model = "gpt-5",
-					-- model = "claude-sonnet-4",
-					model = "gemini-2.5-pro",
+					model = "claude-sonnet-4",
+					-- model = "gemini-2.5-pro",
 					timeout = 1200000,
 					extra_request_body = {
 						temperature = 0.2,
@@ -2255,6 +2267,19 @@ return {
 			-- Accept completion with Ctrl-y
 			vim.keymap.set("i", "<C-y>", "<cmd>call augment#Accept()<cr>", { desc = "Accept Augment suggestion" })
 		end,
+	},
+	{
+		"iamcco/markdown-preview.nvim",
+		-- enabled = false,
+		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+		build = ":call mkdp#util#install()",
+		ft = { "markdown" },
+	},
+	{
+		"jannis-baum/vivify.vim",
+		enabled = false,
+		cmd = { "Vivify" },
+		ft = { "markdown" },
 	},
 	{
 		"MeanderingProgrammer/render-markdown.nvim",

@@ -92,6 +92,8 @@ return {
 			},
 			help = { border = "single" },
 			switchbuf = "uselast",
+			auto_toggle = true,
+			follow_tab = true,
 		},
 	},
 	{
