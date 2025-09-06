@@ -382,6 +382,14 @@ local function get_procs(cb)
 	end)
 end
 
+local function fix_dos_format()
+	local dir = "tests/*"
+	local cmd = string.format("dos2unix %s", dir)
+	vim.cmd("!" .. cmd .. " && exit")
+end
+
+vim.api.nvim_create_user_command("FixDosFormat", fix_dos_format, {})
+
 local function debug_attach()
 	get_procs(function(procs)
 		local largest_name_len = 1
@@ -553,6 +561,7 @@ local mappings = {
 	{ "<leader>cr", ":Lspsaga rename<cr>", desc = "Rename in current buffer" },
 	{ "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", desc = "Documents Symbols" },
 	{ "<leader>cW", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", desc = "Workspace Symbols" },
+	{ "<leader>cw", ":FixDosFormat<cr>", desc = "Fix Dos Format" },
 	{
 		"<leader>cx",
 		":Trouble diagnostics toggle focus = true<cr>",
