@@ -34,6 +34,19 @@ return {
 		end,
 	},
 	{
+		"Jorenar/nvim-dap-disasm",
+		dependencies = "igorlfs/nvim-dap-view",
+		config = true,
+		opts = {
+			dapview_register = true,
+			dapview = {
+				keymap = "D",
+				label = " [D]",
+				short_label = " [D]",
+			},
+		},
+	},
+	{
 		"igorlfs/nvim-dap-view",
 		dependencies = {
 			"stevearc/overseer.nvim",
@@ -67,7 +80,7 @@ return {
 		opts = {
 			winbar = {
 				-- sections = { "watches", "scopes", "exceptions", "breakpoints", "threads", "repl", "console" },
-				sections = { "console", "scopes", "breakpoints", "watches" },
+				sections = { "scopes", "breakpoints", "watches", "disassembly" },
 				controls = {
 					enabled = true,
 					position = "right",
@@ -85,13 +98,14 @@ return {
 			},
 			windows = {
 				position = "right",
-				height = 18,
+				height = 25,
 				terminal = {
-					hide = { "go" },
+					width = 0.45,
+					position = "below",
+					start_hidden = false,
 				},
 			},
 			help = { border = "single" },
-			switchbuf = "uselast",
 			auto_toggle = true,
 			follow_tab = true,
 		},
@@ -234,6 +248,7 @@ return {
 	-- Python LSP
 	{
 		"mfussenegger/nvim-dap-python",
+		enabled = true,
 		ft = "python",
 		dependencies = {
 			"mfussenegger/nvim-dap",
@@ -241,15 +256,18 @@ return {
 		},
 		config = function()
 			-- uses the debugypy installation by mason
-			local path = require("mason-registry").get_package("debugpy"):get_install_path()
+			local path = vim.fn.exepath("debugypy")
 			require("dap-python").setup(path .. "/venv/bin/python")
 		end,
 	},
 	{
 		"linux-cultist/venv-selector.nvim",
-		ft = "python",
-		dependencies = { "neovim/nvim-lspconfig", "nvim-telescope/telescope.nvim", "mfussenegger/nvim-dap-python" },
-		branch = "regexp", -- This is the regexp branch, use this for the new version
+		dependencies = {
+			"neovim/nvim-lspconfig",
+			"nvim-telescope/telescope.nvim",
+			"mfussenegger/nvim-dap-python",
+			"mfussenegger/nvim-dap",
+		},
 		opts = {
 			-- Your options go here
 			-- name = "venv",

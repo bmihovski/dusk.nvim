@@ -1008,38 +1008,45 @@ return {
 				-- provider = "openai_fim_compatible",
 				request_timeout = 15,
 				provider_options = {
+					-- openai_fim_compatible = {
+					-- 	api_key = "DEEPSEEK_CHAT_API_KEY",
+					-- 	name = "deepseek",
+					-- 	template = {
+					-- 		prompt = function(pref, suff)
+					-- 			local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled-in code.]]):format(
+					-- 				vim.bo.filetype
+					-- 			)
+					-- 			if has_vc then
+					-- 				local cache_result = vectorcode_config.get_cacher_backend().query_from_cache(0)
+					-- 				for _, file in ipairs(cache_result) do
+					-- 					prompt_message = prompt_message
+					-- 						.. "<|file_sep|>"
+					-- 						.. file.path
+					-- 						.. "\n"
+					-- 						.. file.document
+					-- 				end
+					-- 				prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
+					-- 			end
+					-- 			return prompt_message
+					-- 				.. "<|fim_begin|>"
+					-- 				.. pref
+					-- 				.. "<|fim_hole|>"
+					-- 				.. suff
+					-- 				.. "<|fim_end|>"
+					-- 		end,
+					-- 		suffix = false,
+					-- 	},
+					-- 	optional = {
+					-- 		max_tokens = 256,
+					-- 		stop = { "\n\n" },
+					-- 	},
+					-- },
 					openai_fim_compatible = {
-						api_key = "DEEPSEEK_CHAT_API_KEY",
-						name = "deepseek",
-						template = {
-							prompt = function(pref, suff)
-								local prompt_message = ([[Perform fill-in-middle from the following snippet of a %s code. Respond with only the filled-in code.]]):format(
-									vim.bo.filetype
-								)
-								if has_vc then
-									local cache_result = vectorcode_config.get_cacher_backend().query_from_cache(0)
-									for _, file in ipairs(cache_result) do
-										prompt_message = prompt_message
-											.. "<|file_sep|>"
-											.. file.path
-											.. "\n"
-											.. file.document
-									end
-									prompt_message = vim.fn.strcharpart(prompt_message, 0, RAG_Context_Window_Size)
-								end
-								return prompt_message
-									.. "<|fim_begin|>"
-									.. pref
-									.. "<|fim_hole|>"
-									.. suff
-									.. "<|fim_end|>"
-							end,
-							suffix = false,
-						},
-						optional = {
-							max_tokens = 256,
-							stop = { "\n\n" },
-						},
+						model = "mercury-coder",
+						name = "mercury",
+						end_point = "https://api.inceptionlabs.ai/v1/fim/completions",
+						api_key = "MERCURY_API_KEY", -- environment variable name
+						stream = true,
 					},
 					openai = {
 						optional = {
@@ -1108,20 +1115,12 @@ return {
 							},
 							safetySettings = {
 								{
+									-- HARM_CATEGORY_HATE_SPEECH,
+									-- HARM_CATEGORY_HARASSMENT
+									-- HARM_CATEGORY_SEXUALLY_EXPLICIT
 									category = "HARM_CATEGORY_DANGEROUS_CONTENT",
-									threshold = "BLOCK_NONE",
-								},
-								{
-									category = "HARM_CATEGORY_HATE_SPEECH",
-									threshold = "BLOCK_NONE",
-								},
-								{
-									category = "HARM_CATEGORY_HARASSMENT",
-									threshold = "BLOCK_NONE",
-								},
-								{
-									category = "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-									threshold = "BLOCK_NONE",
+									-- BLOCK_NONE
+									threshold = "BLOCK_ONLY_HIGH",
 								},
 							},
 						},
@@ -2105,7 +2104,7 @@ return {
 					timeout = 1200000,
 					extra_request_body = {
 						max_tokens = 8192,
-						temperature = 0.5,
+						temperature = 0,
 						stream = true,
 						stream_options = {
 							include_usage = false,
@@ -2129,7 +2128,7 @@ return {
 					extra_request_body = {
 						max_tokens = 16384, -- remember to increase this value, otherwise it will stop generating halfway
 						-- max_tokens = 2600,
-						temperature = 0.7,
+						temperature = 0.5,
 						stream = true,
 						diffusing = false,
 						stream_options = {
@@ -2144,26 +2143,30 @@ return {
 					-- model = "o3",
 					timeout = 1200000,
 					extra_request_body = {
-						temperature = 0.7,
+						temperature = 0,
 						max_completion_tokens = 32768,
 						-- reasoning_effort = "high",
 					},
 				},
 				copilot = {
-					-- model = "gpt-5",
-					model = "claude-sonnet-4",
+					-- model = "gpt-5-codex",
+					model = "claude-haiku-4.5",
 					-- model = "gemini-2.5-pro",
 					timeout = 1200000,
 					extra_request_body = {
-						temperature = 0.2,
 						max_tokens = 32768,
 					},
 				},
 				gemini = {
 					model = "gemini-2.5-flash-lite",
 					timeout = 1200000,
-					extra_request_body = {
-						temperature = 0.7,
+				},
+				extra_request_body = {
+					generationConfig = {
+						thinkingConfig = {
+							thinkingBudget = -1,
+						},
+						temperature = 0,
 					},
 				},
 			},

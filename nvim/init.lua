@@ -54,6 +54,11 @@ require("utils.globals")
 -- Load and Configure plugins
 require("lazy").setup({
 	concurrency = 50,
+	rocks = {
+		enabled = false,
+		server = "https://lumen-oss.github.io/rocks-binaries/",
+		hererocks = false,
+	},
 	spec = {
 
 		--------------------------------------
@@ -806,7 +811,7 @@ require("lazy").setup({
 						"omnisharp",
 						"vscode-spring-boot-tools",
 						"json-lsp",
-						-- "spring-boot-tools", -- still not available with mason
+						"vscode-spring-boot-tools",
 						"lombok-nightly", -- still not available with mason
 						"kotlin-language-server",
 						"lua-language-server",
@@ -817,6 +822,8 @@ require("lazy").setup({
 						"tailwindcss-language-server",
 						"biome",
 						"vectorcode",
+						"htmlbeautifier",
+						"tree-sitter-cli",
 					},
 					-- if set to true this will check each tool for updates. If updates
 					-- are available the tool will be updated. This setting does not

@@ -70,6 +70,10 @@ keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.zsh"<CR>', opts)
 -- keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.bash"<CR>', opts)
 
 keymap("n", "<leader>q", ":lua ZipFiles()<CR>", opts)
+-- [[ terminal ]]--
+keymap("t", "<Esc>", [[<C-\><C-n>]], opts)
+keymap("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
+keymap("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
 
 function ZipFiles()
 	local dir = vim.fn.input("Enter directory (default: src/Skeleton): ")
