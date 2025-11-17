@@ -75,7 +75,7 @@ return {
 					vim.keymap.set("n", "h", "g?", { buffer = evt.buf })
 				end,
 			})
-			require("overseer").patch_dap(true)
+			require("overseer").enable_dap()
 		end,
 		opts = {
 			winbar = {
