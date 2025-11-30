@@ -35,7 +35,8 @@ local options = {
 	winminheight = 0,
 	winminwidth = 0,
 	laststatus = 3,
-	-- scrolloff = 999,
+	-- scrolloff = 999,-- error format
+	errorformat = "%.%#[   LINE   ] --- %f:%l:%m," .. vim.o.errorformat, -- cmocka
 }
 
 for k, v in pairs(options) do

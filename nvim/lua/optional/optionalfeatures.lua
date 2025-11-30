@@ -57,6 +57,23 @@ return {
 			return keys
 		end,
 	},
+	{
+		"mikavilpas/yazi.nvim",
+		event = "VeryLazy",
+		dependencies = { "folke/snacks.nvim" },
+		keys = {
+			{ "<F10>", mode = { "n", "v" }, "<cmd>Yazi<cr>", desc = "Open yazi at current file" },
+			{ "<leader>cw", "<cmd>Yazi cwd<cr>", desc = "Open yazi in cwd" },
+			{ "<c-up>", "<cmd>Yazi toggle<cr>", desc = "Resume last yazi session" },
+		},
+		opts = {
+			open_for_directories = false,
+			keymaps = { show_help = "<f1>" },
+		},
+		init = function()
+			vim.g.loaded_netrwPlugin = 1
+		end,
+	},
 	-- Autosave feature
 	{
 		"okuuva/auto-save.nvim",
@@ -2436,13 +2453,21 @@ return {
 	-- C++ build
 	{
 		"Civitasv/cmake-tools.nvim",
-		ft = { "hpp", "h", "cpp" },
+		ft = { "hpp", "h", "cpp", "c" },
 		event = "VeryLazy",
 		opts = {
 			handlers = {},
 			on_error = function(err)
 				vim.notify("CMake Tools error: " .. err, vim.log.levels.ERROR)
 			end,
+			cmake_runner = {
+				name = "toggleterm",
+				default_opts = {
+					toggleterm = {
+						derection = "horizontal",
+					},
+				},
+			},
 		},
 	},
 
@@ -2461,7 +2486,7 @@ return {
 
 	{
 		"Badhi/nvim-treesitter-cpp-tools",
-		ft = { "hpp", "h", "cpp" },
+		ft = { "hpp", "h", "cpp", "c" },
 		event = "VeryLazy",
 		dependencies = { "nvim-treesitter" },
 		config = function()
@@ -2475,7 +2500,37 @@ return {
 
 	{
 		"bfrg/vim-c-cpp-modern",
-		ft = { "hpp", "h", "cpp" },
+		ft = { "hpp", "h", "cpp", "c" },
+	},
+	{
+		"nvim-neotest/neotest",
+		ft = { "hpp", "h", "cpp", "c" },
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			-- Other neotest dependencies here
+			"orjangj/neotest-ctest",
+		},
+		config = function()
+			-- Optional, but recommended, if you have enabled neotest's diagnostic option
+			local neotest_ns = vim.api.nvim_create_namespace("neotest")
+			vim.diagnostic.config({
+				virtual_text = {
+					format = function(diagnostic)
+						-- Convert newlines, tabs and whitespaces into a single whitespace
+						-- for improved virtual text readability
+						local message = diagnostic.message:gsub("[\r\n\t%s]+", " ")
+						return message
+					end,
+				},
+			}, neotest_ns)
+
+			require("neotest").setup({
+				adapters = {
+					-- Load with default config
+					require("neotest-ctest").setup({}),
+				},
+			})
+		end,
 	},
 
 	-- bazel

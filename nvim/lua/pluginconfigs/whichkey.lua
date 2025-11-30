@@ -580,7 +580,6 @@ local mappings = {
 	{ "<leader>db", ":lua require'dap'.toggle_breakpoint()<cr>", desc = "Breakpoint" },
 	{ "<leader>dc", ":lua require'dap'.continue()<cr>", desc = "Start/Continue" },
 	-- { "<leader>dd", ":lua require'dapui'.toggle()<cr>", desc = "Dap UI" },
-	-- { "<leader>dd", ":lua require'debugmaster'.mode.toggle()<cr>", desc = "Debug Mode" },
 	{ "<leader>dd", ":lua require'dap-view'.toggle()<cr>", desc = "Toggle DAP View" },
 	{ "<leader>dh", "g?<cr>", desc = "DAP View Help" },
 	-- {

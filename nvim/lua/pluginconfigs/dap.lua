@@ -2,38 +2,6 @@ return {
 
 	-- DAP
 	{
-		"miroshQa/debugmaster.nvim",
-		dependencies = {
-			"mfussenegger/nvim-dap",
-			"jbyuki/one-small-step-for-vimkind",
-		},
-		enabled = false,
-		config = function()
-			local dm = require("debugmaster")
-			vim.keymap.set({ "n", "v" }, "<leader>.", dm.mode.toggle, {
-				nowait = true,
-				desc = "Debug mode toggle",
-			})
-			vim.keymap.set("t", "<C-/>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
-			vim.defer_fn(function()
-				local Sidepanel = getmetatable(require("debugmaster.state").sidepanel).__index
-				Sidepanel.set_active_with_open = function(self, comp)
-					if self.active == comp and self:is_open() then
-						self:close()
-					else
-						self:set_active(comp)
-						self:open()
-					end
-				end
-			end, 50)
-			dm.keys.get("u").key = "<leader>du" -- conflict with undo
-			dm.keys.get("U").key = "<leader>dU"
-			dm.plugins.osv_integration.enabled = true
-			dm.plugins.cursor_hl.enabled = false
-			dm.plugins.ui_auto_toggle.enabled = true
-		end,
-	},
-	{
 		"Jorenar/nvim-dap-disasm",
 		dependencies = "igorlfs/nvim-dap-view",
 		config = true,
