@@ -1079,8 +1079,9 @@ return {
 				n_completions = 1,
 				-- notify = "debug",
 				notify = "error",
-				provider = "gemini",
+				-- provider = "gemini",
 				-- provider = "openai_fim_compatible",
+				provider = "openai_compatible",
 				request_timeout = 15,
 				provider_options = {
 					-- openai_fim_compatible = {
@@ -1122,6 +1123,14 @@ return {
 						end_point = "https://api.inceptionlabs.ai/v1/fim/completions",
 						api_key = "MERCURY_API_KEY", -- environment variable name
 						stream = true,
+					},
+					openai_compatible = {
+						-- model = "llama-3.3-70b-versatile",
+						-- model = "qwen/qwen3-32b",
+						model = "moonshotai/kimi-k2-instruct-0905",
+						api_key = "GROQ_API_KEY",
+						end_point = "https://api.groq.com/openai/v1/chat/completions",
+						name = "Groq",
 					},
 					openai = {
 						optional = {
@@ -2169,7 +2178,7 @@ return {
 			-- provider = "gemini-cli",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
-			auto_suggestions_provider = "gemini",
+			auto_suggestions_provider = "copilot",
 			providers = {
 				deepseek = {
 					__inherited_from = "openai",

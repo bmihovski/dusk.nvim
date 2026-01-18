@@ -66,11 +66,10 @@ return {
 			},
 			windows = {
 				position = "right",
-				height = 25,
+				size = 0.45,
 				terminal = {
-					width = 0.45,
+					size = 0.45,
 					position = "below",
-					start_hidden = false,
 				},
 			},
 			help = { border = "single" },

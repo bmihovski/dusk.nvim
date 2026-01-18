@@ -5,9 +5,9 @@ vim.g.loaded_netrwPlugin = 1
 
 --- Set <space> as the leader key
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
-vim.keymap.set({ "n", "v" }, "-", "<Nop>", { silent = true })
-vim.g.mapleader = "-"
-vim.g.maplocalleader = "-"
+vim.keymap.set({ "n", "v" }, " ", "<Nop>", { silent = true })
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
 local ft = {
 	dap = { cppdbg = { "c", "cpp" } },
 	doc = { "markdown", "asciidoc" },
@@ -924,15 +924,10 @@ require("lazy").setup({
 				"ibhagwan/fzf-lua", -- optional
 			},
 		},
-
-		-- Rename packages and imports also when renaming/moving files via nvim-tree (for Java)
 		{
-			"simaxme/java.nvim",
-			ft = "java",
-			dependencies = { "mfussenegger/nvim-jdtls" },
-			config = function()
-				require("simaxme-java").setup()
-			end,
+			"simaxme/java-snippets.nvim",
+			version = "*",
+			opts = {},
 		},
 
 		-- Sonarlint plugin
