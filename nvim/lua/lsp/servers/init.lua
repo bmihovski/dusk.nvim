@@ -1,5 +1,6 @@
 require("lsp.servers.clangd")
 require("lsp.servers.lua")
+require("lsp.servers.marksman")
 require("lsp.servers.tailwindcss")
 require("lsp.servers.json")
 -- require("lsp.servers.typescript")

@@ -65,8 +65,8 @@ keymap("n", "<C-f>", "<cmd> !tmux neww tmux-sessionizer <CR>", opts)
 keymap("n", "<leader>zz", "<cmd> ZenMode<CR>", opts)
 -- cmake run
 keymap("n", "<leader>h", "<cmd> CMakeDebug <CR>", opts)
-keymap("n", "<leader>mm", "<cmd> CMakeRunCurrentFile <CR>", opts)
-keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.zsh"<CR>', opts)
+keymap("n", "<leader>--", "<cmd> CMakeRunCurrentFile <CR>", opts)
+keymap("n", "<leader>c-", '<cmd> TermExec cmd="./run_tests.zsh"<CR>', opts)
 -- keymap("n", "<leader>m", '<cmd> TermExec cmd="./run_tests.bash"<CR>', opts)
 
 keymap("n", "<leader>q", ":lua ZipFiles()<CR>", opts)

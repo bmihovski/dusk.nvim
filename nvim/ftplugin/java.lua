@@ -137,12 +137,12 @@ local config = {
 				updateBuildConfiguration = "interactive",
 				-- TODO Update this by adding any runtimes that you need to support your Java projects and removing any that you don't have installed
 				-- The runtime name parameters need to match specific Java execution environments.  See https://github.com/tamago324/nlsp-settings.nvim/blob/2a52e793d4f293c0e1d61ee5794e3ff62bfbbb5d/schemas/_generated/jdtls.json#L317-L334
-				-- runtimes = {
-				-- 	{
-				-- 		name = "JavaSE-20",
-				-- 		path = "/usr/lib/jvm/java-23-openjdk",
-				-- 	},
-				-- },
+				runtimes = {
+					{
+						name = "Java-25.01",
+						path = "~/.sdkman/candidates/java/current",
+					},
+				},
 			},
 			maven = {
 				downloadSources = true,

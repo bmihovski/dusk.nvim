@@ -1117,13 +1117,13 @@ return {
 					-- 		stop = { "\n\n" },
 					-- 	},
 					-- },
-					openai_fim_compatible = {
-						model = "mercury-coder",
-						name = "mercury",
-						end_point = "https://api.inceptionlabs.ai/v1/fim/completions",
-						api_key = "MERCURY_API_KEY", -- environment variable name
-						stream = true,
-					},
+					-- openai_fim_compatible = {
+					-- 	model = "mercury-coder",
+					-- 	name = "mercury",
+					-- 	end_point = "https://api.inceptionlabs.ai/v1/fim/completions",
+					-- 	api_key = "MERCURY_API_KEY", -- environment variable name
+					-- 	stream = true,
+					-- },
 					openai_compatible = {
 						-- model = "llama-3.3-70b-versatile",
 						-- model = "qwen/qwen3-32b",
@@ -1131,6 +1131,40 @@ return {
 						api_key = "GROQ_API_KEY",
 						end_point = "https://api.groq.com/openai/v1/chat/completions",
 						name = "Groq",
+					},
+					-- openai_compatible = {
+					-- 	api_key = "TERM",
+					-- 	name = "Llama.cpp",
+					-- 	end_point = "http://localhost:1234/v1/chat/completions",
+					-- 	-- The model is set by the llama-cpp server and cannot be altered
+					-- 	-- post-launch.
+					-- 	model = "PLACEHOLDER",
+					-- },
+					openai_fim_compatible = {
+						api_key = "TERM",
+						name = "Llama.cpp",
+						end_point = "http://127.0.0.1:1234/v1/completions",
+						-- end_point = "http://127.0.0.1:58081/v1/completions",
+						-- The model is set by the llama-cpp server and cannot be altered
+						-- post-launch.
+						model = "PLACEHOLDER",
+						optional = {
+							max_tokens = 56,
+							top_p = 0.9,
+						},
+						-- Llama.cpp does not support the `suffix` option in FIM completion.
+						-- Therefore, we must disable it and manually populate the special
+						-- tokens required for FIM completion.
+						template = {
+							prompt = function(context_before_cursor, context_after_cursor, _)
+								return "<|fim_prefix|>"
+									.. context_before_cursor
+									.. "<|fim_suffix|>"
+									.. context_after_cursor
+									.. "<|fim_middle|>"
+							end,
+							suffix = false,
+						},
 					},
 					openai = {
 						optional = {
@@ -2208,9 +2242,9 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "MERCURY_API_KEY",
 					endpoint = "https://api.inceptionlabs.ai/v1",
-					model = "mercury-coder",
+					model = "mercury-2",
 					extra_request_body = {
-						max_tokens = 16384, -- remember to increase this value, otherwise it will stop generating halfway
+						max_tokens = 50000, -- remember to increase this value, otherwise it will stop generating halfway
 						-- max_tokens = 2600,
 						temperature = 0.5,
 						stream = true,
@@ -2226,33 +2260,25 @@ return {
 					-- model = "gpt-4.1",
 					-- model = "o3",
 					timeout = 1200000,
-					extra_request_body = {
-						temperature = 0,
-						max_completion_tokens = 32768,
-						-- reasoning_effort = "high",
-					},
 				},
 				copilot = {
 					-- model = "gpt-5-codex",
 					model = "claude-haiku-4.5",
 					-- model = "gemini-2.5-pro",
 					timeout = 1200000,
-					extra_request_body = {
-						max_tokens = 32768,
-					},
 				},
 				gemini = {
 					model = "gemini-2.5-flash-lite",
 					timeout = 1200000,
 				},
-				extra_request_body = {
-					generationConfig = {
-						thinkingConfig = {
-							thinkingBudget = -1,
-						},
-						temperature = 0,
-					},
-				},
+				-- extra_request_body = {
+				-- 	generationConfig = {
+				-- 		thinkingConfig = {
+				-- 			thinkingBudget = -1,
+				-- 		},
+				-- 		temperature = 0,
+				-- 	},
+				-- },
 			},
 			rag_service = {
 				enabled = false, -- Enables the RAG service

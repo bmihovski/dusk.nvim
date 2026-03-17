@@ -438,7 +438,24 @@ local function debug_attach()
 end
 
 vim.api.nvim_create_user_command("LldbDebugAttach", debug_attach, {})
-
+-- ------------------------------------------------------------------
+-- 1️⃣  Helper: create a terminal that can be toggled
+-- ------------------------------------------------------------------
+local Terminal = require("toggleterm.terminal").Terminal
+local horizontal_term = Terminal:new({
+	direction = "horizontal",
+	hidden = true,
+	highlights = { border = { "FloatBorder", "Normal" } },
+})
+vim.api.nvim_create_user_command("ExecInTermHorizontal", function(params)
+	local args = type(params) == "table" and params.args or { params }
+	vim.notify("[ExecInTermHorizontal] args = " .. vim.inspect(args), vim.log.levels.INFO)
+	horizontal_term:toggle().send(horizontal_term, args)
+end, {
+	nargs = "*",
+	desc = "Toggle a horizontal terminal and exec the given command",
+	bang = false,
+})
 local mappings = {
 	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
 	{ "<leader>a", group = "AI" },
@@ -700,6 +717,42 @@ local mappings = {
 		"<leader>jx",
 		"<Cmd>RemoveUnusedImportsFromProject<CR>",
 		desc = "Remove unused imports from whole project",
+	},
+	{
+		"<leader>jb",
+		"<Cmd>ExecInTermHorizontal rm -f Main.class && javac -cp 'lib/*' Main.java && java -cp '.:lib/*' Main<CR>",
+		desc = "Build and Run java file",
+	},
+	{ "<leader>jm", group = "Java - Maven" },
+	{
+		"<leader>jmr",
+		"<cmd>ExecInTermHorizontal mvn clean -U dependency:resolve<CR>",
+		desc = " Refresh dependencies",
+	},
+	{ "<leader>jmp", "<cmd>ExecInTermHorizontal mvn clean package<CR>", desc = " Package" },
+	{ "<leader>jmi", "<cmd>ExecInTermHorizontal mvn clean install<CR>", desc = " Install" },
+	{ "<leader>jmd", "<cmd>ExecInTermHorizontal mvn clean deploy<CR>", desc = " Deploy" },
+	{ "<leader>jmt", "<cmd>ExecInTermHorizontal mvn clean test<CR>", desc = " Test" },
+	{
+		"<leader>jme",
+		"<cmd>ExecInTermHorizontal mvn dependency:purge-local-repository<CR>",
+		desc = " Purge local repository",
+	},
+	{
+		"<leader>jmP",
+		"<cmd>ExecInTermHorizontal mvn clean package -DskipTests<CR>",
+		desc = " Package (skip tests)",
+	},
+	{ "<leader>jmc", "ExecInTermHorizontal mvn clean compile<CR>", desc = " Compile" },
+	{ "<leader>jmC", "ExecInTermHorizontal mvn clean<CR>", desc = " Clean" },
+	{ "<leader>jg", group = "Gradle" },
+	{ "<leader>jgt", "ExecInTermHorizontal ./gradlew test<CR>", desc = " Test" },
+	{ "<leader>jgb", "ExecInTermHorizontal ./gradlew build<CR>", desc = " Build" },
+	{ "<leader>jgc", "<cmd>ExecInTermHorizontal ./gradlew clean<CR>", desc = " Clean" },
+	{
+		"<leader>jgr",
+		"<cmd>ExecInTermHorizontal ./gradlew --refresh-dependencies<CR>",
+		desc = " Refresh deps",
 	},
 	{ "<leader>l", group = "LSP - Language" },
 	{ "<leader>lf", ":lua vim.lsp.buf.format({ async = true })<cr>", desc = "Format" },

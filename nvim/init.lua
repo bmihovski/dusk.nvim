@@ -187,7 +187,7 @@ require("lazy").setup({
 					options = {
 						component_separators = "|",
 						section_separators = "",
-						theme = "catppuccin",
+						theme = "catppuccin-nvim",
 					},
 					extensions = { "aerial", "toggleterm", "quickfix" },
 
@@ -296,7 +296,7 @@ require("lazy").setup({
 			priority = 1000,
 			config = function(_, opts)
 				require("catppuccin").setup(opts)
-				vim.cmd.colorscheme("catppuccin")
+				vim.cmd.colorscheme("catppuccin-nvim")
 				vim.api.nvim_set_hl(0, "CursorColumn", { link = "CursorLine" })
 				local status_ok, dark_notify = pcall(require, "dark_notify")
 				if status_ok then
@@ -826,6 +826,9 @@ require("lazy").setup({
 						"vectorcode",
 						"htmlbeautifier",
 						"tree-sitter-cli",
+						"marksman",
+						"markdownlint-cli2",
+						"textlint",
 					},
 					-- if set to true this will check each tool for updates. If updates
 					-- are available the tool will be updated. This setting does not
@@ -985,6 +988,52 @@ require("lazy").setup({
 			lazy = true,
 			event = "LspAttach",
 			config = function()
+				local formatters = {
+					textlint = {
+						command = "textlint",
+						args = {
+							"--config",
+							vim.fn.expand("$HOME/.config/textlint/.textlintrc.yaml"),
+							"--fix",
+							"$FILENAME",
+						},
+						stdin = false,
+					},
+					markdownlint = {
+						command = "markdownlint-cli2",
+						args = {
+							"--config",
+							vim.fn.expand("$HOME/.config/markdownlint/.markdownlint.json"),
+							"--fix",
+							"--debug",
+							"$FILENAME",
+						},
+						exit_codes = { 0, 1 },
+						stdin = false,
+					},
+				}
+				local hidden_formatters = {
+					delete_single_space_before_marks = {
+						command = "sed",
+						args = { "s|\\(\\S\\) \\([。、)}]\\)|\\1\\2|g" },
+					},
+					delete_single_space_after_marks = {
+						command = "sed",
+						args = { "s|\\([。、({]\\) \\(\\S\\)|\\1\\2|g" },
+					},
+					markdown_todo_format = {
+						command = "sed",
+						args = { "s|\\([-*+.)]\\) \\[\\]|\\1 [ ]|g" },
+					},
+					replace_ordered_list = {
+						command = "sed",
+						args = { "s|^\\(\\s*\\)[0-9]\\+[\\.)] |\\11. |g" },
+					},
+					injected = {},
+				}
+				for k, v in pairs(hidden_formatters) do
+					formatters[k] = v
+				end
 				require("conform").setup({
 					formatters_by_ft = {
 						lua = { "stylua" },
@@ -1008,8 +1057,15 @@ require("lazy").setup({
 						graphql = { "prettierd", "prettier" },
 						java = { "google-java-format" },
 						kotlin = { "ktlint" },
-						markdown = { "prettierd", "prettier" },
+						markdown = {
+							"delete_single_space_before_marks",
+							"delete_single_space_after_marks",
+							"markdown_todo_format",
+							"replace_ordered_list",
+							"markdownlint",
+						},
 						erb = { "htmlbeautifier" },
+						text = { "textlint" },
 						html = { "htmlbeautifier" },
 						bash = { "beautysh" },
 						proto = { "buf" },
@@ -1018,6 +1074,7 @@ require("lazy").setup({
 						css = { "prettierd", "prettier" },
 						scss = { "prettierd", "prettier" },
 					},
+					formatters = formatters,
 					format_on_save = {
 						-- These options will be passed to conform.format()
 						timeout_ms = 500,
