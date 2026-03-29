@@ -214,7 +214,36 @@ local config = {
 	init_options = {
 		-- References the bundles defined above to support Debugging and Unit Testing
 		bundles = get_jdtls_bundles(),
-		extendedClientCapabilities = jdtls.extendedClientCapabilities,
+		extendedClientCapabilities = {
+			actionableRuntimeNotificationSupport = true,
+			advancedExtractRefactoringSupport = true,
+			advancedGenerateAccessorsSupport = true,
+			advancedIntroduceParameterRefactoringSupport = true,
+			advancedOrganizeImportsSupport = true,
+			advancedUpgradeGradleSupport = true,
+			classFileContentsSupport = true,
+			clientDocumentSymbolProvider = false,
+			clientHoverProvider = false,
+			executeClientCommandSupport = true,
+			extractInterfaceSupport = true,
+			generateConstructorsPromptSupport = true,
+			generateDelegateMethodsPromptSupport = true,
+			generateToStringPromptSupport = true,
+			gradleChecksumWrapperPromptSupport = true,
+			hashCodeEqualsPromptSupport = true,
+			inferSelectionSupport = {
+				"extractConstant",
+				"extractField",
+				"extractInterface",
+				"extractMethod",
+				"extractVariableAllOccurrence",
+				"extractVariable",
+			},
+			moveRefactoringSupport = true,
+			onCompletionItemSelectedCommand = "editor.action.triggerParameterHints",
+			overrideMethodsPromptSupport = true,
+		},
+		-- extendedClientCapabilities = jdtls.extendedClientCapabilities,
 	},
 }
 

@@ -26,6 +26,18 @@ require("nvim-treesitter.configs").setup({
 	auto_install = true,
 	-- Install languages synchronously (only applied to `ensure_installed`)
 	sync_install = false,
+	ensure_installed = {
+		"c",
+		"cpp",
+		"python",
+		"java",
+		"lua",
+		"sql",
+		"json",
+		"yaml",
+		"toml",
+		"bash",
+	},
 	-- List of parsers to ignore installing
 	ignore_install = {},
 	-- You can specify additional Treesitter modules here: -- For example: -- playground = {--enable = true,-- },

@@ -1081,7 +1081,8 @@ return {
 				notify = "error",
 				-- provider = "gemini",
 				-- provider = "openai_fim_compatible",
-				provider = "openai_compatible",
+				-- provider = "openai_compatible",
+				provider = "codestral",
 				request_timeout = 15,
 				provider_options = {
 					-- openai_fim_compatible = {
