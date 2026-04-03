@@ -1,11 +1,10 @@
-local parsers = require("nvim-treesitter.parsers").get_parser_configs()
+local parsers = require("nvim-treesitter.parsers")
 ---@diagnostic disable-next-line: inject-field
 parsers.bazelrc = {
 	install_info = {
 		url = "https://github.com/zaucy/tree-sitter-bazelrc.git",
 		files = { "src/parser.c" },
 		branch = "main",
-		requires_generate_from_grammar = false,
 	},
 }
 ---@diagnostic disable-next-line: inject-field
@@ -14,66 +13,87 @@ parsers.cpp2 = {
 		url = "https://github.com/tsoj/tree-sitter-cpp2.git",
 		files = { "src/parser.c", "src/scanner.c" },
 		branch = "main",
-		generate_requires_npm = false,
-		requires_generate_from_grammar = false,
 	},
 }
-require("nvim-treesitter.install").prefer_git = true
-require("nvim-treesitter.configs").setup({
-	-- Add languages to be installed here that you want installed for treesitter
+vim.api.nvim_create_autocmd("User", {
+	pattern = "TSUpdate",
+	callback = function()
+		require("nvim-treesitter.parsers").lua.install_info.generate = true
+	end,
+})
+-- In the new API this is done via autocmd (plugin no longer does it automatically)
+local languages = {
+	"c",
+	"cpp",
+	"python",
+	"java",
+	"xml",
+	"yaml",
+	"properties", -- application.properties
+	"groovy", -- Gradle build files (build.gradle)
+	"sql",
+	"http",
+	"graphql",
+	"javascript",
+	"typescript",
+	"tsx",
+	"html",
+	"css",
+	"scss",
+	"styled", -- styled-components / css-in-js
+	"json",
+	"json5",
+	"jsdoc",
+	"regex",
+	"toml",
+	"ini",
+	"editorconfig",
+	"dockerfile",
+	"bash",
+	"diff",
+	"gitcommit",
+	"gitignore",
+	"git_config",
+	"gitattributes",
+	"lua",
+	"luadoc", -- LuaDoc comments
+	"vim",
+	"vimdoc",
+	"query",
+	"markdown",
+	"markdown_inline",
+	"latex",
+	"csv",
+	-- === Utilities ===
+	"comment", -- TODO/FIXME/NOTE comments
+	"csv", -- CSV files
+}
+require("nvim-treesitter").install(languages)
 
-	-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-	auto_install = true,
-	-- Install languages synchronously (only applied to `ensure_installed`)
-	sync_install = false,
-	ensure_installed = {
-		"c",
-		"cpp",
-		"python",
-		"java",
-		"lua",
-		"sql",
-		"json",
-		"yaml",
-		"toml",
-		"bash",
-	},
-	-- List of parsers to ignore installing
-	ignore_install = {},
-	-- You can specify additional Treesitter modules here: -- For example: -- playground = {--enable = true,-- },
-	modules = {},
-	highlight = {
-		enable = true,
-		-- disable = { "markdown" }, -- list of language that highlighting will be disabled
-		additional_vim_regex_highlighting = true,
-		use_languagetree = true,
-	},
-	indent = { enable = true },
-	autopairs = { enable = true },
-	matchup = { enable = true },
-	textobjects = {
-		select = {
-			enable = true,
-			lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
-			keymaps = {
-				-- You can use the capture groups defined in textobjects.scm
-				["af"] = "@function.outer",
-				["if"] = "@function.inner",
-				["ac"] = "@class.outer",
-				["ic"] = "@class.inner",
-				["aa"] = "@parameter.outer",
-				["ia"] = "@parameter.inner",
-				["al"] = "@loop.outer",
-				["il"] = "@loop.inner",
-				["ai"] = "@conditional.outer",
-				["ii"] = "@conditional.inner",
-				["a/"] = "@comment.outer",
-				["i/"] = "@comment.inner",
-				["as"] = "@statement.outer",
-				["is"] = "@scopename.inner",
-				["aA"] = "@attribute.outer",
-				["iA"] = "@attribute.inner",
-			},
-		},
-	},
+vim.api.nvim_create_autocmd("FileType", {
+	group = vim.api.nvim_create_augroup("treesitter.setup", {}),
+	callback = function(args)
+		local buf = args.buf
+		local filetype = args.match
+
+		-- you need some mechanism to avoid running on buffers that do not
+		-- correspond to a language (like oil.nvim buffers), this implementation
+		-- checks if a parser exists for the current language
+		local language = vim.treesitter.language.get_lang(filetype) or filetype
+		if not vim.treesitter.language.add(language) then
+			return
+		end
+
+		-- replicate `fold = { enable = true }`
+		vim.wo.foldmethod = "expr"
+		vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+
+		-- replicate `highlight = { enable = true }`
+		vim.treesitter.start(buf, language)
+
+		-- replicate `indent = { enable = true }`
+		vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+
+		-- `incremental_selection = { enable = true }` covered by 0.12.0
+	end,
 })

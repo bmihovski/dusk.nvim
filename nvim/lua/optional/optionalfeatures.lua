@@ -1128,7 +1128,7 @@ return {
 					openai_compatible = {
 						-- model = "llama-3.3-70b-versatile",
 						-- model = "qwen/qwen3-32b",
-						model = "moonshotai/kimi-k2-instruct-0905",
+						model = "openai/gpt-oss-120b",
 						api_key = "GROQ_API_KEY",
 						end_point = "https://api.groq.com/openai/v1/chat/completions",
 						name = "Groq",
@@ -1250,9 +1250,6 @@ return {
 			require("minuet").setup(opts)
 		end,
 	},
-
-	{ "mawkler/modicator.nvim", opts = {}, event = { "BufReadPost", "BufNewFile" } },
-
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
 		dependencies = {
@@ -2166,21 +2163,7 @@ return {
 				enable_token_counting = false,
 			},
 			disabled_tools = {
-				"list_files",
-				"search_files",
 				"read_file",
-				"create_file",
-				"rename_file",
-				"delete_file",
-				"create_dir",
-				"rename_dir",
-				"delete_dir",
-				"bash",
-				"fetch",
-				"git_diff",
-				"git_commit",
-				"execute_command",
-				"write_file",
 			},
 			-- Using function prevents requiring mcphub before it's loaded
 			custom_tools = function()
@@ -2210,6 +2193,7 @@ return {
 				},
 			},
 			provider = "copilot",
+			-- provider = "opencode",
 			-- provider = "gemini-cli",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
@@ -2220,7 +2204,7 @@ return {
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-chat",
-					timeout = 1200000,
+					timeout = 12000000,
 					extra_request_body = {
 						max_tokens = 8192,
 						temperature = 0,
@@ -2230,13 +2214,21 @@ return {
 						},
 					},
 				},
+				lmstudio = {
+					__inherited_from = "openai",
+					api_key_name = "",
+					endpoint = "http://localhost:1234/v1",
+					model = "qwen3.5-35b-a3b",
+					context_window = 262144,
+					timeout = 60000000,
+				},
 				groq = { -- define groq provider
 					__inherited_from = "openai",
 					api_key_name = "GROQ_API_KEY",
 					endpoint = "https://api.groq.com/openai/v1/",
-					model = "llama-3.3-70b-versatile",
+					model = "openai/gpt-oss-120b",
 					extra_request_body = {
-						max_completion_tokens = 32768, -- remember to increase this value, otherwise it will stop generating halfway
+						max_completion_tokens = 65536, -- remember to increase this value, otherwise it will stop generating halfway
 					},
 				},
 				mercury = {
@@ -2263,10 +2255,9 @@ return {
 					timeout = 1200000,
 				},
 				copilot = {
-					-- model = "gpt-5-codex",
-					model = "claude-haiku-4.5",
-					-- model = "gemini-2.5-pro",
-					timeout = 1200000,
+					-- model = "claude-haiku-4.5",
+					model = "gemini-2.5-pro",
+					timeout = 12000000,
 				},
 				gemini = {
 					model = "gemini-2.5-flash-lite",
@@ -2299,9 +2290,11 @@ return {
 			},
 			dual_boost = {
 				enabled = true,
-				first_provider = "deepseek",
-				second_provider = "mercury",
-				timeout = 3600000, -- Timeout in milliseconds
+				-- first_provider = "deepseek",
+				first_provider = "mercury",
+				-- second_provider = "mercury",
+				second_provider = "lmstudio",
+				timeout = 60000000, -- Timeout in milliseconds
 			},
 			windows = {
 				width = 45, -- Width of the sidebar
@@ -2387,7 +2380,7 @@ return {
 		-- enabled = false,
 		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
 		build = ":call mkdp#util#install()",
-		ft = { "markdown" },
+		ft = { "markdown", "Avante" },
 	},
 	{
 		"jannis-baum/vivify.vim",
@@ -2522,6 +2515,7 @@ return {
 
 	{
 		"Badhi/nvim-treesitter-cpp-tools",
+		enabled = false, -- TODO: fix this
 		ft = { "hpp", "h", "cpp", "c" },
 		event = "VeryLazy",
 		dependencies = { "nvim-treesitter" },

@@ -10,6 +10,10 @@ local servers = {
 	go = {
 		filetypes = { "go" },
 		cmd = { "gopls" },
+		sqlls = {
+	},
+		filetypes = { "sql", "mysql" },
+		cmd = { "sql-language-server", "up", "--method", "stdio" },
 	},
 }
 

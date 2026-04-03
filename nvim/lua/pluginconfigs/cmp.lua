@@ -12,8 +12,6 @@ end
 -- load VSCode-like snippets from plugins (e.g., friendly-snippets)
 require("luasnip/loaders/from_vscode").lazy_load()
 
-local ts_utils = require("nvim-treesitter.ts_utils")
-
 local s = luasnip.snippet
 local t = luasnip.text_node
 local i = luasnip.insert_node
@@ -25,7 +23,7 @@ end
 
 local function get_class_name()
 	local bufnr = vim.api.nvim_get_current_buf()
-	local curr = ts_utils.get_node_at_cursor()
+	local curr = vim.treesitter.get_node()
 	local expr = curr
 	while expr do
 		if expr:type() == "class_specifier" or expr:type() == "struct_specifier" then
