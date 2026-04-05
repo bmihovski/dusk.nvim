@@ -54,6 +54,56 @@ return {
 					desc = "Harpoon to File " .. i,
 				})
 			end
+			local harpoon = require("harpoon")
+
+			-- REQUIRED
+			harpoon:setup()
+			-- REQUIRED
+
+			-- basic telescope configuration
+			local conf = require("telescope.config").values
+			local function toggle_telescope(harpoon_files)
+				local finder = function()
+					local paths = {}
+					for _, item in ipairs(harpoon_files.items) do
+						table.insert(paths, item.value)
+					end
+
+					return require("telescope.finders").new_table({
+						results = paths,
+					})
+				end
+
+				require("telescope.pickers")
+					.new({}, {
+						prompt_title = "Harpoon",
+						finder = finder(),
+						previewer = false,
+						sorter = require("telescope.config").values.generic_sorter({}),
+						layout_config = {
+							height = 0.4,
+							width = 0.5,
+							prompt_position = "top",
+							preview_cutoff = 120,
+						},
+						attach_mappings = function(prompt_bufnr, map)
+							map("i", "<C-d>", function()
+								local state = require("telescope.actions.state")
+								local selected_entry = state.get_selected_entry()
+								local current_picker = state.get_current_picker(prompt_bufnr)
+
+								table.remove(harpoon_files.items, selected_entry.index)
+								current_picker:refresh(finder())
+							end)
+							return true
+						end,
+					})
+					:find()
+			end
+
+			vim.keymap.set("n", "<leader>hd", function()
+				toggle_telescope(harpoon:list())
+			end, { desc = "Delete harpoon marks" })
 			return keys
 		end,
 	},
@@ -2193,6 +2243,7 @@ return {
 				},
 			},
 			provider = "copilot",
+			-- provider = "lmstudio",
 			-- provider = "opencode",
 			-- provider = "gemini-cli",
 			mode = "legacy",
@@ -2216,10 +2267,10 @@ return {
 				},
 				lmstudio = {
 					__inherited_from = "openai",
-					api_key_name = "",
+					api_key_name = "LM_STUDIO_API_KEY",
 					endpoint = "http://localhost:1234/v1",
-					model = "qwen3.5-35b-a3b",
-					context_window = 262144,
+					-- model = "google/gemma-4-26b-a4b",
+					model = "qwen/qwen3.5-35b-a3b",
 					timeout = 60000000,
 				},
 				groq = { -- define groq provider
@@ -2238,7 +2289,6 @@ return {
 					model = "mercury-2",
 					extra_request_body = {
 						max_tokens = 50000, -- remember to increase this value, otherwise it will stop generating halfway
-						-- max_tokens = 2600,
 						temperature = 0.5,
 						stream = true,
 						diffusing = false,
@@ -2248,15 +2298,12 @@ return {
 					},
 				},
 				openai = {
-					-- model = "gpt-4.1-nano",
 					model = "gpt-4.1-mini",
-					-- model = "gpt-4.1",
-					-- model = "o3",
 					timeout = 1200000,
 				},
 				copilot = {
-					-- model = "claude-haiku-4.5",
-					model = "gemini-2.5-pro",
+					model = "claude-haiku-4.5",
+					-- model = "gemini-2.5-pro",
 					timeout = 12000000,
 				},
 				gemini = {
