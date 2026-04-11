@@ -2265,6 +2265,17 @@ return {
 						},
 					},
 				},
+				ollama = {
+					model = "gemma4:31b-cloud",
+					timeout = 60000000,
+				},
+				atomicChat = {
+					__inherited_from = "openai",
+					api_key_name = "",
+					endpoint = "http://localhost:1337/v1",
+					model = "Qwen3_5-9B-IQ4_NL",
+					timeout = 60000000,
+				},
 				lmstudio = {
 					__inherited_from = "openai",
 					api_key_name = "LM_STUDIO_API_KEY",
@@ -2338,9 +2349,10 @@ return {
 			dual_boost = {
 				enabled = true,
 				-- first_provider = "deepseek",
-				first_provider = "mercury",
-				-- second_provider = "mercury",
-				second_provider = "lmstudio",
+				-- first_provider = "mercury",
+				first_provider = "ollama",
+				-- second_provider = "lmstudio",
+				second_provider = "atomicChat",
 				timeout = 60000000, -- Timeout in milliseconds
 			},
 			windows = {
@@ -2580,36 +2592,276 @@ return {
 		ft = { "hpp", "h", "cpp", "c" },
 	},
 	{
+		"rcasia/neotest-java",
+		ft = "java",
+		dependencies = {
+			"mfussenegger/nvim-jdtls",
+			"mfussenegger/nvim-dap", -- for debugging (optional)
+			"theHamsta/nvim-dap-virtual-text", -- recommended
+		},
+	},
+	{
+		"javiorfo/nvim-springtime",
+		lazy = true,
+		cmd = { "Springtime", "SpringtimeUpdate" },
+		dependencies = {
+			"javiorfo/nvim-popcorn",
+			"javiorfo/nvim-spinetta",
+			"hrsh7th/nvim-cmp",
+		},
+		build = function()
+			require("springtime.core").update()
+		end,
+		opts = {
+			-- This section is optional
+			-- If you want to change default configurations
+			-- In packer.nvim use require'springtime'.setup { ... }
+
+			-- Springtime popup section
+			spring = {
+				-- Project: Gradle, Gradle Kotlin and Maven (Gradle default)
+				project = {
+					selected = 1,
+				},
+				-- Language: Java, Kotlin and Groovy (Java default)
+				language = {
+					selected = 1,
+				},
+				-- Packaging: Jar and War (Jar default)
+				packaging = {
+					selected = 1,
+				},
+				-- Configuration: Properties and YAML (YAML default)
+				configuration = {
+					selected = 1,
+				},
+				-- Project Metadata defaults:
+				-- Change the default values as you like
+				-- This can also be edited in the popup
+				project_metadata = {
+					group = "com.example",
+					artifact = "demo",
+					name = "demo",
+					package_name = "com.example.demo",
+					version = "0.0.1-SNAPSHOT",
+				},
+			},
+
+			-- Some popup options
+			dialog = {
+				-- The keymap used to select radio buttons (normal mode)
+				selection_keymap = "<C-Space>",
+
+				-- The keymap used to generate the Spring project (normal mode)
+				generate_keymap = "<C-CR>",
+
+				-- If you want confirmation before generate the Spring project
+				confirmation = true,
+
+				-- Highlight links to Title and sections for changing colors
+				style = {
+					title_link = "Boolean",
+					section_link = "Type",
+				},
+			},
+
+			-- Workspace is where the generated Spring project will be saved
+			workspace = {
+				-- Default where Neovim is open
+				path = vim.fn.expand("%:p:h"),
+
+				-- Spring Initializr generates a zip file
+				-- Decompress the file by default
+				decompress = true,
+
+				-- If after generation you want to open the folder
+				-- Opens the generated project in Neovim by default
+				open_auto = true,
+			},
+
+			-- This could be enabled for debugging purposes
+			-- Generates a springtime.log with debug and errors.
+			internal = {
+				log_debug = false,
+			},
+		},
+	},
+	{
+		"andythigpen/nvim-coverage",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		config = function()
+			require("coverage").setup({
+				auto_reload = true,
+				lang = {
+					java = {
+						coverage_file = vim.fn.getcwd() .. "/target/site/jacoco/jacoco.xml",
+					},
+				},
+			})
+		end,
+	},
+	{
 		"nvim-neotest/neotest",
-		ft = { "hpp", "h", "cpp", "c" },
+		ft = { "hpp", "h", "cpp", "c", "java" },
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			-- Other neotest dependencies here
 			"orjangj/neotest-ctest",
+			"nvim-neotest/neotest-python",
+			"rcasia/neotest-java",
+			"alfaix/neotest-gtest",
+			"nvim-neotest/nvim-nio",
 		},
-		config = function()
-			-- Optional, but recommended, if you have enabled neotest's diagnostic option
+		opts = {
+			adapters = {
+				-- Python
+				["neotest-python"] = {
+					dap = { justMyCode = false },
+					args = { "--log-level", "DEBUG" },
+					runner = "pytest",
+					python = (function()
+						local py = vim.fn.exepath("python3")
+						return py ~= "" and py or vim.fn.exepath("python")
+					end)(),
+				},
+
+				-- Java
+				["neotest-java"] = {
+					jvm_args = { "-Xmx1024m" },
+				},
+				-- Load with default config
+				["neotest-ctest"] = {}, -- C/C++ Google Test
+				["neotest-gtest"] = {},
+			},
+			-- Enhanced status configuration
+			status = {
+				virtual_text = true,
+				signs = false,
+			},
+			-- Enhanced output configuration
+			output = {
+				open_on_run = "short",
+				enabled = true,
+			},
+			-- Floating window configuration
+			floating = {
+				border = "rounded",
+				max_height = 0.6,
+				max_width = 0.6,
+			},
+			summary = {
+				enabled = true,
+				follow = true,
+				expand_errors = true,
+				mappings = {
+					attach = "a",
+					clear_marked = "M",
+					clear_target = "T",
+					debug = "d",
+					debug_marked = "D",
+					expand = { "<CR>", "<2-LeftMouse>" },
+					expand_all = "e",
+					jumpto = "i",
+					mark = "m",
+					next_failed = "J",
+					output = "o",
+					prev_failed = "K",
+					run = "r",
+					run_marked = "R",
+					short = "O",
+					stop = "u",
+					target = "t",
+					watch = "w",
+				},
+			},
+			quickfix = {
+				open = function()
+					if pcall(require, "trouble") then
+						require("trouble").open({ mode = "quickfix", focus = false })
+					else
+						vim.cmd("copen")
+					end
+				end,
+			},
+		},
+		config = function(_, opts)
 			local neotest_ns = vim.api.nvim_create_namespace("neotest")
 			vim.diagnostic.config({
 				virtual_text = {
 					format = function(diagnostic)
-						-- Convert newlines, tabs and whitespaces into a single whitespace
-						-- for improved virtual text readability
-						local message = diagnostic.message:gsub("[\r\n\t%s]+", " ")
+						-- Optional, but recommended, if you have enabled neotest's diagnostic option
+						local message =
+							diagnostic.message:gsub("\n", " "):gsub("\t", " "):gsub("%s+", " "):gsub("^%s+", "")
 						return message
 					end,
 				},
 			}, neotest_ns)
 
-			require("neotest").setup({
-				adapters = {
-					-- Load with default config
-					require("neotest-ctest").setup({}),
-				},
-			})
+			if pcall(require, "trouble") then
+				opts.consumers = opts.consumers or {}
+				opts.consumers.trouble = function(client)
+					client.listeners.results = function(adapter_id, results, partial)
+						if partial then
+							return
+						end
+						local tree = assert(client:get_position(nil, { adapter = adapter_id }))
+						local failed = 0
+						for pos_id, result in pairs(results) do
+							if result.status == "failed" and tree:get_key(pos_id) then
+								failed = failed + 1
+							end
+						end
+						vim.schedule(function()
+							local trouble = require("trouble")
+							if trouble.is_open() then
+								trouble.refresh()
+								if failed == 0 then
+									trouble.close()
+								end
+							end
+						end)
+						return {}
+					end
+				end
+			end
+
+			if opts.adapters then
+				local adapters = {}
+				for name, config in pairs(opts.adapters or {}) do
+					if type(name) == "number" then
+						if type(config) == "string" then
+							config = require(config)
+						end
+						adapters[#adapters + 1] = config
+					elseif config ~= false then
+						local adapter = require(name)
+						if type(config) == "table" and not vim.tbl_isempty(config) then
+							local meta = getmetatable(adapter)
+							if adapter.setup then
+								adapter.setup(config)
+							elseif adapter.adapter then
+								adapter.adapter(config)
+								adapter = adapter.adapter
+							elseif meta and meta.__call then
+								adapter = adapter(config)
+							else
+								error("Adapter " .. name .. " does not support setup")
+							end
+						end
+						adapters[#adapters + 1] = adapter
+					end
+				end
+				opts.adapters = adapters
+			end
+
+			require("neotest").setup(opts)
 		end,
 	},
-
+	{
+		"kawre/neotab.nvim",
+		event = "InsertEnter",
+		opts = {},
+	},
 	-- bazel
 	{
 		"mrheinen/bazelbub.nvim",
