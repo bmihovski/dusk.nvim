@@ -871,7 +871,7 @@ require("lazy").setup({
 
 		-- The Java LSP server
 		{
-			"mfussenegger/nvim-jdtls",
+			"https://codeberg.org/mfussenegger/nvim-jdtls",
 			dependencies = { "mason-org/mason.nvim", "JavaHello/spring-boot.nvim", "mfussenegger/nvim-dap" },
 			ft = "java",
 		},
@@ -928,9 +928,30 @@ require("lazy").setup({
 			ft = { "java", "yaml", "jproperties" },
 			dependencies = {
 				"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
-				"neovim/nvim-lspconfig",
 				"ibhagwan/fzf-lua", -- optional
 			},
+			config = function()
+				local ls_path = vim.fn.expand(
+					"$MASON/packages/vscode-spring-boot-tools/extension/language-server/spring-boot-language-server-*.jar"
+				)
+				require("spring_boot").setup({
+					jdtls_name = "jdtls",
+					exploded_ls_jar_data = false,
+					server = {
+						cmd = {
+							"java",
+							"-XX:TieredStopAtLevel=1",
+							"-Xmx4G",
+							"-XX:+UseZGC",
+							"-Dsts.lsp.client=vscode",
+							"-Dsts.log.file=" .. os.getenv("HOME") .. "/.local/state/nvim/spring-boot.log",
+							"-jar",
+							ls_path,
+						},
+					},
+				})
+				require("spring_boot").init_lsp_commands()
+			end,
 		},
 		{
 			"simaxme/java-snippets.nvim",
@@ -958,7 +979,7 @@ require("lazy").setup({
 							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjs.jar"),
 							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarhtml.jar"),
 							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarxml.jar"),
-							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonartext.jar.jar"),
+							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonartext.jar"),
 							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonariac.jar"),
 							vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjavasymbolicexecution.jar"),
 						},

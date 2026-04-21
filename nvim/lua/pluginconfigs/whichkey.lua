@@ -592,7 +592,7 @@ local mappings = {
 	{ "<leader>cvk", ":lua require('telescope').extensions.vstask.jobhistory()<CR>", desc = "List vscode job history" },
 	{ "<C-p>", ":lua require('ufo.preview'):peekFoldedLinesUnderCursor()<cr>", desc = "Peek inside fold." },
 	{ "<leader>cc", "<cmd>Coverage<cr>", desc = "Show Coverage" },
-	{ "<leader>ck", "<cmd>CoverageToggle<cr>", desc = "Toggle Coverage" },
+	{ "<leader>ck", "<cmd>CoverageLoad<cr><cmd>CoverageToggle<cr>", desc = "Toggle Coverage" },
 	{ "<leader>cu", "<cmd>CoverageSummary<cr>", desc = "Coverage Summary" },
 	{
 		"<leader>ctr",
@@ -788,6 +788,7 @@ local mappings = {
 		"<cmd>ExecInTermHorizontal mvn exec:java -Dexec.args='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005'<CR>",
 		desc = "Run with debug",
 	},
+	{ "<leader>jmv", "<cmd>ExecInTermHorizontal mvn verify<CR>", desc = " Coverage IT tests" },
 	{ "<leader>jg", group = "Gradle" },
 	{ "<leader>jgt", "ExecInTermHorizontal ./gradlew test<CR>", desc = " Test" },
 	{ "<leader>jgb", "ExecInTermHorizontal ./gradlew build<CR>", desc = " Build" },
@@ -809,9 +810,13 @@ local mappings = {
 		end,
 		desc = "List Workspace Folders",
 	},
-	{ "<leader>m", group = "Markdown" },
-	{ "<leader>mp", ":MarkdownPreview<CR>", desc = "Preview in browser" },
-	{ "<leader>ms", ":MarkdownPreviewStop<CR>", desc = "Stop Preview" },
+	{ "<leader>M", group = "Markdown" },
+	{ "<leader>Mp", ":MarkdownPreview<CR>", desc = "Preview in browser" },
+	{ "<leader>Ms", ":MarkdownPreviewStop<CR>", desc = "Stop Preview" },
+	{ "<leader>m", group = "Auto Complete" },
+	{ "<leader>mp", "<cmd>Minuet duet predict<cr>", desc = "Minuet duet predict" },
+	{ "<leader>ma", "<cmd>Minuet duet apply<cr>", desc = "Minuet duet apply" },
+	{ "<leader>md", "<cmd>Minuet duet dismiss<cr>", desc = "Minuet duet dismiss" },
 	{ "<leader>o", group = "Open" },
 	{ "<leader>of", ":ToggleTerm direction=float<cr>", desc = "Float Terminal" },
 	{
@@ -899,14 +904,19 @@ local mappings = {
 	{ "<leader>wq", "<cmd>q!<cr>", desc = "Kill window" },
 	{ "<leader>ww", "<C-w>w", desc = "Last window" },
 	{ "<leader>y", ":%y+<cr>", desc = "Yank All Text" },
-	{ "<leader>z", ":ZenMode<cr>", desc = "Zen Mode" },
-	{ "<leader>n", ":NoNeckPain<cr>", desc = "Center buffer no ZenMode" },
+	{ "<leader>z", "<cmd>ZenMode<cr>", desc = "Zen Mode" },
+	{ "<leader>n", "<cmd>NoNeckPain<cr>", desc = "Center buffer no ZenMode" },
 	{ "<leader>J", group = "Java Spring Helpers" },
 	-- set a vim motion to <Space> + <Shift>J + r to run the spring boot project in a vim terminal
 	{ "<leader>Jr", '<cmd>:lua require("springboot-nvim").boot_run()<cr>', desc = "[J]ava [R]un Spring Boot" },
 	-- set a vim motion to <Space> + <Shift>J + c to open the generate class ui to create a class
 	{ "<leader>Jc", '<cmd>:lua require("springboot-nvim").generate_class()<cr>', desc = "[J]ava Create [C]lass" },
 	-- set a vim motion to <Space> + <Shift>J + i to open the generate interface ui to create an interface
+	{
+		"<leader>Ji",
+		"<cmd>Springtime<cr>",
+		desc = "[J]ava Spring [I]nitializer",
+	},
 	{
 		"<leader>Ji",
 		'<cmd>:lua require("springboot-nvim").generate_interface()<cr>',

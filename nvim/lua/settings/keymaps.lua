@@ -104,8 +104,6 @@ keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", op
 keymap("x", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
 keymap("n", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant()<CR>", opts)
 keymap("x", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
-keymap("n", "<leader>jt", "<Cmd>lua require('jdtls').test_nearest_method()<CR>", opts)
-keymap("n", "<leader>jd", "<Cmd>lua require('jdtls').test_class()<CR>", opts)
 keymap("n", "<leader>ju", "<Cmd>JdtUpdateConfig<CR>", opts)
 
 keymap("v", "<leader>jv", "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
@@ -117,6 +115,10 @@ keymap("n", "<leader>jp", "<Cmd>lua require('jdtls').super_implementation<CR>", 
 keymap("n", "<leader>js", "<Cmd>lua require('jdtls').jshell()<CR>", opts)
 -- markdown
 keymap("n", "<F6>", "<cmd> MarkdownPreviewToggle<CR>", opts)
+-- auto complete
+keymap("i", "<A-z>", "<cmd>Minuet duet predict<cr>", opts)
+keymap("i", "<A-a>", "<cmd>Minuet duet apply<cr>", opts)
+keymap("i", "<A-x>", "<cmd>Minuet duet dismiss<cr>", opts)
 
 -- tmux
 keymap("n", "<C-\\>", '<cmd>lua require("nvim-tmux-navigation").NvimTmuxNavigateLastActive<cr>', opts)

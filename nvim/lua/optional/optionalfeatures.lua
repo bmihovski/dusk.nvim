@@ -1273,6 +1273,22 @@ return {
 						-- 		return prompt_message
 						-- 	end,
 						-- },
+						duet = {
+							provider = "gemini",
+							provider_options = {
+								gemini = {
+									model = "gemini-3-flash-preview",
+									optional = {
+										generationConfig = {
+											thinkingConfig = {
+												-- Disable thinking is recommended
+												thinkingLevel = "minimal",
+											},
+										},
+									},
+								},
+							},
+						},
 						optional = {
 							generationConfig = {
 								stop_sequences = { "<|file_separator|>" },
@@ -2243,6 +2259,7 @@ return {
 				},
 			},
 			provider = "copilot",
+			-- provider = "copilot",
 			-- provider = "lmstudio",
 			-- provider = "opencode",
 			-- provider = "gemini-cli",
@@ -2266,14 +2283,15 @@ return {
 					},
 				},
 				ollama = {
-					model = "gemma4:31b-cloud",
+					-- model = "glm-5.1:cloud",
+					model = "qwen3-coder-next:cloud",
 					timeout = 60000000,
 				},
 				atomicChat = {
 					__inherited_from = "openai",
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
-					model = "Qwen3_5-9B-IQ4_NL",
+					model = "openai/gpt-oss-120b",
 					timeout = 60000000,
 				},
 				lmstudio = {
@@ -2281,7 +2299,7 @@ return {
 					api_key_name = "LM_STUDIO_API_KEY",
 					endpoint = "http://localhost:1234/v1",
 					-- model = "google/gemma-4-26b-a4b",
-					model = "qwen/qwen3.5-35b-a3b",
+					model = "qwen3.5-27b-claude-4.6-opus-distilled-mlx",
 					timeout = 60000000,
 				},
 				groq = { -- define groq provider
@@ -2292,6 +2310,13 @@ return {
 					extra_request_body = {
 						max_completion_tokens = 65536, -- remember to increase this value, otherwise it will stop generating halfway
 					},
+				},
+				nvidia_nim = { -- define groq provider
+					__inherited_from = "openai",
+					api_key_name = "NIM_API_KEY",
+					endpoint = "https://integrate.api.nvidia.com/v1",
+					model = "moonshotai/kimi-k2-instruct-0905",
+					timeout = 60000000,
 				},
 				mercury = {
 					__inherited_from = "openai",
@@ -2352,7 +2377,8 @@ return {
 				-- first_provider = "mercury",
 				first_provider = "ollama",
 				-- second_provider = "lmstudio",
-				second_provider = "atomicChat",
+				-- second_provider = "atomicChat",
+				second_provider = "nvidia_nim",
 				timeout = 60000000, -- Timeout in milliseconds
 			},
 			windows = {
@@ -2601,12 +2627,12 @@ return {
 		},
 	},
 	{
-		"javiorfo/nvim-springtime",
+		"https://codeberg.org/caskstrength/nvim-springtime",
 		lazy = true,
 		cmd = { "Springtime", "SpringtimeUpdate" },
 		dependencies = {
-			"javiorfo/nvim-popcorn",
-			"javiorfo/nvim-spinetta",
+			"https://codeberg.org/caskstrength/nvim-popcorn",
+			"https://codeberg.org/caskstrength/nvim-spinetta",
 			"hrsh7th/nvim-cmp",
 		},
 		build = function()
@@ -2653,7 +2679,7 @@ return {
 				selection_keymap = "<C-Space>",
 
 				-- The keymap used to generate the Spring project (normal mode)
-				generate_keymap = "<C-CR>",
+				generate_keymap = "<C-g>",
 
 				-- If you want confirmation before generate the Spring project
 				confirmation = true,

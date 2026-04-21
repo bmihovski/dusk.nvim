@@ -99,7 +99,7 @@ vim.opt.shortmess:append("sI")
 
 -- disable lsp logs to save resources of huge logs
 -- Enable if you need to debug something
-vim.lsp.set_log_level(vim.lsp.log_levels.OFF)
+vim.lsp.log.set_level("off")
 
 vim.diagnostic.config({
 	virtual_text = true,
