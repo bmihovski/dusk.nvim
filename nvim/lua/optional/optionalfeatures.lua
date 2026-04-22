@@ -2970,9 +2970,6 @@ return {
 					cxx = true,
 				},
 				show_success_message = true, -- shows a message with information about the refactor on success
-				-- i.e. [Refactor] Inlined 3 variable occurrences
-				-- load refactoring Telescope extension
-				require("telescope").load_extension("refactoring"),
 			})
 		end,
 	},

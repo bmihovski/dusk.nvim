@@ -720,6 +720,11 @@ local mappings = {
 	},
 	{ "<leader>jl", ":FzfLua lsp_live_workspace_symbols<CR>", desc = "Find Beans" },
 	{
+		"<leader>js",
+		"<cmd>lua require'telescope.builtin'.lsp_workspace_symbols{}<CR>",
+		desc = "Proj Spring Components",
+	},
+	{
 		"<leader>ji",
 		"<cmd>lua require('jdtls.tests').goto_subjects()<cr>",
 		desc = "Go to corresponding Test/Subject Class",
@@ -781,6 +786,7 @@ local mappings = {
 		"<cmd>ExecInTermHorizontal mvn clean package -DskipTests<CR>",
 		desc = " Package (skip tests)",
 	},
+	{ "<leader>jms", "<cmd>Neotree maven toggle<CR>", desc = " Show project [d]ependencies" },
 	{ "<leader>jmc", "<cmd>ExecInTermHorizontal mvn clean compile<CR>", desc = " Compile" },
 	{ "<leader>jmC", "<cmd>ExecInTermHorizontal mvn clean<CR>", desc = " Clean" },
 	{

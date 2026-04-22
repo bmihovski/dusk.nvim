@@ -1,5 +1,4 @@
 local home = vim.env.HOME -- Get the home directory
-local java_home = vim.env.JAVA_HOME -- Get the JAVA home directory
 local mason_packages_path = home .. "/.local/share/nvim/mason"
 -- Nightly Lombok (for completions and annotation processing in DAP/test)
 local lombok_nightly = mason_packages_path .. "/share/lombok-nightly/lombok.jar"
@@ -111,7 +110,32 @@ local function get_jdtls_bundles()
 	end
 	return bundles
 end
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+local function on_attach(client, bufnr)
+	jdtls.setup_dap({ hotcodereplace = "auto" })
+	require("jdtls.dap").setup_dap_main_class_configs()
+	require("jdtls.setup").add_commands()
+	if client.server_capabilities.inlayHintProvider then
+		vim.lsp.inlay_hint.enable(true)
+	end
+	vim.api.nvim_buf_create_user_command(bufnr, "A", function()
+		require("jdtls.tests").goto_subjects()
+	end, {})
+	-- Create a command `:Format` local to the LSP buffer
+	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
+		vim.lsp.buf.format()
+	end, { desc = "Format current buffer with LSP" })
+
+	require("lsp_signature").on_attach({
+		bind = true,
+		padding = "",
+		handler_opts = {
+			border = "rounded",
+		},
+		hint_prefix = "󱄑 ",
+	}, bufnr)
+end
+
 vim.lsp.config("jdtls", {
 	cmd = {
 		"jdtls",
@@ -132,29 +156,8 @@ vim.lsp.config("jdtls", {
 		"settings.gradle", -- Gradle
 		"settings.gradle.kts", -- Gradle
 	},
-	capabilities = capabilities,
-	on_attach = function(client, bufnr)
-		jdtls.setup_dap({ hotcodereplace = "auto" })
-		require("jdtls.dap").setup_dap_main_class_configs()
-		require("jdtls.setup").add_commands()
-		if client.server_capabilities.inlayHintProvider then
-			vim.lsp.inlay_hint.enable(true)
-		end
-
-		-- Create a command `:Format` local to the LSP buffer
-		vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
-			vim.lsp.buf.format()
-		end, { desc = "Format current buffer with LSP" })
-
-		require("lsp_signature").on_attach({
-			bind = true,
-			padding = "",
-			handler_opts = {
-				border = "rounded",
-			},
-			hint_prefix = "󱄑 ",
-		}, bufnr)
-	end,
+	capabilities = common.capabilities,
+	on_attach = on_attach,
 
 	init_options = {
 
@@ -191,6 +194,7 @@ vim.lsp.config("jdtls", {
 			overrideMethodsPromptSupport = true,
 		},
 	},
+
 	handlers = {
 		-- Due to an invalid protocol implementation in the jdtls we have to conform these to be spec compliant.
 		-- https://github.com/eclipse/eclipse.jdt.ls/issues/376
@@ -206,11 +210,10 @@ vim.lsp.config("jdtls", {
 	-- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
 	settings = {
 		java = {
-			-- TODO Replace this with the absolute path to your main java version (JDK 17 or higher)
-			home = java_home,
 			eclipse = {
 				downloadSources = true,
 			},
+			maxConcurrentBuilds = 8,
 			configuration = {
 				updateBuildConfiguration = "interactive",
 				-- TODO Update this by adding any runtimes that you need to support your Java projects and removing any that you don't have installed
@@ -218,7 +221,7 @@ vim.lsp.config("jdtls", {
 				runtimes = {
 					{
 						name = "Java-25.01",
-						path = "~/.sdkman/candidates/java/current",
+						path = "~/.sdkman/candidates/java/25.0.1-amzn/",
 					},
 				},
 			},
@@ -324,6 +327,9 @@ vim.lsp.config("jdtls", {
 					"#",
 				},
 			},
+			saveActions = {
+				organizeImports = true,
+			},
 			sources = {
 				organizeImports = {
 					starThreshold = 9999,
@@ -335,6 +341,7 @@ vim.lsp.config("jdtls", {
 					template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
 				},
 				useBlocks = true,
+				addFinalForNewDeclaration = "fields",
 				hashCodeEquals = {
 					useJava7Objects = true,
 				},

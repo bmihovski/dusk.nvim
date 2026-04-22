@@ -143,9 +143,6 @@ keymap(
 )
 -- undo
 keymap("n", "<leader>u", "<cmd>Telescope undo<cr>", opts)
--- refactoring
-keymap("n", "<leader>rf", "<cmd>lua require('telescope').extensions.refactoring.refactors()<cr>", opts)
-keymap("x", "<leader>rf", "<cmd>lua require('telescope').extensions.refactoring.refactors()<cr>", opts)
 -- DAP
 keymap("n", "<F5>", "<cmd> DapToggleBreakpoint <cr>", opts)
 keymap("n", "<leader>o", "<cmd> DapStepOut <cr>", opts)

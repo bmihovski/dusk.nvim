@@ -13,6 +13,7 @@ local api = vim.api
 local lspgroup = api.nvim_create_augroup("lsp", {})
 local completion_convert = {}
 local setk = vim.keymap.set
+local lsp_auto_complete_enabled = false
 
 completion_convert.zls = function(item)
 	if item.filterText then
@@ -44,7 +45,7 @@ api.nvim_create_autocmd("LspAttach", {
 	callback = function(args)
 		local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
 
-		if client.server_capabilities.completionProvider then
+		if client.server_capabilities.completionProvider and lsp_auto_complete_enabled then
 			extendtriggers(client)
 			vim.lsp.completion.enable(true, client.id, args.buf, {
 				autotrigger = true,
