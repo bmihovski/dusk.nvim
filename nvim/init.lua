@@ -526,7 +526,7 @@ require("lazy").setup({
 				"nvim-lua/plenary.nvim",
 				"jvgrootveld/telescope-zoxide",
 				{
-					"ahmedkhalf/project.nvim",
+					"TheLeoP/project.nvim",
 					config = function()
 						require("project_nvim").setup({
 							-- Methods of detecting the root directory. **"lsp"** uses the native neovim
@@ -539,7 +539,6 @@ require("lazy").setup({
 							-- detection_methods
 							-- patterns = { ".git" },
 						})
-						require("telescope").load_extension("projects")
 					end,
 				},
 				{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
@@ -658,11 +657,8 @@ require("lazy").setup({
 						automatic_installation = true,
 						handlers = {
 							function(server_name)
-								require("lspconfig")[server_name].setup({})
+								vim.lsp.config(server_name)
 							end,
-
-							-- Disable jdtls setup, is handled by nvim-jdtls
-							["jdtls"] = function() end,
 						},
 					})
 				end,
@@ -772,6 +768,7 @@ require("lazy").setup({
 						"lemminx",
 						"marksman",
 						"emmet_ls",
+						"gradle-language-server",
 						"gradle_ls",
 						"html",
 						"cssls",

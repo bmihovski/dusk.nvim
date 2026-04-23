@@ -45,7 +45,6 @@ if ok then
 	tstools.setup({
 		on_attach = common.on_attach,
 		capabilities = common.capabilities,
-		handlers = common.handlers,
 		init_options = { hostInfo = "neovim" },
 		filetypes = {
 			"javascript",

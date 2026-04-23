@@ -1,12 +1,10 @@
 local common = require("lsp.common")
-local handlers = common.handlers
 
 vim.lsp.config.lua = {
 	cmd = { "lua-language-server" },
 	filetypes = { "lua" },
 	root_markers = { ".luarc.json", ".luarc.jsonc", "init.lua" },
 	capabilities = common.capabilities,
-	handlers = handlers,
 	settings = {
 		Lua = {
 			runtime = {

@@ -2291,7 +2291,8 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
-					model = "openai/gpt-oss-120b",
+					-- model = "openai/gpt-oss-120b",
+					model = "Qwen3_5-9B-IQ4_NL",
 					timeout = 60000000,
 				},
 				lmstudio = {
@@ -2315,7 +2316,7 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "NIM_API_KEY",
 					endpoint = "https://integrate.api.nvidia.com/v1",
-					model = "moonshotai/kimi-k2-instruct-0905",
+					model = "moonshotai/kimi-k2.5",
 					timeout = 60000000,
 				},
 				mercury = {
