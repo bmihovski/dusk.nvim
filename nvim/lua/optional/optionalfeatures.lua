@@ -2271,7 +2271,7 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
-					model = "deepseek-chat",
+					model = "deepseek-v4-flash",
 					timeout = 12000000,
 					extra_request_body = {
 						max_tokens = 8192,
