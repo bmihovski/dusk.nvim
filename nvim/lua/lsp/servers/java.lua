@@ -123,6 +123,16 @@ vim.lsp.config("jdtls", {
 	},
 	capabilities = common.capabilities,
 	on_attach = on_attach,
+	handlers = {
+		-- to enable it the second parameter should data
+		["language/status"] = function(_, _)
+			-- vim.notify(data.message, vim.log.levels.INFO)
+		end,
+
+		["$/progress"] = function(_, _)
+			-- vim.notify(data.value.message, vim.log.levels.INFO)
+		end,
+	},
 
 	init_options = {
 

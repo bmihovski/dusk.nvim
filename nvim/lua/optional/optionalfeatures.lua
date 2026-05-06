@@ -2259,10 +2259,11 @@ return {
 				},
 			},
 			provider = "copilot",
-			-- provider = "copilot",
+			-- provider = "ollama",
 			-- provider = "lmstudio",
 			-- provider = "opencode",
 			-- provider = "gemini-cli",
+			-- provider = "nvidia_nim",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "copilot",
@@ -2274,7 +2275,9 @@ return {
 					model = "deepseek-v4-flash",
 					timeout = 12000000,
 					extra_request_body = {
-						max_tokens = 8192,
+						thinking = {
+							type = "disabled",
+						},
 						temperature = 0,
 						stream = true,
 						stream_options = {
@@ -2284,7 +2287,7 @@ return {
 				},
 				ollama = {
 					-- model = "glm-5.1:cloud",
-					model = "qwen3-coder-next:cloud",
+					model = "gemma4:31b-cloud",
 					timeout = 60000000,
 				},
 				atomicChat = {
@@ -2292,32 +2295,46 @@ return {
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
 					-- model = "openai/gpt-oss-120b",
-					model = "Qwen3_5-9B-IQ4_NL",
+					model = "Qwen3.6-27B-Q4_K_M.gguf",
 					timeout = 60000000,
+					extra_request_body = {
+						max_tokens = 4096, -- Трябва да съвпада с капацитета на модела за един отговор
+						temperature = 0,
+						stream_options = {
+							include_usage = false,
+						},
+					},
 				},
 				lmstudio = {
 					__inherited_from = "openai",
 					api_key_name = "LM_STUDIO_API_KEY",
 					endpoint = "http://localhost:1234/v1",
 					-- model = "google/gemma-4-26b-a4b",
-					model = "qwen3.5-27b-claude-4.6-opus-distilled-mlx",
-					timeout = 60000000,
+					model = "qwen/qwen3.6-27b",
+					timeout = 6000000,
+					extra_request_body = {
+						max_tokens = 4096, -- Трябва да съвпада с капацитета на модела за един отговор
+						temperature = 0,
+						stream_options = {
+							include_usage = false,
+						},
+					},
 				},
 				groq = { -- define groq provider
 					__inherited_from = "openai",
 					api_key_name = "GROQ_API_KEY",
-					endpoint = "https://api.groq.com/openai/v1/",
+					endpoint = "https://api.groq.com/openai/v1",
 					model = "openai/gpt-oss-120b",
 					extra_request_body = {
 						max_completion_tokens = 65536, -- remember to increase this value, otherwise it will stop generating halfway
 					},
 				},
-				nvidia_nim = { -- define groq provider
+				nvidia_nim = {
 					__inherited_from = "openai",
 					api_key_name = "NIM_API_KEY",
 					endpoint = "https://integrate.api.nvidia.com/v1",
-					model = "moonshotai/kimi-k2.5",
-					timeout = 60000000,
+					model = "nvidia/nemotron-3-super-120b-a12b",
+					timeout = 6000000,
 				},
 				mercury = {
 					__inherited_from = "openai",
@@ -2326,7 +2343,7 @@ return {
 					model = "mercury-2",
 					extra_request_body = {
 						max_tokens = 50000, -- remember to increase this value, otherwise it will stop generating halfway
-						temperature = 0.5,
+						temperature = 0.1,
 						stream = true,
 						diffusing = false,
 						stream_options = {
@@ -2347,14 +2364,6 @@ return {
 					model = "gemini-2.5-flash-lite",
 					timeout = 1200000,
 				},
-				-- extra_request_body = {
-				-- 	generationConfig = {
-				-- 		thinkingConfig = {
-				-- 			thinkingBudget = -1,
-				-- 		},
-				-- 		temperature = 0,
-				-- 	},
-				-- },
 			},
 			rag_service = {
 				enabled = false, -- Enables the RAG service
@@ -2374,11 +2383,13 @@ return {
 			},
 			dual_boost = {
 				enabled = true,
-				-- first_provider = "deepseek",
+				-- first_provider = "atomicChat",
+				first_provider = "lmstudio",
 				-- first_provider = "mercury",
-				first_provider = "ollama",
+				-- first_provider = "ollama",
+				-- first_provider = "nvidia_nim",
 				-- second_provider = "lmstudio",
-				-- second_provider = "atomicChat",
+				-- second_provider = "deepseek",
 				second_provider = "nvidia_nim",
 				timeout = 60000000, -- Timeout in milliseconds
 			},
@@ -2740,11 +2751,12 @@ return {
 			"nvim-neotest/nvim-nio",
 		},
 		opts = {
+			log_level = vim.log.levels.OFF,
 			adapters = {
 				-- Python
 				["neotest-python"] = {
 					dap = { justMyCode = false },
-					args = { "--log-level", "DEBUG" },
+					args = { "--log-level", "INFO" },
 					runner = "pytest",
 					python = (function()
 						local py = vim.fn.exepath("python3")
@@ -2755,6 +2767,9 @@ return {
 				-- Java
 				["neotest-java"] = {
 					jvm_args = { "-Xmx1024m" },
+					opts = {
+						log_level = vim.log.levels.OFF,
+					},
 				},
 				-- Load with default config
 				["neotest-ctest"] = {}, -- C/C++ Google Test

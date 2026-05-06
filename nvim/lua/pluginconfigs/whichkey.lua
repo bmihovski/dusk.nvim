@@ -662,7 +662,6 @@ local mappings = {
 	{ "<leader>ff", "<cmd>Telescope find_files hidden=true <cr>", desc = "Files" },
 	{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help" },
 	{ "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
-	{ "<leader>fp", "<cmd>Telescope projects <CR>", desc = "Projects" },
 	{ "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
 	{ "<leader>fR", "<cmd>Telescope resume<cr>", desc = "Telescope Resume" },
 	{ "<leader>fz", "<cmd>Telescope zoxide list<cr>", desc = "zoxide list" },
@@ -919,7 +918,7 @@ local mappings = {
 	{ "<leader>Jc", '<cmd>:lua require("springboot-nvim").generate_class()<cr>', desc = "[J]ava Create [C]lass" },
 	-- set a vim motion to <Space> + <Shift>J + i to open the generate interface ui to create an interface
 	{
-		"<leader>Ji",
+		"<leader>Js",
 		"<cmd>Springtime<cr>",
 		desc = "[J]ava Spring [I]nitializer",
 	},

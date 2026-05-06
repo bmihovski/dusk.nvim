@@ -492,7 +492,7 @@ require("lazy").setup({
 				-- Rename packages and imports also when renaming/moving files via nvim-tree.
 				-- Currently works only for tsserver (used in Angular development)
 				{
-					"antosha417/nvim-lsp-file-operations",
+					"ghimiresunil/nvim-lsp-file-operations",
 					config = function()
 						require("lsp-file-operations").setup()
 					end,
@@ -525,22 +525,6 @@ require("lazy").setup({
 			dependencies = {
 				"nvim-lua/plenary.nvim",
 				"jvgrootveld/telescope-zoxide",
-				{
-					"TheLeoP/project.nvim",
-					config = function()
-						require("project_nvim").setup({
-							-- Methods of detecting the root directory. **"lsp"** uses the native neovim
-							-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
-							-- order matters: if one is not detected, the other is used as fallback. You
-							-- can also delete or rearangne the detection methods.
-							-- detection_methods = { "pattern", "lsp" },
-
-							-- All the patterns used to detect root dir, when **"pattern"** is in
-							-- detection_methods
-							-- patterns = { ".git" },
-						})
-					end,
-				},
 				{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
 			},
 			config = function()
@@ -1064,7 +1048,7 @@ require("lazy").setup({
 							"-Xmx4G",
 							"-XX:+UseZGC",
 							"-Dsts.lsp.client=vscode",
-							"-Dsts.log.file=" .. os.getenv("HOME") .. "/.local/state/nvim/spring-boot.log",
+							"-Dsts.log.file=/tmp/spring-boot.log",
 							"-jar",
 							ls_path,
 						},
@@ -1110,6 +1094,23 @@ require("lazy").setup({
 						},
 					},
 					filetypes = ft.sonar,
+				})
+				-- this is really dumb, but sonarlint.nvim spams notifications about progress without a clear way to disable it.
+				-- the below autocmd silences those notifications so it's not distracting while I type.
+				local sonarlint_group = vim.api.nvim_create_augroup("SilenceSonarLint", { clear = true })
+				vim.api.nvim_create_autocmd("LspAttach", {
+					group = sonarlint_group,
+					callback = function(args)
+						-- Get the client that just attached
+						local client = vim.lsp.get_client_by_id(args.data.client_id)
+
+						-- Check if the client is sonarlint
+						if client and client.name == "sonarlint.nvim" then
+							-- This directly overrides the handler for this specific client,
+							-- silencing the progress notifications.
+							client.handlers["$/progress"] = function() end
+						end
+					end,
 				})
 			end,
 		},
