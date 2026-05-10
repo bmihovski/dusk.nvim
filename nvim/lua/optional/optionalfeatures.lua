@@ -2287,10 +2287,13 @@ return {
 				},
 				ollama = {
 					-- model = "glm-5.1:cloud",
-					model = "gemma4:31b-cloud",
+					model = "qwen3.6:27b-coding-nvfp4",
 					timeout = 60000000,
+					extra_request_body = {
+						think = false,
+					},
 				},
-				atomicChat = {
+				jan = {
 					__inherited_from = "openai",
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
@@ -2356,8 +2359,8 @@ return {
 					timeout = 1200000,
 				},
 				copilot = {
-					model = "claude-haiku-4.5",
-					-- model = "gemini-2.5-pro",
+					-- model = "claude-haiku-4.5",
+					model = "gemini-3-flash-preview",
 					timeout = 12000000,
 				},
 				gemini = {
@@ -2383,10 +2386,10 @@ return {
 			},
 			dual_boost = {
 				enabled = true,
-				-- first_provider = "atomicChat",
-				first_provider = "lmstudio",
+				-- first_provider = "jan",
+				-- first_provider = "lmstudio",
 				-- first_provider = "mercury",
-				-- first_provider = "ollama",
+				first_provider = "ollama",
 				-- first_provider = "nvidia_nim",
 				-- second_provider = "lmstudio",
 				-- second_provider = "deepseek",

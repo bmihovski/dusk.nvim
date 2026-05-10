@@ -8,6 +8,7 @@ require("lsp.servers.json")
 -- require("lsp.servers.typescript")
 require("lsp.servers.prisma")
 require("lsp.servers.rust")
+require("lsp.servers.pyright")
 require("lsp.servers.kotlin")
 require("lsp.servers.other")
 local api = vim.api
