@@ -2298,7 +2298,7 @@ return {
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
 					-- model = "openai/gpt-oss-120b",
-					model = "Qwen3.6-27B-Q4_K_M.gguf",
+					model = "model.gguf",
 					timeout = 60000000,
 					extra_request_body = {
 						max_tokens = 4096, -- Трябва да съвпада с капацитета на модела за един отговор

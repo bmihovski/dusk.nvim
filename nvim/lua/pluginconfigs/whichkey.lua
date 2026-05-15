@@ -573,7 +573,6 @@ local mappings = {
 	{ "<leader>cf", "<cmd>lua require('conform').format({async = true})<CR>", desc = "Format Document" },
 	{ "<leader>cn", ":Lspsaga diagnostic_jump_next<cr>", desc = "Next Diagnostic" },
 	{ "<leader>cb", ":Lspsaga goto_definition<cr>", desc = "GoTo Definition" },
-	{ "<leader>ci", ":Lspsaga goto_type_definition<cr>", desc = "GoTo TypeDefinition" },
 	{ "<leader>co", ":Lspsaga outline<cr>", desc = "Code Outline" },
 	{ "<leader>cp", ":Lspsaga diagnostic_jump_prev<cr>", desc = "Prev Diagnostic" },
 	{ "<leader>cq", ":Trouble quickfix focus = true<cr>", desc = "Diagnostics Quickfix" },
