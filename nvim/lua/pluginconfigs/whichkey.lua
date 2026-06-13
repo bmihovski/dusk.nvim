@@ -564,7 +564,7 @@ local mappings = {
 		desc = "Current buffer Diagnostics",
 	},
 	{ "<leader>ca", ":lua vim.lsp.buf.code_action()<cr>", desc = "Code Action" },
-	{ "<leader>cd", ":Neogen<cr>", desc = "generate code docs" },
+	{ "<leader>cD", ":Neogen<cr>", desc = "generate code docs" },
 	{
 		"<leader>ce",
 		":Trouble diagnostics filter.severity=vim.diagnostic.severity.ERROR<cr>",
@@ -577,7 +577,22 @@ local mappings = {
 	{ "<leader>cp", ":Lspsaga diagnostic_jump_prev<cr>", desc = "Prev Diagnostic" },
 	{ "<leader>cq", ":Trouble quickfix focus = true<cr>", desc = "Diagnostics Quickfix" },
 	{ "<leader>cr", ":Lspsaga rename<cr>", desc = "Rename in current buffer" },
-	{ "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", desc = "Documents Symbols" },
+	-- Displays hover information about the symbol under the cursor
+	{ "<leader>ch", "<cmd>Lspsaga hover_doc<cr>", desc = "Hover Doc" },
+
+	-- Peek definition
+	{ "<leader>cm", "<cmd>Lspsaga peek_definition<cr>", desc = "Peek Definition" },
+
+	-- Lists all the implementations for the symbol under the cursor
+	{ "<leader>ci", "<cmd>Lspsaga finder imp<cr>", desc = "Find Implementations" },
+
+	-- Lists all the references
+	{ "<leader>c/", "<cmd>Lspsaga finder<cr>", desc = "Find References" },
+	-- List all supertypes for the symbol under the cursor
+	{ "<leader>cs", "<cmd>Lspsaga supertypes<cr>", desc = "Find Super Types" },
+	-- List all subtypes for the symbol under the cursor
+	{ "<leader>cd", "<cmd>Lspsaga subtypes<cr>", desc = "Find Sub Types" },
+	{ "<leader>cS", "<cmd>Telescope lsp_document_symbols<cr>", desc = "Documents Symbols" },
 	{ "<leader>cW", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", desc = "Workspace Symbols" },
 	{ "<leader>cw", ":FixDosFormat<cr>", desc = "Fix Dos Format" },
 	{ "<C-p>", ":lua require('ufo.preview'):peekFoldedLinesUnderCursor()<cr>", desc = "Peek inside fold." },
@@ -666,22 +681,22 @@ local mappings = {
 	{ "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
 	{ "<leader>fR", "<cmd>Telescope resume<cr>", desc = "Telescope Resume" },
 	{ "<leader>fz", "<cmd>Telescope zoxide list<cr>", desc = "zoxide list" },
-	{ "<leader>g", group = "Git" },
-	{ "<leader>gD", ":DiffviewClose<cr>", desc = "Close Diff" },
-	{ "<leader>gP", ":lua require 'gitsigns'.preview_hunk()<cr>", desc = "Preview Hunk" },
-	{ "<leader>gR", ":lua require 'gitsigns'.reset_buffer()<cr>", desc = "Reset Buffer" },
-	{ "<leader>gb", ":Telescope git_branches<cr>", desc = "Checkout branch" },
-	{ "<leader>gc", ":Telescope git_commits<cr>", desc = "Checkout commit" },
-	{ "<leader>gd", ":DiffviewOpen<cr>", desc = "Open Diff" },
-	{ "<leader>gg", ":LazyGit<cr>", desc = "Lazygit" },
-	{ "<leader>gl", ":lua require 'gitsigns'.blame_line()<cr>", desc = "Blame" },
-	{ "<leader>gn", ":lua require 'gitsigns'.next_hunk()<cr>", desc = "Next Hunk" },
-	{ "<leader>go", ":Telescope git_status<cr>", desc = "Open changed file" },
-	{ "<leader>gp", ":lua require 'gitsigns'.prev_hunk()<cr>", desc = "Prev Hunk" },
-	{ "<leader>gr", ":lua require 'gitsigns'.reset_hunk()<cr>", desc = "Reset Hunk" },
-	{ "<leader>gs", ":lua require 'gitsigns'.stage_hunk()<cr>", desc = "Stage Hunk" },
+	{ "<leader>v", group = "Git" },
+	{ "<leader>vD", ":DiffviewClose<cr>", desc = "Close Diff" },
+	{ "<leader>vP", ":lua require 'gitsigns'.preview_hunk()<cr>", desc = "Preview Hunk" },
+	{ "<leader>vR", ":lua require 'gitsigns'.reset_buffer()<cr>", desc = "Reset Buffer" },
+	{ "<leader>vb", ":Telescope git_branches<cr>", desc = "Checkout branch" },
+	{ "<leader>vc", ":Telescope git_commits<cr>", desc = "Checkout commit" },
+	{ "<leader>vd", ":DiffviewOpen<cr>", desc = "Open Diff" },
+	{ "<leader>vg", ":LazyGit<cr>", desc = "Lazygit" },
+	{ "<leader>vl", ":lua require 'gitsigns'.blame_line()<cr>", desc = "Blame" },
+	{ "<leader>vn", ":lua require 'gitsigns'.next_hunk()<cr>", desc = "Next Hunk" },
+	{ "<leader>vo", ":Telescope git_status<cr>", desc = "Open changed file" },
+	{ "<leader>vp", ":lua require 'gitsigns'.prev_hunk()<cr>", desc = "Prev Hunk" },
+	{ "<leader>vr", ":lua require 'gitsigns'.reset_hunk()<cr>", desc = "Reset Hunk" },
+	{ "<leader>vs", ":lua require 'gitsigns'.stage_hunk()<cr>", desc = "Stage Hunk" },
 	{
-		"<leader>gu",
+		"<leader>vu",
 		":lua require 'gitsigns'.undo_stage_hunk()<cr>",
 		desc = "Undo Stage Hunk",
 	},

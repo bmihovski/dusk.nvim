@@ -191,6 +191,10 @@ vim.lsp.config("jdtls", {
 						name = "Java-25.01",
 						path = "~/.sdkman/candidates/java/25.0.1-amzn/",
 					},
+					{
+						name = "Java-21.0.11",
+						path = "~/.sdkman/candidates/java/21.0.11-amzn/",
+					},
 				},
 			},
 			maven = {

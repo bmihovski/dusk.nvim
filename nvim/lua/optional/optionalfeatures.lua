@@ -1191,32 +1191,32 @@ return {
 					-- 	-- post-launch.
 					-- 	model = "PLACEHOLDER",
 					-- },
-					openai_fim_compatible = {
-						api_key = "TERM",
-						name = "Llama.cpp",
-						end_point = "http://127.0.0.1:1234/v1/completions",
-						-- end_point = "http://127.0.0.1:58081/v1/completions",
-						-- The model is set by the llama-cpp server and cannot be altered
-						-- post-launch.
-						model = "PLACEHOLDER",
-						optional = {
-							max_tokens = 56,
-							top_p = 0.9,
-						},
-						-- Llama.cpp does not support the `suffix` option in FIM completion.
-						-- Therefore, we must disable it and manually populate the special
-						-- tokens required for FIM completion.
-						template = {
-							prompt = function(context_before_cursor, context_after_cursor, _)
-								return "<|fim_prefix|>"
-									.. context_before_cursor
-									.. "<|fim_suffix|>"
-									.. context_after_cursor
-									.. "<|fim_middle|>"
-							end,
-							suffix = false,
-						},
-					},
+					-- openai_fim_compatible = {
+					-- 	api_key = "TERM",
+					-- 	name = "Llama.cpp",
+					-- 	end_point = "http://127.0.0.1:1234/v1/completions",
+					-- 	-- end_point = "http://127.0.0.1:58081/v1/completions",
+					-- 	-- The model is set by the llama-cpp server and cannot be altered
+					-- 	-- post-launch.
+					-- 	model = "PLACEHOLDER",
+					-- 	optional = {
+					-- 		max_tokens = 56,
+					-- 		top_p = 0.9,
+					-- 	},
+					-- 	-- Llama.cpp does not support the `suffix` option in FIM completion.
+					-- 	-- Therefore, we must disable it and manually populate the special
+					-- 	-- tokens required for FIM completion.
+					-- 	template = {
+					-- 		prompt = function(context_before_cursor, context_after_cursor, _)
+					-- 			return "<|fim_prefix|>"
+					-- 				.. context_before_cursor
+					-- 				.. "<|fim_suffix|>"
+					-- 				.. context_after_cursor
+					-- 				.. "<|fim_middle|>"
+					-- 		end,
+					-- 		suffix = false,
+					-- 	},
+					-- },
 					openai = {
 						optional = {
 							max_tokens = 256,
@@ -2220,7 +2220,8 @@ return {
 	{
 		"yetone/avante.nvim",
 		event = "VeryLazy",
-		version = false,
+		version = "v0.0.29",
+		-- version = false,
 		build = "make",
 		opts = {
 			debug = false,
@@ -2258,12 +2259,13 @@ return {
 					auth_method = "gemini-api-key",
 				},
 			},
-			provider = "copilot",
+			-- provider = "copilot",
 			-- provider = "ollama",
 			-- provider = "lmstudio",
 			-- provider = "opencode",
-			-- provider = "gemini-cli",
+			-- provider = "llm7",
 			-- provider = "nvidia_nim",
+			provider = "deepseek",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "copilot",
@@ -2272,25 +2274,37 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "DEEPSEEK_CHAT_API_KEY",
 					endpoint = "https://api.deepseek.com",
-					model = "deepseek-v4-flash",
+					model = "deepseek-v4-pro",
 					timeout = 12000000,
 					extra_request_body = {
-						thinking = {
-							type = "disabled",
-						},
-						temperature = 0,
+						-- thinking = {
+						-- 	type = "disabled",
+						-- },
+						temperature = 0.2,
 						stream = true,
 						stream_options = {
 							include_usage = false,
 						},
 					},
 				},
+				mistral = {
+					__inherited_from = "openai",
+					api_key_name = "MISTRAL_API_KEY",
+					endpoint = "https://api.mistral.ai/v1",
+					model = "mistral-code-latest",
+					timeout = 12000000,
+				},
 				ollama = {
-					-- model = "glm-5.1:cloud",
-					model = "qwen3.6:27b-coding-nvfp4",
+					model = "gemma4:31b-cloud",
+					-- model = "qwen3.6:35b-a3b-coding-nvfp4",
 					timeout = 60000000,
+					is_env_set = function()
+						return require("avante.providers.ollama").check_endpoint_alive()
+					end,
 					extra_request_body = {
-						think = false,
+						temperature = 0.2,
+						stream = true,
+						-- think = false,
 					},
 				},
 				jan = {
@@ -2298,11 +2312,11 @@ return {
 					api_key_name = "",
 					endpoint = "http://localhost:1337/v1",
 					-- model = "openai/gpt-oss-120b",
-					model = "model.gguf",
+					-- model = "model.gguf",
+					model = "gemma4:31b-cloud",
 					timeout = 60000000,
 					extra_request_body = {
-						max_tokens = 4096, -- Трябва да съвпада с капацитета на модела за един отговор
-						temperature = 0,
+						temperature = 0.2,
 						stream_options = {
 							include_usage = false,
 						},
@@ -2312,12 +2326,11 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "LM_STUDIO_API_KEY",
 					endpoint = "http://localhost:1234/v1",
-					-- model = "google/gemma-4-26b-a4b",
-					model = "qwen/qwen3.6-27b",
+					-- model = "qwopus3.5-9b-coder-mtp",
+					model = "mellum2-12b-a2.5b-thinking",
 					timeout = 6000000,
 					extra_request_body = {
-						max_tokens = 4096, -- Трябва да съвпада с капацитета на модела за един отговор
-						temperature = 0,
+						temperature = 0.2,
 						stream_options = {
 							include_usage = false,
 						},
@@ -2337,6 +2350,28 @@ return {
 					api_key_name = "NIM_API_KEY",
 					endpoint = "https://integrate.api.nvidia.com/v1",
 					model = "nvidia/nemotron-3-super-120b-a12b",
+					timeout = 6000000,
+					extra_request_body = {
+						temperature = 0.2,
+						stream_options = {
+							include_usage = false,
+						},
+					},
+				},
+				llm7 = {
+					__inherited_from = "openai",
+					api_key_name = "LLM7_API_KEY",
+					endpoint = "https://api.llm7.io/v1",
+					model = "codestral-latest",
+					timeout = 6000000,
+				},
+				cloudFlare = {
+					__inherited_from = "openai",
+					api_key_name = "CLOUDFLARE_API_KEY",
+					endpoint = "https://api.cloudflare.com/client/v4/accounts/"
+						.. os.getenv("CLOUDFLARE_ACCOUNT_ID")
+						.. "/ai/v1",
+					model = "@cf/moonshotai/kimi-k2.6",
 					timeout = 6000000,
 				},
 				mercury = {
@@ -2359,9 +2394,15 @@ return {
 					timeout = 1200000,
 				},
 				copilot = {
-					-- model = "claude-haiku-4.5",
-					model = "gemini-3-flash-preview",
+					model = "claude-haiku-4.5",
+					-- model = "gpt-5-mini",
 					timeout = 12000000,
+					extra_request_body = {
+						temperature = 0.2,
+						stream_options = {
+							include_usage = false,
+						},
+					},
 				},
 				gemini = {
 					model = "gemini-2.5-flash-lite",
@@ -2385,12 +2426,14 @@ return {
 				},
 			},
 			dual_boost = {
-				enabled = true,
-				-- first_provider = "jan",
+				enabled = false,
+				-- first_provider = "copilot",
 				-- first_provider = "lmstudio",
 				-- first_provider = "mercury",
-				first_provider = "ollama",
+				-- first_provider = "ollama",
+				-- first_provider = "cloudFlare",
 				-- first_provider = "nvidia_nim",
+				first_provider = "mistral",
 				-- second_provider = "lmstudio",
 				-- second_provider = "deepseek",
 				second_provider = "nvidia_nim",

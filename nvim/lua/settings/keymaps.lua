@@ -207,25 +207,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			vim.keymap.set(mode, lhs, rhs, lspopts)
 		end
 
-		-- Displays hover information about the symbol under the cursor
-		bufmap("n", "K", "<cmd>Lspsaga hover_doc<cr>")
-
-		-- Peek definition
-		bufmap("n", "gd", "<cmd>Lspsaga peek_definition<cr>")
-
-		-- Jump to definition
-		bufmap("n", "gD", "<cmd>lua vim.lsp.buf.definition()<cr>")
-
-		-- Lists all the implementations for the symbol under the cursor
-		bufmap("n", "gi", "<cmd>Lspsaga finder imp<cr>")
 
 		-- Jumps to the definition of the type symbol
 		bufmap("n", "go", "<cmd>lua vim.lsp.buf.type_definition()<cr>")
-
-		-- Lists all the references
-		-- bufmap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>')
-		bufmap("n", "gr", "<cmd>Lspsaga finder<cr>")
-
+		-- Jump to definition
+		bufmap("n", "gD", "<cmd>lua vim.lsp.buf.definition()<cr>")
 		-- Displays a function's signature information
 		bufmap("n", "L", "<cmd>lua vim.lsp.buf.signature_help()<cr>")
 
