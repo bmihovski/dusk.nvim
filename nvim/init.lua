@@ -809,7 +809,6 @@ require("lazy").setup({
 						"rust-analyzer",
 						"tailwindcss-language-server",
 						"biome",
-						"vectorcode",
 						"htmlbeautifier",
 						"tree-sitter-cli",
 						"marksman",
