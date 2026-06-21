@@ -494,6 +494,7 @@ local mappings = {
 	{ "<leader>am", "<cmd>CopilotChatModels<cr>", desc = "Select Models" },
 	-- VectorCode register buffer
 	{ "<leader>av", "<cmd>VectorCode register<cr>", desc = "VectorCode Register Buffer" },
+	{ "<leader>ad", "<cmd>ClaudeCode<cr>", desc = "[C]laude [C]ode" },
 	{ "<leader>B", group = "Bazel" },
 	{ "<leader>Bb", "<cmd>BazelBuildFile<cr>", desc = "Bazel Build File" },
 	{ "<leader>Bm", "<cmd>BazelModuleFile<cr>", desc = "Bazel Module File" },
@@ -549,7 +550,6 @@ local mappings = {
 	{ "<leader>St", "<cmd>ClangdTypeHierarchy<cr>", desc = "Display Type Hierarchy" },
 	{ "<leader>Sw", "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch Source/Header" },
 	{ "<leader>Sy", "<cmd>ClangdCallHierarchy<cr>", desc = "Display Call Hierarchy" },
-	{ "<leader>add", ":Alpha", desc = "Dashboard" },
 	{ "<leader>b", group = "Buffer" },
 	{ "<leader>bK", "<cmd>BufDelOthers<cr>", desc = "Close all buffers except current" },
 	{ "<leader>bb", "<cmd>Telescope buffers theme=dropdown<cr>", desc = "Buffer List" },
