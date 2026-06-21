@@ -114,6 +114,7 @@ vim.lsp.config("jdtls", {
 	filetypes = { "java" },
 	root_markers = {
 		".git",
+		"bnd.bnd",
 		"build.gradle",
 		"build.gradle.kts",
 		"build.xml", -- Ant
@@ -187,10 +188,6 @@ vim.lsp.config("jdtls", {
 				-- TODO Update this by adding any runtimes that you need to support your Java projects and removing any that you don't have installed
 				-- The runtime name parameters need to match specific Java execution environments.  See https://github.com/tamago324/nlsp-settings.nvim/blob/2a52e793d4f293c0e1d61ee5794e3ff62bfbbb5d/schemas/_generated/jdtls.json#L317-L334
 				runtimes = {
-					{
-						name = "Java-25.01",
-						path = "~/.sdkman/candidates/java/25.0.1-amzn/",
-					},
 					{
 						name = "Java-21.0.11",
 						path = "~/.sdkman/candidates/java/21.0.11-amzn/",

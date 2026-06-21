@@ -2454,19 +2454,22 @@ return {
 				},
 			},
 			rag_service = {
-				enabled = false, -- Enables the RAG service
+				enabled = true, -- Enables the RAG service
 				llm = {
-					host_mount = os.getenv("HOME") .. "/Workspace/py-adp/", -- Host mount path for the rag service
-					provider = "openai", -- The provider to use for RAG service (e.g. openai or ollama)
+					host_mount = os.getenv("HOME") .. "/Workspace/AGEERA-EMS", -- Host mount path for the rag service
+					provider = "ollama",
+					endpoint = "http://host.docker.internal:11434",
+					model = "llama3.2", -- change to mistral-nemo, qwen2.5:14b, etc.
 					extra = { -- Extra configuration options for the LLM (optional)
-						max_completion_tokens = 32768,
 						temperature = 0.3, -- Controls the randomness of the output. Lower values make it more deterministic.
-						timeout = 120, -- Request timeout in seconds.
+						timeout = 12000, -- Request timeout in seconds.
 					},
 				},
 				embed = {
-					model = "text-embedding-3-large", -- The embedding model to use for RAG service
-					dimensions = 1024,
+					provider = "ollama",
+					endpoint = "http://host.docker.internal:11434",
+					model = "qwen3-embedding", -- switch to bge-m3, snowflake-arctic-embed, etc.
+					extra = { embed_batch_size = 10 },
 				},
 			},
 			dual_boost = {
@@ -2718,6 +2721,41 @@ return {
 	{
 		"bfrg/vim-c-cpp-modern",
 		ft = { "hpp", "h", "cpp", "c" },
+	},
+	-- java maven and gradle
+	{
+		"oclay1st/maven.nvim",
+		cmd = { "Maven", "MavenInit", "MavenExec" },
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+		},
+		opts = {}, -- options, see default configuration
+		keys = {
+			{
+				"<Leader>M",
+				function()
+					require("maven").toggle_projects_view()
+				end,
+				desc = "Maven",
+			},
+		},
+	},
+	{
+		"oclay1st/gradle.nvim",
+		cmd = { "Gradle", "GradleExec", "GradleInit" },
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+		},
+		opts = {}, -- options, see default configuration
+		keys = {
+			{
+				"<Leader>G",
+				function()
+					require("gradle").toggle_projects_view()
+				end,
+				desc = "Gradle",
+			},
+		},
 	},
 	{
 		"rcasia/neotest-java",
