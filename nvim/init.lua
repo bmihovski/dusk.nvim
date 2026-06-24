@@ -1198,7 +1198,7 @@ require("lazy").setup({
 						typescriptreact = { "prettierd", "prettier" },
 						json = { "jq" },
 						graphql = { "prettierd", "prettier" },
-						java = { "google-java-format" },
+						java = { "jdtls" },
 						kotlin = { "ktlint" },
 						markdown = {
 							"delete_single_space_before_marks",
@@ -1224,6 +1224,48 @@ require("lazy").setup({
 						timeout_ms = 500,
 						lsp_fallback = true,
 					},
+				})
+			end,
+		},
+		{
+			"mfussenegger/nvim-lint",
+			event = { "BufReadPre", "BufNewFile" },
+			config = function()
+				local lint = require("lint")
+
+				require("lint.linters.checkstyle").config_file =
+					vim.fn.expand("$HOME/.config/checkstyle/checkstyle.xml")
+
+				lint.linters_by_ft = {
+					-- add linters here
+					javascript = { "eslint_d" },
+					typescript = { "eslint_d" },
+					python = { "ruff" },
+					java = { "checkstyle" },
+					c = { "cppcheck" },
+					cpp = { "cppcheck" },
+				}
+
+				local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+
+				vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter", "InsertLeave" }, {
+					group = lint_augroup,
+					callback = function()
+						lint.try_lint()
+					end,
+				})
+			end,
+		},
+		-- automatically install via mason
+		{
+			"rshkarin/mason-nvim-lint",
+			dependencies = { "mason.nvim", "nvim-lint" },
+			-- lazy = false, -- annoying
+			event = "VeryLazy",
+			config = function()
+				require("mason-nvim-lint").setup({
+					ensure_installed = { "eslint_d", "ruff", "checkstyle" },
+					ignore_install = { "cppcheck" },
 				})
 			end,
 		},

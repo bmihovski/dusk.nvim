@@ -724,11 +724,6 @@ local mappings = {
 	},
 	{ "<leader>je", "<Cmd>JdtSetRuntime<CR>", desc = "Choose Java Runtime" },
 	{
-		"<leader>jf",
-		"<cmd>lua require('conform').format({async = true})<cr>",
-		desc = "Format with Google Java Format",
-	},
-	{
 		"<leader>jg",
 		"<cmd>lua require('jdtls.tests').generate()<cr>",
 		desc = "Generate tests for current Class",

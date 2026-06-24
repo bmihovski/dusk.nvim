@@ -2305,11 +2305,11 @@ return {
 			},
 			-- provider = "copilot",
 			-- provider = "ollama",
-			-- provider = "lmstudio",
+			provider = "lmstudio",
 			-- provider = "opencode",
 			-- provider = "llm7",
 			-- provider = "nvidia_nim",
-			provider = "deepseek",
+			-- provider = "deepseek",
 			mode = "legacy",
 			cursor_applying_provider = "groq",
 			auto_suggestions_provider = "copilot",
@@ -2368,7 +2368,7 @@ return {
 				},
 				lmstudio = {
 					__inherited_from = "openai",
-					api_key_name = "LM_STUDIO_API_KEY",
+					api_key_name = "",
 					endpoint = "http://localhost:1234/v1",
 					-- model = "qwopus3.5-9b-coder-mtp",
 					model = "mellum2-12b-a2.5b-thinking",
@@ -2454,21 +2454,17 @@ return {
 				},
 			},
 			rag_service = {
-				enabled = true, -- Enables the RAG service
+				enabled = false, -- Enables the RAG service
 				llm = {
 					host_mount = os.getenv("HOME") .. "/Workspace/AGEERA-EMS", -- Host mount path for the rag service
 					provider = "ollama",
 					endpoint = "http://host.docker.internal:11434",
-					model = "llama3.2", -- change to mistral-nemo, qwen2.5:14b, etc.
-					extra = { -- Extra configuration options for the LLM (optional)
-						temperature = 0.3, -- Controls the randomness of the output. Lower values make it more deterministic.
-						timeout = 12000, -- Request timeout in seconds.
-					},
+					model = "llama2", -- change to mistral-nemo, qwen2.5:14b, etc.
 				},
 				embed = {
 					provider = "ollama",
 					endpoint = "http://host.docker.internal:11434",
-					model = "qwen3-embedding", -- switch to bge-m3, snowflake-arctic-embed, etc.
+					model = "nomic-embed-text", -- switch to bge-m3, snowflake-arctic-embed, etc.
 					extra = { embed_batch_size = 10 },
 				},
 			},
