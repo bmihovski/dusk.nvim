@@ -1,5 +1,5 @@
 require("lsp.servers.clangd")
-require("lsp.servers.java")
+-- require("lsp.servers.java")
 require("lsp.servers.gradle")
 require("lsp.servers.lua")
 require("lsp.servers.marksman")

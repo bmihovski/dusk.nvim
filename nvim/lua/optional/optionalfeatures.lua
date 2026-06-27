@@ -2241,6 +2241,7 @@ return {
 	{
 		"folke/snacks.nvim",
 		priority = 1000,
+		enabled = true,
 		lazy = false,
 		---@type snacks.Config
 		opts = {
@@ -2757,7 +2758,8 @@ return {
 		"rcasia/neotest-java",
 		ft = "java",
 		dependencies = {
-			"mfussenegger/nvim-jdtls",
+			-- "mfussenegger/nvim-jdtls",
+			"bmihovski/nvim-java",
 			"mfussenegger/nvim-dap", -- for debugging (optional)
 			"theHamsta/nvim-dap-virtual-text", -- recommended
 		},
@@ -2891,8 +2893,14 @@ return {
 				-- Java
 				["neotest-java"] = {
 					jvm_args = { "-Xmx1024m" },
-					opts = {
-						log_level = vim.log.levels.OFF,
+					-- opts = {
+					-- 	log_level = vim.log.levels.OFF,
+					-- },
+					test_classname_patterns = {
+						"^.*Tests?$",
+						"^.*IT$",
+						"^.*Spec$",
+						"^.*Test$",
 					},
 				},
 				-- Load with default config

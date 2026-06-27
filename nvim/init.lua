@@ -617,14 +617,12 @@ require("lazy").setup({
 		{
 			"mason-org/mason.nvim",
 			lazy = false,
-			config = function()
-				require("mason").setup({
-					registries = {
-						"github:bmihovski/mason-registry",
-						"github:mason-org/mason-registry",
-					},
-				})
-			end,
+			opts = {
+				registries = {
+					"github:bmihovski/mason-registry",
+					"github:mason-org/mason-registry",
+				},
+			},
 		},
 		{
 			-- LSP Configuration & Plugins
@@ -745,7 +743,7 @@ require("lazy").setup({
 
 					-- You can add more ensure installed servers based on the aliases on this list: https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
 					ensure_installed = {
-						"jdtls",
+						-- "jdtls",
 						"ts_ls",
 						"lua_ls",
 						"jsonls",
@@ -797,7 +795,6 @@ require("lazy").setup({
 						"jq",
 						"yamlfmt",
 						"omnisharp",
-						"vscode-spring-boot-tools",
 						"json-lsp",
 						"vscode-spring-boot-tools",
 						"lombok-nightly", -- still not available with mason
@@ -852,9 +849,57 @@ require("lazy").setup({
 
 		-- The Java LSP server
 		{
-			"https://codeberg.org/mfussenegger/nvim-jdtls",
-			dependencies = { "mason-org/mason.nvim", "JavaHello/spring-boot.nvim", "mfussenegger/nvim-dap" },
+			"alessio-vivaldelli/java-creator-nvim",
 			ft = "java",
+			opts = {
+				options = {
+					java_version = 21,
+					auto_open = true,
+					use_notify = true,
+				},
+				keymaps = {
+					java_new = "<leader>jn",
+					java_class = "<leader>jC",
+					java_interface = "<leader>jI",
+					java_enum = "<leader>jE",
+					java_record = "<leader>jR",
+					java_abstract_class = "<leader>jA",
+				},
+			},
+		},
+		{
+			"bmihovski/nvim-java",
+			ft = { "java" },
+			config = function()
+				require("java").setup()
+				vim.lsp.config("jdtls", {
+					root_markers = {
+						".git",
+						".gitignore",
+						"bnd.bnd",
+						"build.gradle",
+						"build.gradle.kts",
+						"build.xml", -- Ant
+						"pom.xml", -- Maven
+						"settings.gradle", -- Gradle
+						"settings.gradle.kts", -- Gradle
+					},
+					settings = {
+						java = {
+							configuration = {
+								runtimes = {
+									{
+										name = "JavaSE-21",
+										path = "~/.sdkman/candidates/java/21.0.11-amzn/",
+										default = true,
+									},
+								},
+							},
+						},
+					},
+				})
+				vim.lsp.enable("jdtls")
+			end,
 		},
 		{
 			"nvim-neo-tree/neo-tree.nvim",
@@ -985,7 +1030,7 @@ require("lazy").setup({
 			lazy = true,
 			dependencies = {
 				"neovim/nvim-lspconfig",
-				"mfussenegger/nvim-jdtls",
+				-- "mfussenegger/nvim-jdtls",
 			},
 			config = function()
 				-- gain acces to the springboot nvim plugin and its functions
@@ -1030,8 +1075,9 @@ require("lazy").setup({
 			"JavaHello/spring-boot.nvim",
 			ft = { "java", "yaml", "jproperties" },
 			dependencies = {
-				"mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
+				-- "mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
 				"ibhagwan/fzf-lua", -- optional
+				"bmihovski/nvim-java",
 			},
 			config = function()
 				local ls_path = vim.fn.expand(
