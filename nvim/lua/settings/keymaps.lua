@@ -98,21 +98,6 @@ keymap("n", "<leader>7", "<cmd> Telescope current_buffer_fuzzy_find <CR>", opts)
 
 -- outline symbols
 keymap("n", "<F3>", "<Cmd>AerialToggle!<CR>", opts)
--- java test
-keymap("n", "<A-o>", "<Cmd>lua require'jdtls'.organize_imports()<CR>", opts)
-keymap("n", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable()<CR>", opts)
-keymap("x", "<leader>jv", "<Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
-keymap("n", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant()<CR>", opts)
-keymap("x", "<leader>jw", "<Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
-keymap("n", "<leader>ju", "<Cmd>JdtUpdateConfig<CR>", opts)
-
-keymap("v", "<leader>jv", "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", opts)
-keymap("v", "<leader>jw", "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", opts)
-keymap("v", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", opts)
-keymap("x", "<leader>jm", "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", opts)
-keymap("n", "<leader>jl", "<Cmd>lua function() vim.lsp.buf.incoming_calls() end<CR>", opts)
-keymap("n", "<leader>jp", "<Cmd>lua require('jdtls').super_implementation<CR>", opts)
-keymap("n", "<leader>js", "<Cmd>lua require('jdtls').jshell()<CR>", opts)
 -- markdown
 keymap("n", "<F6>", "<cmd> MarkdownPreviewToggle<CR>", opts)
 -- auto complete
@@ -206,7 +191,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			local lspopts = { buffer = true }
 			vim.keymap.set(mode, lhs, rhs, lspopts)
 		end
-
 
 		-- Jumps to the definition of the type symbol
 		bufmap("n", "go", "<cmd>lua vim.lsp.buf.type_definition()<cr>")
