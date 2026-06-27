@@ -735,6 +735,11 @@ local mappings = {
 	},
 	{ "<leader>jl", ":FzfLua lsp_live_workspace_symbols<CR>", desc = "Find Beans" },
 	{
+		"<leader>jr",
+		"<Cmd>JavaTestRunCurrentMethod<cr>",
+		desc = "Run the test method on the cursor",
+	},
+	{
 		"<leader>js",
 		"<cmd>JavaProfile<CR>",
 		desc = "Opens the profiles UI",
@@ -775,11 +780,6 @@ local mappings = {
 		desc = "Debug all tests in the workspace",
 	},
 	{
-		"<leader>jr",
-		"<Cmd>JavaTestRunCurrentMethod<cr>",
-		desc = "Run the test method on the cursor",
-	},
-	{
 		"<leader>jt",
 		"<Cmd>JavaTestDebugCurrentMethod<CR>",
 		desc = "Debug the test method on the cursor",
@@ -803,6 +803,37 @@ local mappings = {
 		"<leader>jb",
 		"<Cmd>ExecInTermHorizontal rm -f Main.class && javac -cp 'lib/*' Main.java && java -cp '.:lib/*' Main<CR>",
 		desc = "Build and Run java file",
+	},
+	{ "<leader>jz", group = "Java - Class files" },
+	{
+		"<leader>jzn",
+		"<Cmd>JavaNew<CR>",
+		desc = "Interactive creation wizard",
+	},
+	{
+		"<leader>jzc",
+		"<Cmd>JavaClass<CR>",
+		desc = "Create a new class",
+	},
+	{
+		"<leader>jzi",
+		"<Cmd>JavaInterface<CR>",
+		desc = "Create a new interface",
+	},
+	{
+		"<leader>jze",
+		"<Cmd>JavaEnum<CR>",
+		desc = "Create a new enum",
+	},
+	{
+		"<leader>jzr",
+		"<Cmd>JavaRecord<CR>",
+		desc = "Create a new record (Java 16+)",
+	},
+	{
+		"<leader>jzs",
+		"<Cmd>JavaAbstractClass<CR>",
+		desc = "Create a new abstract class",
 	},
 	{ "<leader>jm", group = "Java - Maven" },
 	{

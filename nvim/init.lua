@@ -856,14 +856,23 @@ require("lazy").setup({
 					java_version = 21,
 					auto_open = true,
 					use_notify = true,
+					project_markers = {
+						"bnd.bnd",
+						".gitignore",
+						"pom.xml",
+						"build.gradle",
+						"build.gradle.kts",
+						"settings.gradle",
+						"settings.gradle.kts",
+						".project",
+					},
 				},
 				keymaps = {
-					java_new = "<leader>jn",
-					java_class = "<leader>jC",
-					java_interface = "<leader>jI",
-					java_enum = "<leader>jE",
-					java_record = "<leader>jR",
-					java_abstract_class = "<leader>jA",
+					java_new = "<leader>jzn",
+					java_class = "<leader>jzc",
+					java_interface = "<leader>jzi",
+					java_enum = "<leader>jze",
+					java_record = "<leader>jzr",
 				},
 			},
 		},
@@ -883,6 +892,16 @@ require("lazy").setup({
 						"pom.xml", -- Maven
 						"settings.gradle", -- Gradle
 						"settings.gradle.kts", -- Gradle
+					},
+					handlers = {
+						-- to enable it the second parameter should data
+						["language/status"] = function(_, _)
+							-- vim.notify(data.message, vim.log.levels.INFO)
+						end,
+
+						["$/progress"] = function(_, _)
+							-- vim.notify(data.value.message, vim.log.levels.INFO)
+						end,
 					},
 					settings = {
 						java = {
