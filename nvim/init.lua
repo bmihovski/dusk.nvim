@@ -893,16 +893,16 @@ require("lazy").setup({
 						"settings.gradle", -- Gradle
 						"settings.gradle.kts", -- Gradle
 					},
-					handlers = {
-						-- to enable it the second parameter should data
-						["language/status"] = function(_, _)
-							-- vim.notify(data.message, vim.log.levels.INFO)
-						end,
-
-						["$/progress"] = function(_, _)
-							-- vim.notify(data.value.message, vim.log.levels.INFO)
-						end,
-					},
+					-- handlers = {
+					-- 	-- to enable it the second parameter should data
+					-- 	["language/status"] = function(_, _)
+					-- 		-- vim.notify(data.message, vim.log.levels.INFO)
+					-- 	end,
+					--
+					-- 	["$/progress"] = function(_, _)
+					-- 		-- vim.notify(data.value.message, vim.log.levels.INFO)
+					-- 	end,
+					-- },
 					settings = {
 						java = {
 							configuration = {
@@ -1207,6 +1207,26 @@ require("lazy").setup({
 						},
 						stdin = false,
 					},
+					astyle = {
+						command = "astyle",
+						prepend_args = {
+							"-t4", -- if you want pure default Java tab behavior
+							"-c", -- Attach closing while/else/catch/finally to closing brace
+							"-xC120", -- Max code width 120 chars
+							"-S", -- Indent switch/case blocks
+						},
+					},
+					uncrustify = {
+						command = "uncrustify",
+						args = {
+							"-c",
+							vim.fn.expand("$HOME/.config/uncrustify/java_openems.cfg"),
+							"--no-backup",
+							"--replace",
+							"$FILENAME",
+						},
+						stdin = false,
+					},
 					markdownlint = {
 						command = "markdownlint-cli2",
 						args = {
@@ -1263,7 +1283,7 @@ require("lazy").setup({
 						typescriptreact = { "prettierd", "prettier" },
 						json = { "jq" },
 						graphql = { "prettierd", "prettier" },
-						java = { "jdtls" },
+						-- java = { "astyle" },
 						kotlin = { "ktlint" },
 						markdown = {
 							"delete_single_space_before_marks",
