@@ -44,6 +44,15 @@ return {
 				end,
 			})
 			require("overseer").enable_dap()
+			-- Java remote debug attach
+			dap.configurations.java = dap.configurations.java or {}
+			table.insert(dap.configurations.java, {
+				type = "java",
+				request = "attach",
+				name = "Attach to JVM (5005)",
+				hostName = "127.0.0.1",
+				port = 5005,
+			})
 		end,
 		opts = {
 			winbar = {
@@ -223,8 +232,16 @@ return {
 		},
 		config = function()
 			-- uses the debugypy installation by mason
-			local path = vim.fn.exepath("debugypy")
-			require("dap-python").setup(path .. "/venv/bin/python")
+			local path = vim.fn.exepath("debugpy")
+			require("dap-python").setup(path .. "/.venv/bin/python")
+		end,
+	},
+	{
+		"tnfru/nvim-venv-detector",
+		ft = "python",
+		event = "VimEnter",
+		config = function()
+			require("venv_detector").setup()
 		end,
 	},
 	{

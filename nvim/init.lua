@@ -877,7 +877,7 @@ require("lazy").setup({
 			},
 		},
 		{
-			"bmihovski/nvim-java",
+			"nvim-java/nvim-java",
 			ft = { "java" },
 			config = function()
 				require("java").setup()
@@ -912,6 +912,9 @@ require("lazy").setup({
 										path = "~/.sdkman/candidates/java/21.0.11-amzn/",
 										default = true,
 									},
+								},
+								project = {
+									outputPath = "build/jdtls",
 								},
 							},
 						},
@@ -1096,7 +1099,7 @@ require("lazy").setup({
 			dependencies = {
 				-- "mfussenegger/nvim-jdtls", -- or nvim-java, nvim-lspconfig
 				"ibhagwan/fzf-lua", -- optional
-				"bmihovski/nvim-java",
+				"nvim-java/nvim-java",
 			},
 			config = function()
 				local ls_path = vim.fn.expand(

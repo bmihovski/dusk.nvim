@@ -1,4 +1,5 @@
 vim.lsp.config.pyright = {
+	filetypes = { "python" },
 	settings = {
 		python = {
 			analysis = {

@@ -2371,8 +2371,8 @@ return {
 					__inherited_from = "openai",
 					api_key_name = "",
 					endpoint = "http://localhost:1234/v1",
-					-- model = "qwopus3.5-9b-coder-mtp",
-					model = "mellum2-12b-a2.5b-thinking",
+					model = "prism-ml/bonsai-27b",
+					-- model = "mellum2-12b-a2.5b-thinking-mlx",
 					timeout = 6000000,
 					extra_request_body = {
 						temperature = 0.2,
@@ -2759,7 +2759,7 @@ return {
 		ft = "java",
 		dependencies = {
 			-- "mfussenegger/nvim-jdtls",
-			"bmihovski/nvim-java",
+			"nvim-java/nvim-java",
 			"mfussenegger/nvim-dap", -- for debugging (optional)
 			"theHamsta/nvim-dap-virtual-text", -- recommended
 		},
