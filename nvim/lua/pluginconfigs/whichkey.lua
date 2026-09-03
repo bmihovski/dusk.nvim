@@ -68,33 +68,817 @@ local function CopilotChatAsk()
 end
 vim.api.nvim_create_user_command("CopilotChatAsk", CopilotChatAsk, {})
 
-local function CopilotChatHelpActions()
-	local actions = require("CopilotChat.actions").help_actions()
-	if actions == nil then
-		vim.notify("No help actions found.", "warn")
+-- Removed 2026-09-02: CopilotChatHelpActions and CopilotChatPromptActions
+-- required CopilotChat.actions and CopilotChat.integrations.fzflua, both of
+-- which no longer exist upstream. CopilotChatPerplexitySearch passed
+-- agent="perplexityai", a GitHub-Copilot concept with no meaning against a
+-- local oMLX provider. Use <leader>acp (CopilotChatPrompts) instead of the
+-- prompt picker, and /Docs7 in the chat for current documentation.
+
+-- CopilotChat's prompt commands (:CopilotChatGraph and friends) are created by
+-- its setup, so they do not exist before the plugin loads and a plain
+-- <cmd>...<cr> mapping would fail with "Not an editor command". Load on demand,
+-- then run. One helper beats maintaining the spec's `cmd` list per prompt.
+-- Repo root for the tools that want an absolute path, not a filename.
+local function repo_root()
+	return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
+end
+
+-- The code buffer these mappings are ABOUT, which is not necessarily the
+-- current one: pressing a key with the CopilotChat window focused made
+-- expand("%:.") return "copilot-chat", and serena was asked to outline a file
+-- that does not exist. Prefer the current buffer when it is a real file, else
+-- the first file buffer visible in this tab, else the alternate buffer.
+local function code_path()
+	local function usable(b)
+		return b > 0
+			and vim.api.nvim_buf_is_valid(b)
+			and vim.bo[b].buftype == ""
+			and vim.api.nvim_buf_get_name(b) ~= ""
+	end
+	local buf = vim.api.nvim_get_current_buf()
+	if not usable(buf) then
+		buf = nil
+		for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+			local b = vim.api.nvim_win_get_buf(w)
+			if usable(b) then
+				buf = b
+				break
+			end
+		end
+		if not buf then
+			local alt = vim.fn.bufnr("#")
+			buf = usable(alt) and alt or nil
+		end
+	end
+	if not buf then
+		vim.notify("No file buffer to work on -- open the file first", vim.log.levels.WARN)
+		return nil
+	end
+	return vim.api.nvim_buf_get_name(buf)
+end
+
+-- Relative to `root`: serena wants repo-relative, and expand("%:.") is relative
+-- to cwd, which is not always the repo root.
+local function rel_to(root, path)
+	if root and path:sub(1, #root + 1) == root .. "/" then
+		return path:sub(#root + 2)
+	end
+	return vim.fn.fnamemodify(path, ":t")
+end
+
+local function cc(command, arg)
+	return function()
+		require("lazy").load({ plugins = { "CopilotChat.nvim" } })
+		vim.cmd(arg and (command .. " " .. arg()) or command)
+	end
+end
+
+-- Individual :Ai* commands, so a mapping composes them the ordinary way:
+--   "<cmd>AiIndex<cr><cmd>AiGraph<cr>"
+-- Each command resolves what its prompt needs from the buffer (repo root, file
+-- relative to it, symbol under the cursor), so the mappings stay plain strings
+-- and every command is usable on its own from :.
+--
+-- Only AiIndex blocks. It is a dependency, and one submit is one tool round
+-- (init.lua:638-665), so a query issued in the same tick would be sent while the
+-- index was still building -- the stale-input failure that made the model invent
+-- descriptions for 84 symbols. The completion signal is the chat buffer's
+-- modifiable flag: Chat:start() clears it, Chat:finish() restores it
+-- (chat.lua:467-485). AiIndex ERRORS on timeout, interrupt or a tool left
+-- pending, and an error aborts the remaining commands in the mapping -- so a
+-- failed dependency stops the sequence instead of feeding it a stale index.
+-- Index freshness, per repo. Keyed by root, so several projects each keep their
+-- own state and switching between them needs nothing extra.
+--
+-- A plain "already done this session" flag was wrong three ways: a checkout
+-- replaces the code wholesale, a pull moves the ref without touching
+-- .git/HEAD, and your own edits change files under a graph that still claims
+-- to describe them. So the record carries the commit it was built from and is
+-- compared, not just checked.
+local indexed = {} -- root -> { head = <sha>, dirty = bool }
+local last_head_check = {} -- root -> uv.now() ms, to throttle the subprocess
+
+-- Resolved HEAD rather than the branch name: `git pull` and `git rebase` move
+-- the ref while .git/HEAD keeps saying "ref: refs/heads/main", and the code
+-- changed just as much as it does on a checkout. Empty string when this is not
+-- a git repo, which then relies on writes alone.
+local function git_head(root)
+	local out = vim.fn.systemlist({ "git", "-C", root, "rev-parse", "HEAD" })
+	if vim.v.shell_error ~= 0 or not out[1] then
+		return ""
+	end
+	return out[1]
+end
+
+-- Reported by AiFreshStatus only. Never used for staleness: a branch name
+-- change at the SAME commit means the code on disk is byte-identical, so
+-- re-indexing would be pure waste. `git checkout -b new` is exactly that case,
+-- and watching .git/HEAD instead of the resolved SHA would fire a full re-index
+-- of the whole repo for no change at all.
+local function git_branch(root)
+	local out = vim.fn.systemlist({ "git", "-C", root, "rev-parse", "--abbrev-ref", "HEAD" })
+	if vim.v.shell_error ~= 0 or not out[1] then
+		return "?"
+	end
+	return out[1]
+end
+
+local function index_stale(root)
+	local rec = indexed[root]
+	if not rec then
+		return true, "not indexed yet"
+	end
+	-- A reason recorded at detection time wins, so the message you get when the
+	-- index is rebuilt matches the message you got when the change was noticed.
+	-- Clearing the record instead would report "not indexed yet" for a checkout,
+	-- which is true but contradicts what the notification just said.
+	if rec.stale_reason then
+		return true, rec.stale_reason
+	end
+	if rec.dirty then
+		return true, "files written since the last index"
+	end
+	if git_head(root) ~= rec.head then
+		return true, "git HEAD moved since the last index"
+	end
+	return false
+end
+
+-- Notice a checkout as it happens rather than at query time, so the message
+-- arrives while you still remember switching. This only marks the index stale;
+-- the re-index itself runs on the next codebase-memory query.
+--
+-- It does NOT re-index here, and that is deliberate: a non-headless ask calls
+-- M.open() when the chat is not focused (init.lua:451-458), so an auto-fired
+-- reindex would pop the chat window open over the file you are editing. The
+-- headless path does not open anything, but its completion is unobservable --
+-- config.callback fires at init.lua:574, BEFORE the tool round runs at :605 --
+-- so there would be no way to know when the index was actually built. Marking
+-- it stale means you never type <leader>agi, and the wait lands when you have
+-- asked a question and are already waiting for an answer.
+local function head_changed(root, throttle_ms)
+	if root == "" or vim.fn.isdirectory(root .. "/.git") == 0 then
+		return
+	end
+	local rec = indexed[root]
+	if not rec then
+		return -- nothing indexed yet, so nothing to invalidate
+	end
+	local now = vim.uv.now()
+	if throttle_ms and last_head_check[root] and (now - last_head_check[root]) < throttle_ms then
+		return
+	end
+	last_head_check[root] = now
+	local head = git_head(root)
+	if head ~= rec.head then
+		local short = head ~= "" and head:sub(1, 7) or "unknown"
+		rec.stale_reason = "HEAD moved to " .. short
+		vim.notify(
+			vim.fs.basename(root)
+				.. ": HEAD moved to "
+				.. short
+				.. " -- the graph will re-index on the next codebase query",
+			vim.log.levels.INFO
+		)
+	end
+end
+
+local ai_fresh = vim.api.nvim_create_augroup("AiIndexFreshness", { clear = true })
+
+-- A write under an indexed repo invalidates it. auto-save.nvim covers most
+-- writes on its own; this fires for those too, since it is the write that
+-- matters and not who asked for it.
+vim.api.nvim_create_autocmd("BufWritePost", {
+	group = ai_fresh,
+	callback = function(ev)
+		local file = ev.file or ""
+		for root, rec in pairs(indexed) do
+			if file:sub(1, #root + 1) == root .. "/" then
+				rec.dirty = true
+			end
+		end
+	end,
+})
+
+-- FocusGained catches a checkout made in another terminal, which is the common
+-- one. DirChanged catches moving between projects. BufEnter catches a checkout
+-- made inside nvim (fugitive, gitsigns) and is throttled, because it fires
+-- constantly and each check is a git subprocess.
+vim.api.nvim_create_autocmd({ "FocusGained", "DirChanged" }, {
+	group = ai_fresh,
+	callback = function()
+		head_changed(repo_root())
+	end,
+})
+vim.api.nvim_create_autocmd("BufEnter", {
+	group = ai_fresh,
+	callback = function()
+		head_changed(repo_root(), 3000)
+	end,
+})
+
+local function chat_idle()
+	local cc = package.loaded["CopilotChat"]
+	local buf = cc and cc.chat and cc.chat.bufnr
+	if not buf or not vim.api.nvim_buf_is_valid(buf) then
+		return true
+	end
+	return vim.bo[buf].modifiable
+end
+
+-- finish() also ends a round when a tool needs approval, writing a #name:id
+-- marker for <CR> to resume (init.lua:177-182). The modifiable flag cannot tell
+-- that from success, so it is checked separately.
+local function chat_pending()
+	local cc = package.loaded["CopilotChat"]
+	local ok, msg = pcall(function()
+		return cc.chat:get_message("user")
+	end)
+	return ok and msg and (msg.content or ""):match("#[%w_]+:%S") ~= nil
+end
+
+-- MCP tools must EXIST before a prompt that grants them is submitted, and
+-- nothing guarantees that on its own.
+--
+-- mcphub is `cmd = { "MCPHub" }`, so it loads only when you run :MCPHub. Its
+-- CopilotChat extension is what writes MCP tools into
+-- CopilotChat.config.functions (extensions/copilotchat/functions.lua:315-328),
+-- registering on setup and again on every servers_updated. Two consequences:
+--   * the extension early-returns when CopilotChat is not loaded yet
+--     (extensions/copilotchat/init.lua:18-21), so CopilotChat must load FIRST
+--   * the tools only exist once the MCP servers have connected, which is async
+--
+-- Miss either and the failure is SILENT: resolve_tools matches names against
+-- config.functions and drops whatever it cannot find (prompts.lua:74-89), so
+-- the model is handed a prompt telling it to call a tool it has no schema for
+-- -- and it invents the answer. Measured, not hypothetical: an AiIndex run
+-- reported 12 nodes / 8 edges for a repo whose real index is 286 nodes / 748
+-- edges, with no tool message anywhere in the transcript.
+-- `needs` is a "are the MCP tools registered at all" gate, not a manifest of
+-- everything a prompt grants. One representative name per server is enough --
+-- requiring all of them would let a single absent optional tool block the
+-- command forever, and a tool missing from a prompt's own `tools` list is
+-- dropped silently by resolve_tools, which is the pre-existing behaviour.
+local function tools_ready(names, timeout_ms)
+	require("lazy").load({ plugins = { "CopilotChat.nvim" } })
+	require("lazy").load({ plugins = { "mcphub.nvim" } })
+	if not names or #names == 0 then
+		return
+	end
+	local function have()
+		local cc = package.loaded["CopilotChat"]
+		local fns = cc and cc.config and cc.config.functions
+		if not fns then
+			return false
+		end
+		for _, n in ipairs(names) do
+			if not fns[n] then
+				return false
+			end
+		end
+		return true
+	end
+	if have() then
+		return
+	end
+	vim.notify("waiting for MCP servers to register their tools...", vim.log.levels.INFO)
+	if not vim.wait(timeout_ms or 20000, have, 200) then
+		local cc = package.loaded["CopilotChat"]
+		local fns = (cc and cc.config and cc.config.functions) or {}
+		local missing = {}
+		for _, n in ipairs(names) do
+			if not fns[n] then
+				table.insert(missing, n)
+			end
+		end
+		error(
+			"MCP tools never registered: "
+				.. table.concat(missing, ", ")
+				.. ". Run :MCPHub and check the servers are connected. Refusing to ask "
+				.. "without them -- the model would invent the answer.",
+			0
+		)
+	end
+end
+
+-- How many tool results the conversation holds. Compared across a submit, this
+-- is the only proof a tool actually RAN: a model that was granted no tool
+-- answers in prose that looks identical to a real result, and the chat goes
+-- busy then idle either way.
+local function tool_message_count()
+	local cc = package.loaded["CopilotChat"]
+	local ok, msgs = pcall(function()
+		return cc.chat:get_messages()
+	end)
+	if not ok or not msgs then
+		return 0
+	end
+	local n = 0
+	for _, m in ipairs(msgs) do
+		if m.role == "tool" then
+			n = n + 1
+		end
+	end
+	return n
+end
+
+local function ai(name, fn, opts)
+	opts = opts or {}
+	local needs = opts.needs
+	opts.needs = nil
+	vim.api.nvim_create_user_command("Ai" .. name, function(a)
+		tools_ready(needs)
+		fn(a)
+	end, opts)
+end
+
+-- Bail loudly rather than send an empty argument, which the model would then
+-- invent a target for.
+-- Every reader here works from DISK, never from your buffers: serena opens the
+-- file, and index_repository walks the tree.
+--
+-- auto-save.nvim is configured with debounce_delay = 5000, so there is a FIVE
+-- SECOND window after you stop typing where the file on disk is still the old
+-- one. "Change something and immediately ask about it" lands inside that
+-- window every time, and the answer is then about the previous version -- with
+-- correct line numbers for it, which is what makes it convincing. So this is
+-- not redundant with autosave; it closes autosave's debounce gap and is a
+-- no-op the rest of the time. Silent, because it does exactly what autosave
+-- would have done a few seconds later.
+--
+-- Called at the TOP of AiIndex as well, not only from need_file: in
+-- "<cmd>AiIndex<cr><cmd>AiGraph<cr>" the index is built first, so a write that
+-- happened inside AiGraph would land after the graph was already built from the
+-- old code -- answering from a stale index it had just refreshed.
+local function write_modified(under)
+	local wrote = {}
+	for _, b in ipairs(vim.api.nvim_list_bufs()) do
+		local name = vim.api.nvim_buf_is_valid(b) and vim.api.nvim_buf_get_name(b) or ""
+		local match = name ~= "" and (name == under or name:sub(1, #under + 1) == under .. "/")
+		if match and vim.bo[b].modified and vim.bo[b].buftype == "" then
+			vim.api.nvim_buf_call(b, function()
+				vim.cmd("silent write")
+			end)
+			table.insert(wrote, vim.fn.fnamemodify(name, ":t"))
+		end
+	end
+	return wrote
+end
+
+local function need_file()
+	local p = code_path()
+	if not p then
+		error("no file buffer to work on", 0)
+	end
+	write_modified(p)
+	return repo_root(), p
+end
+
+-- codebase-memory's project id, derived from the repo root: leading "/" dropped,
+-- every "/" turned into "-". Verified against all four indexed projects as
+-- list_projects reports them (omlx-gates, ansible, osgi-gateway, mini-orm).
+--
+-- This used to be HARDCODED in the Graph, Trace and Coverage prompts, which
+-- meant pressing those keys in any other repo queried omlx-gates' graph and
+-- described a different codebase without saying so. If the slug rule ever stops
+-- matching, the tool answers "project is required" and lists the real ids --
+-- an error, not a wrong answer, which is the failure mode to prefer.
+local function project_id()
+	local root = repo_root()
+	return (root:gsub("^/", ""):gsub("/", "-"))
+end
+
+-- A regex matching top-level definitions, per language, for search_code's
+-- freshness oracle. Deliberately free of literal spaces so the whole thing can
+-- travel as one key=value token.
+--
+-- The pattern used to be hardcoded to Python's `^(def|class) ` in the Graph and
+-- Coverage prompts. On a Java or YAML repo that matches nothing, so the raw:
+-- section comes back empty -- and an empty raw: is what those prompts read as
+-- "the index is current". The staleness oracle would have reported fresh on
+-- every non-Python project, permanently. Absence of evidence read as evidence.
+--
+-- Returns nil for a language with no usable pattern, and the prompts then say
+-- freshness could not be assessed instead of assuming it passed.
+local DEF_PATTERNS = {
+	python = "^[ \t]*(def|class)[ \t]",
+	lua = "^[ \t]*(local[ \t]+)?function[ \t]",
+	go = "^(func|type)[ \t]",
+	rust = "^[ \t]*(pub[ \t]+)?(fn|struct|enum|impl|trait)[ \t]",
+	java = "^[ \t]*(public|private|protected|static|final|abstract|class|interface|enum)[ \t]",
+	kotlin = "^[ \t]*(fun|class|object|interface)[ \t]",
+	c = "^[a-zA-Z_].*[(]",
+	cpp = "^[a-zA-Z_].*[(]",
+	ruby = "^[ \t]*(def|class|module)[ \t]",
+	sh = "^[a-zA-Z_][a-zA-Z0-9_]*[(][)]",
+	bash = "^[a-zA-Z_][a-zA-Z0-9_]*[(][)]",
+}
+DEF_PATTERNS.javascript = "^[ \t]*(function|class|export|const|let)[ \t]"
+DEF_PATTERNS.typescript = DEF_PATTERNS.javascript
+DEF_PATTERNS.typescriptreact = DEF_PATTERNS.javascript
+DEF_PATTERNS.javascriptreact = DEF_PATTERNS.javascript
+
+local function def_pattern(path)
+	local ft = vim.filetype.match({ filename = path }) or ""
+	return DEF_PATTERNS[ft]
+end
+
+-- <cword> is wherever the CURSOR is, which is not necessarily code. Pressed with
+-- the chat window focused it once sent "copilot-chat" as a symbol name, and
+-- with the cursor in a path it sent "usr" -- a plausible-looking identifier that
+-- passes the %w_ check and costs a whole round. So the word is only taken from a
+-- real file buffer; anywhere else, ask.
+local function need_symbol(what)
+	local in_code = vim.bo.buftype == "" and vim.api.nvim_buf_get_name(0) ~= ""
+	local w = in_code and vim.fn.expand("<cword>") or ""
+	if not w:match("^[%w_]+$") then
+		w = vim.fn.input(what .. " which symbol: ")
+	end
+	if w == "" then
+		error("no symbol given", 0)
+	end
+	return w
+end
+
+ai("Index", function(a)
+	local root = repo_root()
+	-- Flush before the staleness check, not after: an unwritten buffer IS
+	-- staleness, and the BufWritePost autocmd above turns the write into the
+	-- dirty flag that index_stale reads. Doing it the other way round indexes
+	-- the old file and then writes the new one.
+	write_modified(root)
+	local stale, why = index_stale(root)
+	if not stale and not a.bang then
+		return -- index still matches this HEAD and nothing has been written since
+	end
+	vim.notify(
+		"re-indexing " .. vim.fs.basename(root) .. ": " .. (why or "forced"),
+		vim.log.levels.INFO
+	)
+	local tools_before = tool_message_count()
+	vim.cmd("CopilotChatReindex " .. root)
+	-- vim.wait pumps the event loop but blocks input: nvim is unresponsive while
+	-- a large repo indexes. <C-c> interrupts, and that aborts the sequence.
+	if not vim.wait(15000, function()
+		return not chat_idle()
+	end, 100) then
+		error("AiIndex: reindex never started", 0)
+	end
+	if not vim.wait(900000, chat_idle, 250) then
+		error("AiIndex: reindex did not finish (interrupted or timed out)", 0)
+	end
+	if chat_pending() then
+		error("AiIndex: index_repository is waiting for approval -- press <CR> in the chat", 0)
+	end
+	-- The round finishing proves nothing about the tool having run. A model with
+	-- no tool schema writes a plausible JSON reply instead, and the chat goes
+	-- busy then idle exactly as it would on success. Only a NEW tool-role message
+	-- proves it. Without this the stamp records a fabricated index, which is
+	-- strictly worse than having no freshness tracking at all.
+	if tool_message_count() <= tools_before then
+		error(
+			"AiIndex: the round finished with no tool result -- index_repository did "
+				.. "not run, and the reply in the chat is invented. Index NOT marked fresh.",
+			0
+		)
+	end
+	-- Stamp with the HEAD read AFTER indexing: if the checkout moved while the
+	-- index was building, the stamp records what was actually read, so the next
+	-- press re-indexes rather than trusting a half-old graph.
+	indexed[root] = { head = git_head(root), dirty = false }
+end, { bang = true, needs = { "codebase_memory_mcp_index_repository" },
+	desc = "Re-index if HEAD moved or files were written (! always). Blocks." })
+
+-- Self-test for the assumption the chains rest on.
+--
+-- "<cmd>AiIndex<cr><cmd>AiGraph<cr>" is only safe if an error in the first
+-- command aborts the rest of the sequence -- otherwise a failed index is
+-- followed by a query against it, which is the whole thing this was built to
+-- prevent. That abort is Vim typeahead behaviour, not something this config
+-- controls, so it can change under an nvim upgrade and should be re-checkable.
+--
+-- The verdict is reported from vim.schedule, which runs after the typeahead has
+-- been processed: by then the marker either ran or it did not. Reporting from
+-- inside the sequence cannot work, because if the abort DOES happen nothing
+-- later in the sequence gets to report anything.
+local abort_probe_reached = false
+
+-- Why did (or did not) a checkout get noticed? This prints the whole freshness
+-- state rather than leaving you to infer it from an absent notification.
+--
+-- The common answer is "no stamp": head_changed() early-returns when the repo
+-- has not been indexed in THIS nvim session, because there is no HEAD to
+-- compare against and it avoids a git subprocess on every BufEnter in repos you
+-- never query. Reloading this file resets the table, so a reload counts as a
+-- new session. Silence in that state is correct, not broken -- and harmless,
+-- because the first AiIndex of any session re-indexes anyway ("not indexed
+-- yet"), so a checkout made between sessions is covered without detection.
+vim.api.nvim_create_user_command("AiFreshStatus", function()
+	local root = repo_root()
+	local rec = indexed[root]
+	local out = {
+		"repo_root()  " .. root,
+		"project_id() " .. project_id(),
+		"git HEAD     " .. (git_head(root) ~= "" and git_head(root) or "(not a git repo)"),
+		"git branch   " .. git_branch(root) .. "   (name is NOT what staleness compares)",
+		"code_path()  " .. (code_path() or "(no file buffer)"),
+		"defs=        " .. (code_path() and (def_pattern(code_path()) or "none") or "-"),
+		"",
+	}
+	if rec then
+		table.insert(out, "stamped head  " .. (rec.head ~= "" and rec.head or "(empty)"))
+		table.insert(out, "dirty         " .. tostring(rec.dirty))
+		table.insert(out, "stale_reason  " .. (rec.stale_reason or "(none)"))
+		local stale, why = index_stale(root)
+		table.insert(out, "index_stale   " .. tostring(stale) .. (why and (" -- " .. why) or ""))
+		table.insert(out, "=> a checkout WOULD be noticed on FocusGained/DirChanged/BufEnter")
+		table.insert(out, "   ...but only if it moves the COMMIT. `git checkout -b foo` points a")
+		table.insert(out, "   new name at the same commit, so the code is identical and nothing")
+		table.insert(out, "   fires -- correctly. To exercise detection, move HEAD:")
+		table.insert(out, "     git -C <repo> commit --allow-empty -m probe   (undo: reset --soft HEAD~1)")
 	else
-		require("CopilotChat.integrations.fzflua").pick(actions)
+		table.insert(out, "NO STAMP for this repo in this nvim session.")
+		table.insert(out, "=> checkout detection is disabled here until you index once.")
+		table.insert(out, "   Run <leader>agg first, THEN switch branch, then come back.")
+		table.insert(out, "   (Harmless: the first AiIndex of a session re-indexes regardless.)")
 	end
-end
-vim.api.nvim_create_user_command("CopilotChatHelpActions", CopilotChatHelpActions, {})
-
-local function CopilotChatPromptActions()
-	local actions = require("CopilotChat.actions").prompt_actions()
-	require("CopilotChat.integrations.fzflua").pick(actions)
-end
-vim.api.nvim_create_user_command("CopilotChatPromptActions", CopilotChatPromptActions, {})
-
--- Ask the Perplexity agent a quick question
-local function CopilotChatPerplexitySearch()
-	local input = vim.fn.input("Perplexity: ")
-	if input ~= "" then
-		require("CopilotChat").ask(input, {
-			agent = "perplexityai",
-			selection = false,
-		})
+	table.insert(out, "")
+	local n = #vim.api.nvim_get_autocmds({ group = "AiIndexFreshness" })
+	table.insert(out, "freshness autocmds registered: " .. n .. " (expect 4)")
+	table.insert(out, "other repos stamped this session:")
+	local any = false
+	for r, v in pairs(indexed) do
+		if r ~= root then
+			any = true
+			table.insert(out, "  " .. r .. "  head=" .. (v.head or ""):sub(1, 7) .. " dirty=" .. tostring(v.dirty))
+		end
 	end
+	if not any then
+		table.insert(out, "  (none)")
+	end
+	vim.api.nvim_echo({ { table.concat(out, "\n") } }, true, {})
+end, { desc = "Print index-freshness state: stamps, HEAD, autocmds" })
+
+vim.api.nvim_create_user_command("AiAbortMark", function()
+	abort_probe_reached = true
+end, { desc = "Marker used by AiAbortProbe; meaningless on its own" })
+
+vim.api.nvim_create_user_command("AiAbortProbe", function()
+	abort_probe_reached = false
+	vim.schedule(function()
+		local verdict, hl, level
+		if abort_probe_reached then
+			verdict = "AiAbortProbe FAIL: a <cmd> sequence CONTINUES past an error. "
+				.. "AiIndex failing does NOT stop AiGraph -- the chain guard is "
+				.. "decorative and needs replacing with an explicit flag."
+			hl, level = "ErrorMsg", vim.log.levels.ERROR
+		else
+			verdict = "AiAbortProbe PASS: a <cmd> sequence aborts at the first error, "
+				.. "so AiIndex failing really does stop AiGraph. The error above it was "
+				.. "deliberate."
+			hl, level = "MoreMsg", vim.log.levels.INFO
+		end
+		-- Both, on purpose. notify() may be routed through a plugin (noice) and
+		-- shown as a transient popup that the deliberate error immediately
+		-- replaces; nvim_echo with history=true always lands in :messages, so the
+		-- verdict survives being missed. A self-test whose result you cannot find
+		-- is not a self-test.
+		vim.api.nvim_echo({ { verdict, hl } }, true, {})
+		vim.notify(verdict, level)
+	end)
+	-- The traceback this prints is unavoidable and expected. nvim wraps ANY
+	-- error raised in a :command callback with one, and the abort depends on a
+	-- real error being raised -- nvim_err_writeln prints without aborting, which
+	-- would break the test. Routing it through vim.cmd("throw ...") was tried and
+	-- is worse: the Vimscript error comes back through nvim_exec2 as a Lua error
+	-- anyway, adding two frames rather than removing the traceback. Read the
+	-- PASS/FAIL line below it; that is the result.
+	error("AiAbortProbe: deliberate error -- this IS the test", 0)
+end, { desc = "Self-test: does an error abort the rest of a <cmd> sequence?" })
+
+ai("Graph", function()
+	local _, p = need_file()
+	vim.cmd(
+		"CopilotChatGraph project="
+			.. project_id()
+			.. " file="
+			.. vim.fn.fnamemodify(p, ":t")
+			.. " defs="
+			.. (def_pattern(p) or "none")
+	)
+end, { needs = { "codebase_memory_mcp_search_graph" }, desc = "Graph the current file (codebase-memory)" })
+
+ai("Trace", function()
+	vim.cmd("CopilotChatTrace " .. project_id() .. " " .. need_symbol("Trace"))
+end, { needs = { "codebase_memory_mcp_search_graph" }, desc = "Trace the symbol under the cursor" })
+
+ai("Arch", function()
+	vim.cmd("CopilotChatArchitecture project=" .. project_id())
+end, { needs = { "codebase_memory_mcp_get_architecture" }, desc = "Project architecture" })
+
+ai("Coverage", function()
+	local _, p = need_file()
+	vim.cmd(
+		"CopilotChatCoverage project="
+			.. project_id()
+			.. " file="
+			.. vim.fn.fnamemodify(p, ":t")
+			.. " defs="
+			.. (def_pattern(p) or "none")
+	)
+end, { needs = { "codebase_memory_mcp_index_status" }, desc = "Is the graph current?" })
+
+ai("Outline", function()
+	local root, p = need_file()
+	vim.cmd("CopilotChatOutline " .. root .. " " .. rel_to(root, p))
+end, { needs = { "serena_get_symbols_overview" }, desc = "Name index for the current file (serena)" })
+
+ai("Where", function()
+	local root, p = need_file()
+	vim.cmd("CopilotChatWhere " .. root .. " " .. rel_to(root, p) .. " " .. need_symbol("Where"))
+end, { needs = { "serena_find_symbol" }, desc = "What is this symbol (serena)" })
+
+ai("How", function()
+	local root, p = need_file()
+	vim.cmd("CopilotChatHow " .. root .. " " .. rel_to(root, p) .. " " .. need_symbol("Explain"))
+end, { needs = { "serena_find_symbol" }, desc = "How this symbol works, from source (serena)" })
+
+-- CopilotChat history lives here; one picker loads or deletes, save names by repo
+local CHAT_HISTORY = vim.fn.stdpath("data") .. "/copilotchat_history"
+
+local function chat_save()
+	vim.ui.input({ prompt = "Save chat as: ", default = vim.fs.basename(repo_root()) }, function(name)
+		if name and name ~= "" then
+			require("lazy").load({ plugins = { "CopilotChat.nvim" } })
+			vim.cmd("CopilotChatSave " .. name)
+		end
+	end)
 end
-vim.api.nvim_create_user_command("CopilotChatPerplexitySearch", CopilotChatPerplexitySearch, {})
+
+local function chat_history()
+	local names = vim.tbl_map(function(f)
+		return vim.fn.fnamemodify(f, ":t:r")
+	end, vim.fn.glob(CHAT_HISTORY .. "/*.json", true, true))
+	if #names == 0 then
+		return vim.notify("no saved chats in " .. CHAT_HISTORY, vim.log.levels.INFO)
+	end
+	require("fzf-lua").fzf_exec(names, {
+		prompt = "chats> ",
+		fzf_opts = { ["--multi"] = "" },
+		actions = {
+			["default"] = function(sel)
+				require("lazy").load({ plugins = { "CopilotChat.nvim" } })
+				vim.cmd("CopilotChatLoad " .. sel[1])
+				vim.cmd("CopilotChatOpen")
+			end,
+			["ctrl-x"] = function(sel)
+				for _, n in ipairs(sel) do
+					os.remove(CHAT_HISTORY .. "/" .. n .. ".json")
+				end
+				vim.notify("deleted " .. #sel .. " chat(s)")
+			end,
+		},
+	})
+end
+
+-- Compact the live chat: summarise it, then replace the buffer with the summary.
+-- CopilotChat has no compaction of its own. Two things shape this:
+--   * headless=true sends NO chat history (init.lua:536-538), so the transcript
+--     goes in the prompt body and nothing is sent twice.
+--   * M.load() already does clear -> add_message -> finish correctly
+--     (init.lua:740), so the summary is written as a history file and loaded,
+--     rather than reimplementing that sequence by hand.
+local COMPACT_BUDGET = 60000 -- chars of transcript, ~15k tokens, fits 49152 input
+
+local function chat_compact()
+	local cc = package.loaded["CopilotChat"]
+	if not cc then
+		return vim.notify("CopilotChat is not loaded", vim.log.levels.WARN)
+	end
+	local msgs = cc.chat:get_messages()
+	if #msgs < 2 then
+		return vim.notify("nothing to compact", vim.log.levels.INFO)
+	end
+
+	-- Newest first until the budget runs out, so a long chat keeps its recent end.
+	-- Tool results are the bulk -- a /Graph map is ~14k tokens -- so each keeps only
+	-- a stub: enough for the summary to say what ran, not to carry the payload.
+	local parts, used, dropped = {}, 0, 0
+	for i = #msgs, 1, -1 do
+		local m = msgs[i]
+		local cap = (m.role == "tool" or m.tool_call_id) and 400 or 4000
+		local c = m.content or ""
+		if #c > cap then
+			c = c:sub(1, cap) .. "\n[truncated]"
+		end
+		local block = ("## %s\n%s"):format(m.role, c)
+		if used + #block > COMPACT_BUDGET then
+			dropped = dropped + 1
+		else
+			table.insert(parts, 1, block)
+			used = used + #block
+		end
+	end
+
+	local stamp = os.date("%Y%m%d-%H%M")
+	cc.save("precompact-" .. stamp) -- full fidelity on disk BEFORE anything destructive
+
+	-- ponytail: a sticky tool grant from /How or /Where can still ride along on this
+	-- ask; the config has no way to say "no tools". Harmless for a summarise prompt
+	-- with no repo context. If it ever fires a tool round, reset before compacting.
+	cc.ask(
+		"Below is a transcript of a working conversation, oldest first. Compact it "
+			.. "into a handoff another session can pick up from.\n"
+			.. "Keep: decisions and what they rested on; findings with the file, line or "
+			.. "number they came from; anything still open.\n"
+			.. "Keep corrections AS corrections. If something was claimed and later "
+			.. "disproved, record both -- \"thought X, disproved by Y\" -- never the claim "
+			.. "alone. A summary that preserves a retracted claim is worse than no "
+			.. "summary, because the next reader cannot tell it was retracted.\n"
+			.. "Drop: tool payloads, restated code, anything already superseded.\n"
+			.. "Omit any section that has nothing in it.\n"
+			.. "OUTPUT FORMAT, and this part is mechanical: put the handoff between "
+			.. "<handoff> and </handoff> and put NOTHING outside those tags. No "
+			.. "preamble, no restating these instructions, no working out, no draft "
+			.. "followed by a final version, no checklist of whether you followed the "
+			.. "rules. Everything outside the tags is discarded, so anything you write "
+			.. "there is wasted. The first thing after <handoff> is the first line of "
+			.. "the summary.\n\n---\n\n"
+			.. table.concat(parts, "\n\n"),
+		{
+			headless = true,
+			remember_as_sticky = false,
+			callback = function(response)
+				local raw = vim.trim(response and response.content or "")
+				-- Extract between the tags. The first attempt asked for "no preamble"
+				-- and got the model's entire deliberation -- "I need to extract... I
+				-- will structure... Draft: ... Final check against constraints...
+				-- Ready." -- followed by the summary twice, about three times the
+				-- size of the thing it was compacting. A delimiter makes the
+				-- extraction deterministic instead of a matter of compliance.
+				local summary = raw:match("<handoff>(.-)</handoff>")
+				if summary then
+					summary = vim.trim(summary)
+				else
+					-- No tags: keep everything rather than lose the summary, but say so,
+					-- because the result will carry whatever else the model wrote.
+					summary = raw
+					vim.notify(
+						"compact: no <handoff> tags in the reply -- kept the whole response, expect noise",
+						vim.log.levels.WARN
+					)
+				end
+				if summary == "" then
+					return vim.notify("compact produced nothing; chat left alone", vim.log.levels.WARN)
+				end
+				local name = "compact-" .. stamp
+				local f = io.open(CHAT_HISTORY .. "/" .. name .. ".json", "w")
+				if not f then
+					return vim.notify("could not write " .. name, vim.log.levels.ERROR)
+				end
+				f:write(vim.json.encode({
+					{
+						role = "user",
+						content = "Compacted context from the previous conversation:\n\n" .. summary,
+					},
+				}))
+				f:close()
+				-- schedule: let the ask unwind before load() calls stop(true) under it
+				vim.schedule(function()
+					cc.load(name)
+					vim.notify(
+						("compacted %d messages%s -- original saved as precompact-%s"):format(
+							#msgs,
+							dropped > 0 and (", %d oldest dropped"):format(dropped) or "",
+							stamp
+						),
+						vim.log.levels.INFO
+					)
+				end)
+			end,
+		}
+	)
+end
+
+-- Autosave the chat on exit. CopilotChat has no autosave and no VimLeave hook of
+-- its own (checked: init.lua M.save/M.load are the only writers), and closing the
+-- chat window does not clear the messages, so only quitting nvim loses them.
+vim.api.nvim_create_autocmd("VimLeavePre", {
+	group = vim.api.nvim_create_augroup("CopilotChatAutosave", { clear = true }),
+	callback = function()
+		local chat = package.loaded["CopilotChat"]
+		if not chat then
+			return
+		end
+		-- ponytail: pcall because chat.chat exists only once the window has opened
+		pcall(function()
+			if #chat.chat:get_messages() > 0 then
+				chat.save(vim.fs.basename(repo_root()))
+			end
+		end)
+	end,
+})
 
 -- Open test results after execution
 local function print_test_results(items)
@@ -459,41 +1243,57 @@ end, {
 local mappings = {
 	{ "<leader>R", ":%d+<cr>", desc = "Remove All Text" },
 	{ "<leader>a", group = "AI" },
-	{
-		"<leader>aca",
-		"<cmd>CopilotChatAsk",
-		desc = "CopilotChat: Ask AI",
-	},
-	{ "<leader>acw", "<cmd>CopilotChatToggle<cr>", desc = "CopilotChat: Toggle chat window." },
-	{ "<leader>acda", "<cmd>CopilotChatHelpActions<cr>", desc = "CopilotChat: Diagnostic help actions" },
-	{
-		"<leader>acp",
-		"<cmd>CopilotChatPromptActions<cr>",
-		desc = "CopilotChat: Prompt actions",
-	},
-	{
-		"<leader>acsp",
-		"<cmd>CopilotChatPerplexitySearch<cr>",
-		desc = "CopilotChat - Perplexity Search",
-	},
-	-- Code related commands
-	{ "<leader>ace", "<cmd>CopilotChatExplain<cr>", desc = "Explain Code" },
-	{ "<leader>act", "<cmd>CopilotChatTests<cr>", desc = "Generate Tests" },
-	{ "<leader>acr", "<cmd>CopilotChatReview<cr>", desc = "Review Code" },
-	{ "<leader>acR", "<cmd>CopilotChatRefactor<cr>", desc = "Refactor Code" },
-	{ "<leader>acn", "<cmd>CopilotChatBetterNamings<cr>", desc = "Better Naming" },
-	-- Git related commands
-	{ "<leader>acc", "<cmd>CopilotChatCommit<cr>", desc = "Generate Commit Message" },
-	{ "<leader>acs", "<cmd>CopilotChatCommitStaged<cr>", desc = "Commit Staged Changes" },
-	{ "<leader>acu", "<cmd>CopilotChatCommitUnstaged<cr>", desc = "Commit Unstaged Changes" },
-	{ "<leader>acpp", "<cmd>CopilotChatPullRequest<cr>", desc = "Generate Pull Request" },
-	-- Debug and fix
-	{ "<leader>acd", "<cmd>CopilotChatDebugInfo<cr>", desc = "Debug Info" },
-	{ "<leader>acf", "<cmd>CopilotChatFixDiagnostic<cr>", desc = "Fix Diagnostic" },
-	-- Models
-	{ "<leader>am", "<cmd>CopilotChatModels<cr>", desc = "Select Models" },
-	-- VectorCode register buffer
-	{ "<leader>av", "<cmd>VectorCode register<cr>", desc = "VectorCode Register Buffer" },
+
+	-- CopilotChat: session and window
+	{ "<leader>ac", group = "CopilotChat" },
+	{ "<leader>aca", "<cmd>CopilotChatAsk<cr>", desc = "Ask (input prompt)" },
+	{ "<leader>acw", cc("CopilotChatToggle"), desc = "Toggle chat window" },
+	{ "<leader>acm", cc("CopilotChatModels"), desc = "Pick model" },
+	{ "<leader>acp", cc("CopilotChatPrompts"), desc = "Pick prompt" },
+	{ "<leader>acx", cc("CopilotChatStop"), desc = "Stop generating" },
+	{ "<leader>acR", cc("CopilotChatReset"), desc = "Reset conversation" },
+	{ "<leader>acS", chat_save, desc = "Save session (prompts for a name)" },
+	{ "<leader>ach", chat_history, desc = "History — <CR> load, <C-x> delete" },
+	{ "<leader>acC", chat_compact, desc = "Compact chat (summarise, keep a backup)" },
+
+	-- CopilotChat: on the selection or buffer
+	{ "<leader>ace", cc("CopilotChatExplain"), desc = "Explain", mode = { "n", "v" } },
+	{ "<leader>acr", cc("CopilotChatReview"), desc = "Review — defects only", mode = { "n", "v" } },
+	{ "<leader>acb", cc("CopilotChatBoilerplate"), desc = "Boilerplate", mode = { "n", "v" } },
+	{ "<leader>act", cc("CopilotChatTests"), desc = "Tests", mode = { "n", "v" } },
+	{ "<leader>acf", cc("CopilotChatFix"), desc = "Fix", mode = { "n", "v" } },
+	{ "<leader>aco", cc("CopilotChatOptimize"), desc = "Optimize", mode = { "n", "v" } },
+	{ "<leader>acd", cc("CopilotChatDocs"), desc = "Docs", mode = { "n", "v" } },
+	{ "<leader>acc", cc("CopilotChatCommit"), desc = "Commit message" },
+
+	-- Codebase questions. Graph and Trace take an argument, so they are
+	-- prefilled from the buffer name and the word under the cursor.
+	{ "<leader>ag", group = "Codebase (graph)" },
+
+	-- codebase-memory prompts read the index, so AiIndex goes first. It blocks and
+	-- errors on failure, which aborts the rest of the sequence -- so a query never
+	-- runs against an index that did not build. Once per repo per session.
+	{ "<leader>agg", "<cmd>AiIndex<cr><cmd>AiGraph<cr>", desc = "Graph THIS file" },
+	{ "<leader>agt", "<cmd>AiIndex<cr><cmd>AiTrace<cr>", desc = "Trace symbol under cursor" },
+	{ "<leader>aga", "<cmd>AiIndex<cr><cmd>AiArch<cr>", desc = "Project architecture" },
+	{ "<leader>agc", "<cmd>AiCoverage<cr>", desc = "Is the graph current?" },
+	{ "<leader>agi", "<cmd>AiIndex!<cr>", desc = "Re-index this repo (force)" },
+
+	-- Verifies the assumption every chained ag* mapping depends on. Expect one
+	-- deliberate error message, then a PASS or FAIL notification.
+	{ "<leader>at", "<cmd>AiAbortProbe<cr><cmd>AiAbortMark<cr>", desc = "Self-test: <cmd> chain aborts on error?" },
+	{ "<leader>aF", "<cmd>AiFreshStatus<cr>", desc = "Why was/wasn't a checkout noticed?" },
+
+	-- serena prompts read real source, not the index, so they are NOT chained
+	-- through AiIndex, and activate_project already fits inside their round.
+	{ "<leader>ago", "<cmd>AiOutline<cr>", desc = "Outline THIS file (serena)", mode = { "n", "v" } },
+	{ "<leader>agw", "<cmd>AiWhere<cr>", desc = "What is this symbol (serena)", mode = { "n", "v" } },
+	{ "<leader>agh", "<cmd>AiHow<cr>", desc = "HOW this symbol works (source)", mode = { "n", "v" } },
+	{ "<leader>ag7", cc("CopilotChatDocs7"), desc = "Library docs (context7)", mode = { "n", "v" } },
+
+	-- The 27B reasoning model, one question at a time
+	{ "<leader>aD", cc("CopilotChatDiagnose"), desc = "Diagnose (27B, slow)", mode = { "n", "v" } },
+
 	{ "<leader>ad", "<cmd>ClaudeCode<cr>", desc = "[C]laude [C]ode" },
 	{ "<leader>B", group = "Bazel" },
 	{ "<leader>Bb", "<cmd>BazelBuildFile<cr>", desc = "Bazel Build File" },
@@ -888,10 +1688,6 @@ local mappings = {
 	{ "<leader>M", group = "Markdown" },
 	{ "<leader>Mp", ":MarkdownPreview<CR>", desc = "Preview in browser" },
 	{ "<leader>Ms", ":MarkdownPreviewStop<CR>", desc = "Stop Preview" },
-	{ "<leader>m", group = "Auto Complete" },
-	{ "<leader>mp", "<cmd>Minuet duet predict<cr>", desc = "Minuet duet predict" },
-	{ "<leader>ma", "<cmd>Minuet duet apply<cr>", desc = "Minuet duet apply" },
-	{ "<leader>md", "<cmd>Minuet duet dismiss<cr>", desc = "Minuet duet dismiss" },
 	{ "<leader>o", group = "Open" },
 	{ "<leader>of", ":ToggleTerm direction=float<cr>", desc = "Float Terminal" },
 	{

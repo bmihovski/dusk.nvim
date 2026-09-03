@@ -295,9 +295,6 @@ cmp.setup({
 			name = "buffer-lines",
 			option = { words = true, leading_whitespace = false, comments = true },
 		},
-		{ name = "avante_commands" },
-		{ name = "avante_mentions" },
-		{ name = "avante_files" },
 		{ name = "path" },
 		{ name = "calc" },
 		{ name = "emoji" },
@@ -476,81 +473,6 @@ cmp.setup.filetype("text", {
 		},
 	}),
 })
--- Setup function to be called after Avante loads
-local function setup_avante_completion()
-	if not package.loaded["cmp"] then
-		return
-	end
-	local cmp = require("cmp")
-
-	-- Setup for AvanteInput filetype
-	cmp.setup.filetype("AvanteInput", {
-		enabled = true,
-		completion = {
-			autocomplete = {
-				require("cmp.types").cmp.TriggerEvent.TextChanged,
-			},
-			keyword_length = 1, -- Auto-trigger after just 1 character
-		},
-		sources = cmp.config.sources({
-			{ name = "minuet", priority = 100, group_index = 1 },
-		}, {
-			{ name = "avante_commands", priority = 90, group_index = 2 },
-			{ name = "avante_mentions", priority = 90, group_index = 2 },
-			{ name = "avante_files", priority = 90, group_index = 2 },
-		}, {
-			{ name = "nvim_lsp" },
-			{ name = "buffer" },
-			{ name = "luasnip" },
-			{ name = "path" },
-		}),
-		mapping = cmp.mapping.preset.insert({
-			-- Keep the manual trigger as a fallback option
-			["<A-y>"] = require("minuet").make_cmp_map(),
-			["<CR>"] = cmp.mapping(function(fallback)
-				if cmp.core.view:visible() then
-					cmp.confirm({ select = true })
-				else
-					fallback()
-				end
-			end),
-			["<Tab>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
-			["<S-Tab>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
-			["<C-b>"] = cmp.mapping.scroll_docs(-4),
-			["<C-f>"] = cmp.mapping.scroll_docs(4),
-			["<C-e>"] = cmp.mapping.abort(),
-		}),
-	})
-
-	-- Similar setup for AvantePromptInput
-	cmp.setup.filetype("AvantePromptInput", {
-		enabled = true,
-		completion = {
-			autocomplete = {
-				require("cmp.types").cmp.TriggerEvent.TextChanged,
-			},
-			keyword_length = 1,
-		},
-		sources = {
-			{ name = "avante_prompt_mentions", priority = 100 },
-			{ name = "minuet", priority = 90 },
-		},
-	})
-end
-
--- Apply our configuration after Avante loads
-vim.api.nvim_create_autocmd("User", {
-	pattern = "AvanteLoaded",
-	callback = setup_avante_completion,
-})
-
--- Also run once during initial load in case Avante is already loaded
-vim.defer_fn(function()
-	if package.loaded["avante"] then
-		setup_avante_completion()
-	end
-end, 100)
-
 vim.cmd([[
         highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080
         highlight! CmpItemAbbrMatch guibg=NONE guifg=#569CD6

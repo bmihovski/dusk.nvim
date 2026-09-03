@@ -248,7 +248,6 @@ Output detailed study schedule aligned with [TIME_AVAILABLE]
 			cmp = {
 				enable = true, -- whether to enable the nvim-cmp source for referencing contexts
 
-				register_cmp_avante = true, -- whether to include the cmp source for avante input buffers.
 				-- They need to be registered using an autocmd, so this is a separate config option
 				manual_context_keyword = "@manual_context", -- keyword to use for manual context
 				history_keyword = "@history_context", -- keyword to use for history context
