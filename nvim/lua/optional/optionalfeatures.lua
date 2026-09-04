@@ -938,7 +938,7 @@ return {
 					system_prompt = "You are debugging unfamiliar code. Reason about mechanism, not symptoms. Do not propose a fix you cannot justify.",
 					model = "claude-opus-5:qwen-reason",
 					remember_as_sticky = false,
-					description = "Diagnose (27B reasoning)",
+					description = "Diagnose (reasoning model)",
 				},
 				-- include_info=true is what makes this authoritative: the schema calls it
 				-- "hover-like, typically including docstring and signature", read from real
@@ -969,7 +969,7 @@ return {
 						.. "Container/member for a method, and that is its OUTPUT format -- it is "
 						.. "not the input these calls want, and you cannot use it here anyway "
 						.. "because every call in a round is issued before any of them return. "
-						.. "Prefixing a module-level Python function produced ValueError: No symbol "
+						.. "Prefixing a function with its module or class produced ValueError: No symbol "
 						.. "matching 'module/function' found, which wasted call 3 entirely.\n"
 						.. "You already have every argument, so do NOT wait for call 2 to "
 						.. "return before issuing call 3 -- calls in a round run in order and "
@@ -1014,7 +1014,7 @@ return {
 						.. "Container/member for a method, and that is its OUTPUT format -- it is "
 						.. "not the input these calls want, and you cannot use it here anyway "
 						.. "because every call in a round is issued before any of them return. "
-						.. "Prefixing a module-level Python function produced ValueError: No symbol "
+						.. "Prefixing a function with its module or class produced ValueError: No symbol "
 						.. "matching 'module/function' found, which wasted call 3 entirely.\n"
 						.. "Then explain how it works, from the body you were given:\n"
 						.. "  - what it takes and what it returns, including the shape of the "
@@ -1032,8 +1032,8 @@ return {
 						.. "something whose definition you were NOT given, say what it appears "
 						.. "to do from the call site and mark that as an inference.\n"
 						.. "Where a claim turns on the exact semantics of a library call -- "
-						.. "setdefault vs assignment, get with a default, pop, mutation in "
-						.. "place -- name the call and state what you believe it does with an "
+						.. "setdefault vs get, append vs extend, Optional.orElse vs orElseGet, "
+						.. "mutation in place vs copy -- name the call and state what you believe it does with an "
 						.. "EXISTING value, so I can check that step rather than the "
 						.. "conclusion. Getting one of these backwards inverts the answer.\n"
 						.. "Use ONLY the returned body and call sites as evidence. Do not "
@@ -1072,7 +1072,7 @@ return {
 						.. "visible rather than silent.\n"
 						.. "NEVER INFER WHAT A FILE OR MODULE IS FOR FROM ITS NAME. The payload "
 						.. "gives you counts, labels, edges, clusters, entry_points and a file "
-						.. "tree -- it does not say what anything DOES. Calling gate1.py a "
+						.. "tree -- it does not say what anything DOES. Calling a file a "
 						.. "\"standalone speed probe\" or a cluster a \"testing lane\" is invention, "
 						.. "however plausible. Report the shape: which files exist, how many nodes "
 						.. "each package has, what the entry points are, which nodes have high "
@@ -1086,7 +1086,7 @@ return {
 						.. "field: entry_points is absent on some projects, and building an Entry "
 						.. "Points heading from a cluster members list invents a fact the graph "
 						.. "never asserted.\n"
-						.. "Likewise never borrow a number across rows. gate_run.py was reported as "
+						.. "Likewise never borrow a number across rows. one file was reported as "
 						.. "3 nodes from a row belonging to something else, and a class was given 2 "
 						.. "fan-in that belonged to a different method.\n"
 						.. "GAPS. After the tables, under the heading \"source files missing from "
@@ -1096,19 +1096,19 @@ return {
 						.. "Ignore documentation and config: nobody needs eleven markdown files "
 						.. "listed as absent.\n"
 						.. "  COMPARE STEMS, NOT FILENAMES. Packages are named by module stem, so "
-						.. "tests/test_task1_counting.py corresponds to the packages row "
-						.. "test_task1_counting -- strip the directory and the extension before "
+						.. "src/utils/foo_bar.py corresponds to the row foo_bar, and "
+						.. "src/com/app/FooBar.java corresponds to FooBar -- strip the directory and extension before "
 						.. "deciding. Matching the full filename against a package name matches "
 						.. "nothing and reports every file as missing: that produced seven false "
 						.. "positives out of eleven on one project.\n"
 						.. "  Why this section exists: it is where the graph is incomplete. "
-						.. "merge_ranges.py genuinely had no packages row while being the "
+						.. "a source file genuinely had no packages row while being the "
 						.. "most-called module in its repo -- fan-in 33, top of hotspots. A module "
 						.. "missing from packages appears in no node count you report.\n"
-						.. "Ignore the builtin pseudo-packages -- str, list, dict, int, len, print, "
-						.. "range and the builtins.* hotspots are the graph counting library calls, "
-						.. "not modules of this project. Mentioning that dict.get has fan-in 25 "
-						.. "tells me nothing about my code.\n",
+						.. "Ignore builtin and standard-library pseudo-packages -- these are the graph "
+						.. "counting language-runtime calls (Python builtins, Java java.lang, etc.), "
+						.. "not modules of this project. Mentioning that a stdlib call has high "
+						.. "fan-in tells me nothing about my code.\n",
 					tools = {
 						"codebase_memory_mcp_get_architecture",
 						"codebase_memory_mcp_search_graph",
@@ -1161,7 +1161,6 @@ return {
 					remember_as_sticky = false,
 					description = "Library docs via context7",
 				},
-
 				-- codebase-memory, one tool round each. Type them in the chat buffer with
 				-- the argument on the same line: "/Graph gate.py", "/Trace _refresh_suite".
 				-- Both avoid get_code_snippet on purpose: it needs a qualified_name from
@@ -1231,9 +1230,9 @@ return {
 						.. 'are empty write exactly "no docstring -- not described" and '
 						.. "nothing more. The indexer sometimes returns the COMMENT ABOVE a "
 						.. "definition in the docstring field instead of its real doc comment. Judge "
-						.. "that BY THE LANGUAGE, not by punctuation: a Python row is shadowed when "
-						.. "the field starts with # or is a bare divider line; a Java, C, JS or Rust "
-						.. "row is shadowed when it starts with // or a plain /* comment. A field "
+						.. "that BY THE LANGUAGE, not by punctuation: a row is shadowed when the field "
+						.. "starts with a line comment (# in Python/Ruby/Shell, // in Java/C/JS/Rust/Go) "
+						.. "or is a bare divider line, or starts with a plain /* block comment. A field "
 						.. "opening with /** or /// IS the real doc comment -- report it as "
 						.. "documentation even when it contains ==== or ---- divider lines inside "
 						.. "it. A Javadoc full of = signs was misreported as shadowed for exactly "
@@ -1419,19 +1418,21 @@ return {
 						.. "none means no usable pattern exists for it.\n"
 						.. "In ONE response issue:\n"
 						.. "  1. index_status, verbose=true\n"
-						.. "  2. search_code, pattern set to defs=, regex=true, file_pattern "
+						.. "  2. check_index_coverage with the project= value\n"
+						.. "  3. search_code, pattern set to defs=, regex=true, file_pattern "
 						.. "set to file=, limit=400 -- SKIP THIS CALL ENTIRELY if defs=none\n"
 						.. "regex=true applies to `pattern` ONLY. file_pattern is a separate matcher "
 						.. "and takes the file= value LITERALLY -- copy it exactly, no backslash "
 						.. "escaping, no wildcards, no quotes. Escaping the dot fails the call with "
 						.. "\"path or file_pattern contains invalid characters\" and costs the round.\n"
-						.. "Report the node and edge counts and which files the indexer could "
-						.. "not fully process.\n"
-						.. "Then freshness. If defs=none you made no call 2 and have NO "
+						.. "Report the node and edge counts, which files the indexer could "
+						.. "not fully process, and check_index_coverage results (files indexed "
+						.. "vs total, any gaps).\n"
+						.. "Then freshness. If defs=none you made no call 3 and have NO "
 						.. "freshness evidence: say \"freshness not assessed: no definition "
 						.. "pattern for this language\" and stop there. An empty result only "
 						.. "means something when the pattern could have matched.\n"
-						.. "Otherwise judge from call 2 ONLY, and read the field carefully: "
+						.. "Otherwise judge from call 3 ONLY, and read the field carefully: "
 						.. "raw_match_count is the number of grep hits the tool could NOT attach "
 						.. "to any graph node. It counts FAILURES to map, not successes.\n"
 						.. "Use one of these two verdicts, in these words:\n"

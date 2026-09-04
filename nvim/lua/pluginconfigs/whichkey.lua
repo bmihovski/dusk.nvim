@@ -1291,8 +1291,8 @@ local mappings = {
 	{ "<leader>agh", "<cmd>AiHow<cr>", desc = "HOW this symbol works (source)", mode = { "n", "v" } },
 	{ "<leader>ag7", cc("CopilotChatDocs7"), desc = "Library docs (context7)", mode = { "n", "v" } },
 
-	-- The 27B reasoning model, one question at a time
-	{ "<leader>aD", cc("CopilotChatDiagnose"), desc = "Diagnose (27B, slow)", mode = { "n", "v" } },
+	-- The reasoning model, one question at a time
+	{ "<leader>aD", cc("CopilotChatDiagnose"), desc = "Diagnose (reasoning, slow)", mode = { "n", "v" } },
 
 	{ "<leader>ad", "<cmd>ClaudeCode<cr>", desc = "[C]laude [C]ode" },
 	{ "<leader>B", group = "Bazel" },
