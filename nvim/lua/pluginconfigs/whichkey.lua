@@ -1269,6 +1269,13 @@ local mappings = {
 	-- Codebase questions. Graph and Trace take an argument, so they are
 	-- prefilled from the buffer name and the word under the cursor.
 	{ "<leader>ag", group = "Codebase (graph)" },
+	{ "<leader>ap", group = "Pi (local agent)" },
+	-- Pi (local agent): little-coder in side panel
+	{ "<leader>apt", function() require("pi").toggle() end, mode = { "n", "t" }, desc = "Toggle Pi panel" },
+	{ "<leader>apa", function() require("pi").ask("@this: ") end, mode = { "n", "v" }, desc = "Ask about code" },
+	{ "<leader>apx", function() require("pi").select() end, mode = { "n", "v" }, desc = "Action picker" },
+	{ "<leader>app", function() require("pi").send_context() end, mode = { "n", "v" }, desc = "Send code context" },
+	{ "<leader>apq", function() require("pi").abort() end, mode = "n", desc = "Abort" },
 
 	-- codebase-memory prompts read the index, so AiIndex goes first. It blocks and
 	-- errors on failure, which aborts the rest of the sequence -- so a query never

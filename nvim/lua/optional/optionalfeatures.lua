@@ -2152,4 +2152,37 @@ return {
 	--     require("telescope").load_extension("rest")
 	--   end,
 	-- }
+	-- pi.nvim: little-coder / pi coding agent in neovim side panel
+	{
+		"kurochenko/pi.nvim",
+		dependencies = {
+			{ "folke/snacks.nvim", optional = true },
+		},
+		event = "VeryLazy",
+		opts = {
+			terminal = {
+				position = "right",
+				size = 0.4,
+				cmd = "little-coder",
+				continue_session = true,
+				auto_start = false,
+			},
+			ask = {
+				prompt = "pi> ",
+			},
+			prompts = {
+				explain = { text = "Explain @this and its context", submit = true },
+				review = { text = "Review @this for correctness and readability", submit = true },
+				fix = { text = "Fix @diagnostics", submit = true },
+				test = { text = "Write tests for @this. Use the project test framework. Cover happy path, edge cases, and exceptions. Do NOT test trivial getters/setters.", submit = true },
+				document = { text = "Add documentation comments to @this", submit = true },
+				optimize = { text = "Optimize @this for performance and readability", submit = true },
+				implement = { text = "Implement @this", submit = true },
+				diff = { text = "Review the following git diff for correctness and readability: @diff", submit = true },
+			},
+			events = {
+				reload = true,
+			},
+		},
+	},
 }
